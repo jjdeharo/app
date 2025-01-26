@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matemáticas divertidas</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: linear-gradient(135deg, #FFB6C1, #87CEEB);
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #FF69B4;
+            font-size: 2em;
+            margin-bottom: 20px;
+        }
+
+        .operation {
+            font-size: 2.5em;
+            margin: 20px;
+            color: #4169E1;
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .option {
+            background: #4169E1;
+            color: white;
+            border: none;
+            padding: 15px;
+            font-size: 1.5em;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .option:hover {
+            transform: scale(1.05);
+        }
+
+        .score {
+            font-size: 1.5em;
+            color: #4169E1;
+            margin: 20px;
+        }
+
+        .feedback {
+            font-size: 1.2em;
+            min-height: 1.5em;
+            margin: 10px 0;
+        }
+
+        .correct {
+            background: #4CAF50;
+        }
+
+        .incorrect {
+            background: #FF6B6B;
+        }
+
+        .level-select {
+            margin: 20px;
+        }
+
+        select {
+            font-size: 1.2em;
+            padding: 5px;
+            border-radius: 5px;
+            margin: 0 10px;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+        }
+
+        a {
+            color: #4169E1;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Matemáticas divertidas</h1>
+        
+        <div class="level-select">
+            <label for="operation">Operación:</label>
+            <select id="operation" onchange="generateProblem()">
+                <option value="suma">Suma</option>
+                <option value="resta">Resta</option>
+                <option value="multiplicacion">Multiplicación</option>
+                <option value="division">División</option>
+            </select>
+
+            <label for="level">Nivel:</label>
+            <select id="level" onchange="generateProblem()">
+                <option value="1">1 (1-5)</option>
+                <option value="2">2 (1-10)</option>
+                <option value="3">3 (1-20)</option>
+            </select>
+        </div>
+
+        <div class="operation" id="problem"></div>
+        <div class="options" id="options"></div>
+        <div class="score">Puntos: <span id="score">0</span></div>
+        <div class="feedback" id="feedback"></div>
+        <button onclick="generateProblem()">Siguiente problema</button>
+    </div>
+
+    <footer>
+        <p>Aplicación hecha por <a href="https://bilateria.org">Juan José de Haro</a></p>
+        <p>Esta obra está bajo una <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es">licencia Creative Commons BY-SA</a></p>
+    </footer>
+
+    <script>
+        let currentAnswer;
+        let score = 0;
+
+        function getRandomNumber(max) {
+            return Math.floor(Math.random() * max) + 1;
+        }
+
+        function generateOptions(correctAnswer, max) {
+            let options = [correctAnswer];
+            while (options.length < 4) {
+                let option = correctAnswer + getRandomNumber(5) * (Math.random() < 0.5 ? 1 : -1);
+                if (option > 0 && !options.includes(option) && option <= max) {
+                    options.push(option);
+                }
+            }
+            return shuffleArray(options);
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateProblem() {
+            const operation = document.getElementById('operation').value;
+            const level = parseInt(document.getElementById('level').value);
+            const maxNumber = level === 1 ? 5 : level === 2 ? 10 : 20;
+            let num1, num2, symbol, answer;
+
+            switch(operation) {
+                case 'suma':
+                    num1 = getRandomNumber(maxNumber);
+                    num2 = getRandomNumber(maxNumber);
+                    symbol = '+';
+                    answer = num1 + num2;
+                    break;
+                case 'resta':
+                    num1 = getRandomNumber(maxNumber);
+                    num2 = getRandomNumber(num1);
+                    symbol = '-';
+                    answer = num1 - num2;
+                    break;
+                case 'multiplicacion':
+                    num1 = getRandomNumber(level === 1 ? 5 : level === 2 ? 10 : 12);
+                    num2 = getRandomNumber(level === 1 ? 5 : level === 2 ? 10 : 12);
+                    symbol = '×';
+                    answer = num1 * num2;
+                    break;
+                case 'division':
+                    num2 = getRandomNumber(level === 1 ? 5 : level === 2 ? 10 : 12);
+                    answer = getRandomNumber(level === 1 ? 5 : level === 2 ? 10 : 12);
+                    num1 = num2 * answer;
+                    symbol = '÷';
+                    break;
+            }
+
+            currentAnswer = answer;
+            document.getElementById('problem').textContent = `${num1} ${symbol} ${num2} = ?`;
+            
+            const options = generateOptions(answer, maxNumber * 2);
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            options.forEach(opt => {
+                const button = document.createElement('button');
+                button.className = 'option';
+                button.textContent = opt;
+                button.onclick = () => checkAnswer(opt);
+                optionsContainer.appendChild(button);
+            });
+
+            document.getElementById('feedback').textContent = '';
+            document.querySelectorAll('.option').forEach(btn => {
+                btn.classList.remove('correct', 'incorrect');
+                btn.disabled = false;
+            });
+        }
+
+        function checkAnswer(selected) {
+            const feedback = document.getElementById('feedback');
+            const options = document.querySelectorAll('.option');
+            
+            options.forEach(btn => {
+                btn.disabled = true;
+                if (parseInt(btn.textContent) === currentAnswer) {
+                    btn.classList.add('correct');
+                }
+                if (parseInt(btn.textContent) === selected && selected !== currentAnswer) {
+                    btn.classList.add('incorrect');
+                }
+            });
+
+            if (selected === currentAnswer) {
+                score += 10;
+                document.getElementById('score').textContent = score;
+                feedback.textContent = '¡Muy bien! 🌟';
+                feedback.style.color = '#4CAF50';
+                document.querySelector('.container').classList.add('celebrate');
+                setTimeout(() => {
+                    document.querySelector('.container').classList.remove('celebrate');
+                }, 500);
+            } else {
+                feedback.textContent = `¡Inténtalo otra vez! La respuesta correcta era ${currentAnswer}`;
+                feedback.style.color = '#FF6B6B';
+            }
+
+            setTimeout(generateProblem, 2000);
+        }
+
+        generateProblem();
+    </script>
+</body>
+</html>
