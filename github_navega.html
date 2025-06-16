@@ -166,7 +166,6 @@
                 styleActiveTab(browserTabActive ? tabBrowserBtn : tabConverterBtn);
                 styleInactiveTab(browserTabActive ? tabConverterBtn : tabBrowserBtn);
                 
-                // Cargar repos automáticamente al cambiar a la pestaña de navegar si hay token y no se ha cargado nada
                 if (browserTabActive && tokenInput.value.trim() && !contentGrid.innerHTML.trim() && !breadcrumbsContainer.innerHTML.trim()) {
                     handleLoadRepos();
                 }
@@ -207,7 +206,7 @@
                 const savedToken = getSavedToken();
                 if (savedToken) tokenInput.value = savedToken;
                 
-                switchTab('converter'); // Iniciar en la pestaña de convertir
+                switchTab('converter'); 
 
                 tabBrowserBtn.addEventListener('click', () => switchTab('browser'));
                 tabConverterBtn.addEventListener('click', () => switchTab('converter'));
@@ -380,21 +379,33 @@
                     return;
                 }
                 
-                const githubRepoRegex = /https?:\/\/github\.com\/([^\/]+)\/([^\/]+)/;
-                const githubPagesRegex = /https?:\/\/([^\.]+)\.github\.io\/([^\/]+)/;
-                let match = url.match(githubRepoRegex) || url.match(githubPagesRegex);
-                if (!match) {
+                let user, repo, filePath = '';
+                
+                const githubPagesRegex = /https?:\/\/([^\.]+)\.github\.io\/([^\/]+)\/?(.*)/;
+                const githubRepoRegex = /https?:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/blob\/[^\/]+\/(.*))?/;
+
+                let matchPages = url.match(githubPagesRegex);
+                let matchRepo = url.match(githubRepoRegex);
+
+                if (matchPages) {
+                    [, user, repo, filePath] = matchPages;
+                } else if (matchRepo) {
+                    [, user, repo, filePath] = matchRepo;
+                } else {
                     errorConverter.textContent = "URL no válida. Debe ser de un repositorio de GitHub o GitHub Pages.";
                     setLoading(loaderConverter, errorConverter, false);
                     return;
                 }
-                const [, user, repo] = match;
+
+                filePath = filePath || '';
 
                 try {
                     const repoData = await fetchFromGitHub(`/repos/${user}/${repo.replace(/\/$/, '')}`);
-                    renderResult(resultsContainerConverter, 'URL de GitHub', repoData.html_url);
+                    const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (filePath ? `/blob/${repoData.default_branch}/${filePath}` : '');
+                    renderResult(resultsContainerConverter, 'URL de GitHub', githubUrl);
+                    
                     if (repoData.has_pages) {
-                        const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}`;
+                        const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${filePath}`;
                         renderResult(resultsContainerConverter, 'URL de Pages', pagesUrl, 'text-teal-600 dark:text-teal-300');
                     } else {
                         resultsContainerConverter.insertAdjacentHTML('beforeend', '<p class="text-center text-gray-500 mt-4">Este repositorio no tiene GitHub Pages activado.</p>');
