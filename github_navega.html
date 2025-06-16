@@ -88,9 +88,7 @@
                         <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
                         <li>En "Note" (Nota), pon un nombre para recordar para qué es este token, por ejemplo: <strong class="text-gray-800 dark:text-gray-200">NavegadorDeArchivos</strong>.</li>
                         <li>En "Expiration" (Caducidad), puedes dejar 30 días, que es lo habitual.</li>
-                        <li>En "Select scopes" (Seleccionar permisos), marca **SOLAMENTE** la casilla que dice <strong class="text-gray-800 dark:text-gray-200">`repo`</strong>. Esto le da acceso a tus repositorios.
-                            <img src="https://i.imgur.com/G5B1y4V.png" alt="Imagen mostrando la opción 'repo' seleccionada en GitHub" class="mt-2 rounded-md border border-gray-300 dark:border-gray-600">
-                        </li>
+                        <li>En "Select scopes" (Seleccionar permisos), marca **SOLAMENTE** la casilla que dice <strong class="text-gray-800 dark:text-gray-200">`repo`</strong>. Esto le da acceso a tus repositorios.</li>
                         <li>Baja hasta el final de la página y haz clic en el botón verde "Generate token".</li>
                         <li>GitHub te mostrará el token. ¡Cópialo! No podrás volver a verlo. Pégalo en el campo de arriba.</li>
                     </ol>
@@ -172,10 +170,8 @@
                     themeIconDark.classList.remove('hidden');
                 }
             };
-            
             const toggleTheme = () => {
-                const currentTheme = localStorage.getItem('theme') || 'light';
-                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                const newTheme = root.classList.contains('light') ? 'dark' : 'light';
                 localStorage.setItem('theme', newTheme);
                 applyTheme(newTheme);
             };
@@ -186,40 +182,40 @@
             const clearSavedToken = () => {
                 localStorage.removeItem('githubToken');
                 tokenInput.value = '';
-                resetUI();
+                githubToken = '';
+                resetFullUI();
                 showError('Token olvidado. La página se ha reiniciado.');
             };
 
             // --- Inicialización ---
             const initializeApp = () => {
-                // Configurar tema
                 const savedTheme = localStorage.getItem('theme');
                 const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
 
-                // Cargar token
                 const savedToken = getSavedToken();
                 if (savedToken) {
                     tokenInput.value = savedToken;
-                    handleLoadRepos(); // Intentar cargar repos automáticamente si hay token
+                    handleLoadRepos();
                 }
             };
 
             // --- Funciones de la API de GitHub ---
             async function fetchFromGitHub(endpoint) {
-                if (!githubToken) githubToken = tokenInput.value.trim();
+                githubToken = tokenInput.value.trim();
+                if (!githubToken) {
+                    throw new Error('Por favor, introduce un Personal Access Token.');
+                }
                 const url = `https://api.github.com${endpoint}`;
                 const headers = { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' };
                 const response = await fetch(url, { headers });
                 if (!response.ok) {
                     const errorData = await response.json();
-                    if(response.status === 401) { // Bad credentials
+                    if(response.status === 401) {
                         clearSavedToken();
-                        showError("Token no válido o caducado. Por favor, introduce uno nuevo.");
-                    } else {
-                        showError(errorData.message || `Error ${response.status}`);
+                        throw new Error("Token no válido o caducado. Introduce uno nuevo.");
                     }
-                    throw new Error(errorData.message);
+                    throw new Error(errorData.message || `Error ${response.status}`);
                 }
                 return response.json();
             }
@@ -233,11 +229,14 @@
                 setLoading(false);
                 errorMessage.textContent = message;
             }
-            function resetUI() {
+            function resetContentUI() {
                 contentGrid.innerHTML = '';
-                breadcrumbsContainer.innerHTML = '';
                 githubUrlSection.style.display = 'none';
                 pagesUrlSection.style.display = 'none';
+            }
+             function resetFullUI() {
+                resetContentUI();
+                breadcrumbsContainer.innerHTML = '';
                 currentUser = '';
                 currentRepo = '';
                 currentPath = '';
@@ -254,82 +253,91 @@
                     breadcrumbsContainer.appendChild(crumbElement);
                 });
             }
-            function renderItems(items, type) {
-                resetUI();
+            function renderItems(items) {
+                resetContentUI();
                 items.sort((a, b) => {
-                    if (type !== 'repo') {
-                        if (a.type === 'dir' && b.type !== 'dir') return -1;
-                        if (a.type !== 'dir' && b.type === 'dir') return 1;
-                    }
+                    if (a.type === 'dir' && b.type !== 'dir') return -1;
+                    if (a.type !== 'dir' && b.type === 'dir') return 1;
                     return a.name.localeCompare(b.name, 'es', { numeric: true });
                 });
                 items.forEach(item => {
                     const card = document.createElement('div');
                     card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
-                    const isDir = item.type === 'dir', isRepo = type === 'repo';
-                    const iconHTML = (isRepo || isDir) ? 
+                    const isDir = item.type === 'dir';
+                    const iconHTML = (isDir) ? 
                         `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>` : 
                         `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 dark:text-gray-400"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
                     card.innerHTML = `${iconHTML}<span class="font-medium truncate">${item.name}</span>`;
                     card.onclick = () => handleItemClick(item);
                     contentGrid.appendChild(card);
                 });
-                renderBreadcrumbs();
+            }
+             function renderRepos(repos) {
+                resetContentUI();
+                 repos.forEach(repo => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
+                    const iconHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+                    card.innerHTML = `${iconHTML}<span class="font-medium truncate">${repo.name}</span>`;
+                    card.onclick = () => handleItemClick(repo);
+                    contentGrid.appendChild(card);
+                });
             }
 
             // --- Manejadores de eventos ---
             async function handleLoadRepos() {
-                githubToken = tokenInput.value.trim();
-                if (!githubToken) {
-                    showError('Por favor, introduce un Personal Access Token.');
-                    return;
-                }
                 setLoading(true);
-                resetUI();
+                resetFullUI();
                 try {
                     const user = await fetchFromGitHub('/user');
                     currentUser = user.login;
-                    saveToken(githubToken); // Guardar token solo si es válido
+                    saveToken(tokenInput.value.trim());
                     breadcrumbs = [{ name: currentUser, path: '' }];
+                    renderBreadcrumbs();
                     const repos = await fetchFromGitHub('/user/repos?per_page=100&sort=updated');
-                    renderItems(repos, 'repo');
+                    renderRepos(repos);
                 } catch (error) {
-                    // El error ya se muestra en fetchFromGitHub
+                    showError(error.message);
                 } finally {
                     setLoading(false);
                 }
             }
             async function handleItemClick(item) {
                 setLoading(true);
-                githubUrlSection.style.display = 'none';
-                pagesUrlSection.style.display = 'none';
                 try {
-                    if (item.full_name && !currentRepo) { // Clic en repositorio
+                    // Clic en un repositorio
+                    if (item.full_name && !currentRepo) {
                         currentRepo = item.name;
                         currentPath = '';
                         breadcrumbs.push({ name: item.name, path: '' });
                         const repoDetails = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}`);
                         currentRepoHasPages = repoDetails.has_pages;
                         const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/`);
-                        renderItems(contents, 'dir-file');
-                    } else if (item.type === 'dir') { // Clic en carpeta
+                        renderItems(contents);
+                        renderBreadcrumbs();
+                    } 
+                    // Clic en una carpeta
+                    else if (item.type === 'dir') {
                         currentPath = item.path;
                         breadcrumbs.push({ name: item.name, path: item.path });
                         const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/${currentPath}`);
-                        renderItems(contents, 'dir-file');
-                    } else if (item.type === 'file') { // Clic en archivo
+                        renderItems(contents);
+                        renderBreadcrumbs();
+                    } 
+                    // Clic en un archivo
+                    else if (item.type === 'file') {
+                        resetContentUI();
                         fileUrlElement.textContent = item.html_url;
                         githubUrlSection.style.display = 'flex';
                         if (currentRepoHasPages) {
                             pagesUrlElement.textContent = `https://${currentUser}.github.io/${currentRepo}/${item.path}`;
                             pagesUrlSection.style.display = 'flex';
                         }
-                        setLoading(false); // No hay más que cargar, detener loader
                     }
                 } catch (error) {
-                    setLoading(false);
+                    showError(error.message);
                 } finally {
-                     if (item.type !== 'file') setLoading(false);
+                    setLoading(false);
                 }
             }
             async function handleBreadcrumbClick(index) {
@@ -337,19 +345,26 @@
                 const crumb = breadcrumbs[index];
                 breadcrumbs = breadcrumbs.slice(0, index + 1);
                 currentPath = crumb.path;
-                if (index === 0) {
-                    currentRepo = '';
-                    currentRepoHasPages = false;
-                    await handleLoadRepos();
-                } else {
-                    try {
+                
+                try {
+                    // Navegar a la lista de repos
+                    if (index === 0) {
+                        currentRepo = '';
+                        currentRepoHasPages = false;
+                        const repos = await fetchFromGitHub('/user/repos?per_page=100&sort=updated');
+                        renderRepos(repos);
+                    } 
+                    // Navegar a un repositorio o carpeta
+                    else {
                         const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/${currentPath}`);
-                        renderItems(contents, 'dir-file');
-                    } catch (error) {
-                        showError(error.message);
+                        renderItems(contents);
                     }
+                    renderBreadcrumbs();
+                } catch(error) {
+                    showError(error.message);
+                } finally {
+                    setLoading(false);
                 }
-                setLoading(false);
             }
 
             function copyToClipboard(elementId, button) {
