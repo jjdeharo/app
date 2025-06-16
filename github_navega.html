@@ -306,6 +306,7 @@
                         renderResult(resultsContainerBrowser, 'URL Repositorio', item.html_url);
                         const rawUrl = `https://raw.githubusercontent.com/${currentUser}/${currentRepo.name}/${currentRepo.default_branch}/${item.path}`;
                         renderResult(resultsContainerBrowser, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                        // Si el repositorio tiene GitHub Pages, genera la URL correspondiente para cualquier tipo de archivo.
                         if (currentRepo.has_pages) {
                              const pagesUrl = `https://${currentUser}.github.io/${currentRepo.name}/${item.path}`;
                              renderResult(resultsContainerBrowser, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
@@ -361,6 +362,7 @@
                 }
                 
                 let user, repo, filePath = '';
+                let isPagesUrl = false;
                 
                 const githubPagesRegex = /https?:\/\/([^\.]+)\.github\.io\/([^\/]+)\/?(.*)/;
                 const githubRepoRegex = /https?:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/(?:blob|tree)\/[^\/]+\/(.*))?/;
@@ -369,8 +371,10 @@
                 let matchRepo = url.match(githubRepoRegex);
 
                 if (matchPages) {
+                    isPagesUrl = true;
                     [, user, repo, filePath] = matchPages;
                 } else if (matchRepo) {
+                    isPagesUrl = false;
                     [, user, repo, filePath] = matchRepo;
                 } else {
                     errorConverter.textContent = "URL no válida. Debe ser de un repositorio de GitHub o GitHub Pages.";
@@ -378,21 +382,29 @@
                     return;
                 }
 
-                filePath = (filePath || '').replace(/\/$/, ''); // Clean up path
+                let effectivePath = (filePath || '').replace(/\/$/, '');
+                if (isPagesUrl && (effectivePath === '' || url.endsWith('/'))) {
+                    effectivePath = (effectivePath ? effectivePath + '/' : '') + 'index.html';
+                }
+                effectivePath = effectivePath.replace(/\/+/g, '/').replace(/^\//, '');
 
                 try {
                     const repoData = await fetchFromGitHub(`/repos/${user}/${repo.replace(/\/$/, '')}`);
                     
-                    const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (filePath ? `/blob/${repoData.default_branch}/${filePath}` : '');
+                    const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (effectivePath ? `/blob/${repoData.default_branch}/${effectivePath}` : '');
                     renderResult(resultsContainerConverter, 'URL Repositorio', githubUrl);
 
-                    const rawUrl = `https://raw.githubusercontent.com/${repoData.owner.login}/${repoData.name}/${repoData.default_branch}/${filePath}`;
-                    if(filePath) renderResult(resultsContainerConverter, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                    if (effectivePath) {
+                        const rawUrl = `https://raw.githubusercontent.com/${repoData.owner.login}/${repoData.name}/${repoData.default_branch}/${effectivePath}`;
+                        renderResult(resultsContainerConverter, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                    }
                     
+                    // Si el repositorio tiene GitHub Pages, genera la URL correspondiente para el archivo.
+                    // Funciona para cualquier tipo de archivo que pueda ser servido por la web (html, txt, jpg, etc.).
                     if (repoData.has_pages) {
-                        const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${filePath}`;
+                        const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${effectivePath}`;
                         renderResult(resultsContainerConverter, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
-                    } else if (filePath) {
+                    } else if (effectivePath) {
                         resultsContainerConverter.insertAdjacentHTML('beforeend', '<p class="text-center text-gray-500 mt-4">Este repositorio no tiene GitHub Pages activado.</p>');
                     }
                 } catch (error) { errorConverter.textContent = `Error: ${error.message}`; } finally { setLoading(loaderConverter, errorConverter, false); }
