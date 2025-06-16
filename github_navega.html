@@ -56,7 +56,7 @@
 
             <!-- Contenido de las Pestañas -->
             <div>
-                <!-- Pestaña CONVERTIR URL (ahora la primera) -->
+                <!-- Pestaña CONVERTIR URL -->
                 <div id="content-converter">
                      <div class="flex flex-col sm:flex-row items-center gap-4 mt-4">
                         <input type="text" id="url-input" placeholder="Pega aquí una URL de GitHub o de Pages" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -69,10 +69,10 @@
                      <div id="results-container-converter" class="space-y-3 mt-4"></div>
                 </div>
 
-                <!-- Pestaña NAVEGAR (ahora la segunda) -->
+                <!-- Pestaña NAVEGAR -->
                 <div id="content-browser" class="hidden">
-                    <!-- Sección de Autenticación (Ahora dentro de esta pestaña) -->
-                    <div id="auth-section-wrapper" class="space-y-2 border-b border-gray-200 dark:border-gray-700 py-6">
+                    <!-- Sección de Autenticación -->
+                    <div class="space-y-2 border-b border-gray-200 dark:border-gray-700 py-6">
                         <div class="flex flex-col sm:flex-row items-center gap-4">
                             <input type="password" id="github-token" placeholder="Pega tu Personal Access Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                             <button id="clear-token-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Olvidar Token</button>
@@ -80,7 +80,6 @@
                         <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg mt-4">
                             <summary class="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
                             <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
-                                <p>Para usar esta aplicación, necesitas un permiso especial de GitHub.</p>
                                 <ol class="list-decimal list-inside space-y-2">
                                     <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
                                     <li>En "Note", pon un nombre, ej: <strong class="text-gray-800 dark:text-gray-200">HerramientaRepos</strong>.</li>
@@ -113,42 +112,35 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // --- Referencias a elementos del DOM ---
+            // --- DOM Elements ---
             const tokenInput = document.getElementById('github-token');
             const clearTokenBtn = document.getElementById('clear-token-btn');
             const themeToggleButton = document.getElementById('theme-toggle');
             const root = document.documentElement;
-
-            // Pestañas
             const tabBrowserBtn = document.getElementById('tab-browser');
             const tabConverterBtn = document.getElementById('tab-converter');
             const contentBrowser = document.getElementById('content-browser');
             const contentConverter = document.getElementById('content-converter');
-            
-            // Pestaña Navegar
             const loadReposBtn = document.getElementById('load-repos-btn');
             const loaderBrowser = document.getElementById('loader-browser');
             const errorBrowser = document.getElementById('error-message-browser');
             const breadcrumbsContainer = document.getElementById('breadcrumbs');
             const contentGrid = document.getElementById('content-grid');
             const resultsContainerBrowser = document.getElementById('results-container-browser');
-
-            // Pestaña Convertir
             const urlInput = document.getElementById('url-input');
             const convertUrlBtn = document.getElementById('convert-url-btn');
             const loaderConverter = document.getElementById('loader-converter');
             const errorConverter = document.getElementById('error-message-converter');
             const resultsContainerConverter = document.getElementById('results-container-converter');
 
-            // --- Estado de la aplicación ---
+            // --- App State ---
             let githubToken = '';
             let currentUser = '';
-            let currentRepo = '';
-            let currentRepoHasPages = false;
+            let currentRepo = { name: '', default_branch: '', has_pages: false };
             let currentPath = '';
             let breadcrumbs = [];
             
-            // --- Lógica de Pestañas ---
+            // --- Tab Logic ---
             function switchTab(targetTab) {
                 const browserTabActive = targetTab === 'browser';
                 contentBrowser.classList.toggle('hidden', !browserTabActive);
@@ -171,7 +163,7 @@
                 }
             }
 
-            // --- Lógica del Tema (Claro/Oscuro) ---
+            // --- Theme Logic ---
             const applyTheme = (theme) => {
                 const lightIcon = document.getElementById('theme-icon-light');
                 const darkIcon = document.getElementById('theme-icon-dark');
@@ -189,7 +181,7 @@
                 applyTheme(newTheme);
             };
 
-            // --- Lógica del Token Persistente ---
+            // --- Token Logic ---
             const saveToken = (token) => localStorage.setItem('githubToken', token);
             const getSavedToken = () => localStorage.getItem('githubToken');
             const clearSavedToken = () => {
@@ -199,7 +191,7 @@
                 errorBrowser.textContent = 'Token olvidado. La página se ha reiniciado.';
             };
 
-            // --- Inicialización ---
+            // --- Initialization ---
             const initializeApp = () => {
                 const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 applyTheme(savedTheme);
@@ -216,7 +208,7 @@
                 convertUrlBtn.addEventListener('click', handleUrlConversion);
             };
 
-            // --- Funciones de la API de GitHub ---
+            // --- API Fetch ---
             async function fetchFromGitHub(endpoint) {
                 githubToken = tokenInput.value.trim();
                 if (!githubToken) throw new Error('Se necesita un Token de Acceso. Introdúcelo en la pestaña "Navegar".');
@@ -226,15 +218,14 @@
                 if (!response.ok) {
                     const errorData = await response.json();
                     if(response.status === 401) {
-                        clearSavedToken();
-                        throw new Error("Token no válido o caducado.");
+                        clearSavedToken(); throw new Error("Token no válido o caducado.");
                     }
                     throw new Error(errorData.message || `Error ${response.status}`);
                 }
                 return response.json();
             }
 
-            // --- UI y Renderizado ---
+            // --- UI & Rendering ---
             function setLoading(loader, errorEl, isLoading) {
                 errorEl.textContent = '';
                 loader.style.display = isLoading ? 'block' : 'none';
@@ -242,7 +233,8 @@
             function resetFullUI() {
                 contentGrid.innerHTML = ''; breadcrumbsContainer.innerHTML = '';
                 resultsContainerBrowser.innerHTML = ''; resultsContainerConverter.innerHTML = '';
-                currentUser = ''; currentRepo = ''; currentPath = ''; breadcrumbs = [];
+                currentUser = ''; currentRepo = { name: '', default_branch: '', has_pages: false }; 
+                currentPath = ''; breadcrumbs = [];
             }
             function renderResult(container, label, url, labelColorClass = 'text-gray-600 dark:text-gray-300') {
                 const id = `url-${Math.random().toString(36).substr(2, 9)}`;
@@ -259,27 +251,18 @@
             document.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
-
-                if (button.classList.contains('copy-btn')) {
-                    copyToClipboard(button.dataset.target, button);
-                } else if (button.classList.contains('open-btn')) {
-                    window.open(button.dataset.url, '_blank');
-                }
+                if (button.classList.contains('copy-btn')) copyToClipboard(button.dataset.target, button);
+                else if (button.classList.contains('open-btn')) window.open(button.dataset.url, '_blank');
             });
-             function copyToClipboard(elementId, button) {
-                const url = document.getElementById(elementId).textContent;
-                navigator.clipboard.writeText(url).then(() => {
+            function copyToClipboard(elementId, button) {
+                navigator.clipboard.writeText(document.getElementById(elementId).textContent).then(() => {
                     const originalText = button.textContent;
-                    button.textContent = '¡Copiado!';
-                    button.classList.add('bg-yellow-500');
-                    setTimeout(() => {
-                        button.textContent = originalText;
-                        button.classList.remove('bg-yellow-500');
-                    }, 1500);
+                    button.textContent = '¡Copiado!'; button.classList.add('bg-yellow-500');
+                    setTimeout(() => { button.textContent = originalText; button.classList.remove('bg-yellow-500'); }, 1500);
                 });
             }
 
-            // --- Lógica para Pestaña NAVEGAR ---
+            // --- Browser Tab Logic ---
             async function handleLoadRepos() {
                 setLoading(loaderBrowser, errorBrowser, true);
                 resetFullUI();
@@ -291,11 +274,7 @@
                     renderBreadcrumbs();
                     const repos = await fetchFromGitHub('/user/repos?per_page=100&sort=updated');
                     renderRepos(repos);
-                } catch (error) {
-                    errorBrowser.textContent = error.message;
-                } finally {
-                    setLoading(loaderBrowser, errorBrowser, false);
-                }
+                } catch (error) { errorBrowser.textContent = error.message; } finally { setLoading(loaderBrowser, errorBrowser, false); }
             }
             function renderRepos(repos) {
                 contentGrid.innerHTML = '';
@@ -307,33 +286,35 @@
                     contentGrid.appendChild(card);
                 });
             }
-             async function handleItemClick(item) {
+            async function handleItemClick(item) {
                 setLoading(loaderBrowser, errorBrowser, true);
                 resultsContainerBrowser.innerHTML = '';
                 try {
-                    if (item.full_name && !currentRepo) {
-                        currentRepo = item.name; currentPath = '';
+                    if (item.full_name && !currentRepo.name) {
+                        const repoDetails = await fetchFromGitHub(`/repos/${item.full_name}`);
+                        currentRepo = { name: repoDetails.name, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
+                        currentPath = '';
                         breadcrumbs.push({ name: item.name, path: '' });
-                        const repoDetails = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}`);
-                        currentRepoHasPages = repoDetails.has_pages;
-                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/`);
+                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo.name}/contents/`);
                         renderItems(contents);
                     } else if (item.type === 'dir') {
                         currentPath = item.path;
                         breadcrumbs.push({ name: item.name, path: item.path });
-                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/${currentPath}`);
+                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo.name}/contents/${currentPath}`);
                         renderItems(contents);
                     } else if (item.type === 'file') {
-                        renderResult(resultsContainerBrowser, 'URL de GitHub', item.html_url);
-                        if (currentRepoHasPages) {
-                             const pagesUrl = `https://${currentUser}.github.io/${currentRepo}/${item.path}`;
-                             renderResult(resultsContainerBrowser, 'URL de Pages', pagesUrl, 'text-teal-600 dark:text-teal-300');
+                        renderResult(resultsContainerBrowser, 'URL Repositorio', item.html_url);
+                        const rawUrl = `https://raw.githubusercontent.com/${currentUser}/${currentRepo.name}/${currentRepo.default_branch}/${item.path}`;
+                        renderResult(resultsContainerBrowser, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                        if (currentRepo.has_pages) {
+                             const pagesUrl = `https://${currentUser}.github.io/${currentRepo.name}/${item.path}`;
+                             renderResult(resultsContainerBrowser, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
                         }
                     }
                     renderBreadcrumbs();
                 } catch (error) { errorBrowser.textContent = error.message; } finally { setLoading(loaderBrowser, errorBrowser, false); }
             }
-             function renderItems(items) {
+            function renderItems(items) {
                 contentGrid.innerHTML = '';
                 items.sort((a, b) => (a.type === 'dir' && b.type !== 'dir') ? -1 : (a.type !== 'dir' && b.type === 'dir') ? 1 : a.name.localeCompare(b.name));
                 items.forEach(item => {
@@ -359,16 +340,16 @@
                 setLoading(loaderBrowser, errorBrowser, true);
                 breadcrumbs = breadcrumbs.slice(0, index + 1);
                 currentPath = breadcrumbs[index].path;
-                if (index === 0) { currentRepo = ''; currentRepoHasPages = false; }
-                const endpoint = currentRepo ? `/repos/${currentUser}/${currentRepo}/contents/${currentPath}` : '/user/repos?per_page=100&sort=updated';
+                if (index === 0) { currentRepo = { name: '', default_branch: '', has_pages: false }; }
+                const endpoint = currentRepo.name ? `/repos/${currentUser}/${currentRepo.name}/contents/${currentPath}` : '/user/repos?per_page=100&sort=updated';
                 try {
                     const data = await fetchFromGitHub(endpoint);
-                    currentRepo ? renderItems(data) : renderRepos(data);
+                    currentRepo.name ? renderItems(data) : renderRepos(data);
                     renderBreadcrumbs();
                 } catch(error) { errorBrowser.textContent = error.message; } finally { setLoading(loaderBrowser, errorBrowser, false); }
             }
             
-            // --- Lógica para Pestaña CONVERTIR ---
+            // --- Converter Tab Logic ---
             async function handleUrlConversion() {
                 setLoading(loaderConverter, errorConverter, true);
                 resultsContainerConverter.innerHTML = '';
@@ -382,7 +363,7 @@
                 let user, repo, filePath = '';
                 
                 const githubPagesRegex = /https?:\/\/([^\.]+)\.github\.io\/([^\/]+)\/?(.*)/;
-                const githubRepoRegex = /https?:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/blob\/[^\/]+\/(.*))?/;
+                const githubRepoRegex = /https?:\/\/github\.com\/([^\/]+)\/([^\/]+)(?:\/(?:blob|tree)\/[^\/]+\/(.*))?/;
 
                 let matchPages = url.match(githubPagesRegex);
                 let matchRepo = url.match(githubRepoRegex);
@@ -397,17 +378,21 @@
                     return;
                 }
 
-                filePath = filePath || '';
+                filePath = (filePath || '').replace(/\/$/, ''); // Clean up path
 
                 try {
                     const repoData = await fetchFromGitHub(`/repos/${user}/${repo.replace(/\/$/, '')}`);
+                    
                     const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (filePath ? `/blob/${repoData.default_branch}/${filePath}` : '');
-                    renderResult(resultsContainerConverter, 'URL de GitHub', githubUrl);
+                    renderResult(resultsContainerConverter, 'URL Repositorio', githubUrl);
+
+                    const rawUrl = `https://raw.githubusercontent.com/${repoData.owner.login}/${repoData.name}/${repoData.default_branch}/${filePath}`;
+                    if(filePath) renderResult(resultsContainerConverter, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
                     
                     if (repoData.has_pages) {
                         const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${filePath}`;
-                        renderResult(resultsContainerConverter, 'URL de Pages', pagesUrl, 'text-teal-600 dark:text-teal-300');
-                    } else {
+                        renderResult(resultsContainerConverter, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
+                    } else if (filePath) {
                         resultsContainerConverter.insertAdjacentHTML('beforeend', '<p class="text-center text-gray-500 mt-4">Este repositorio no tiene GitHub Pages activado.</p>');
                     }
                 } catch (error) { errorConverter.textContent = `Error: ${error.message}`; } finally { setLoading(loaderConverter, errorConverter, false); }
