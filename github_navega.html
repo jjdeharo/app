@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Navegador y Convertidor de URL de GitHub</title>
+    <title>Herramientas de GitHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,13 +29,14 @@
         .item-card:hover { transform: translateY(-2px); }
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
+        .modal-content { max-height: 80vh; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center p-4">
 
     <div class="w-full max-w-4xl mx-auto relative">
         <!-- Interruptor de Tema -->
-        <div class="absolute top-4 right-4 z-10">
+        <div class="absolute top-4 right-4 z-20">
             <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                 <svg id="theme-icon-light" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
@@ -45,33 +46,30 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 mt-16">
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
-                <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por tus repositorios.</p>
+                <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por tus repositorios o explora tus Gists.</p>
             </header>
             
-            <!-- Pestañas de Navegación -->
+            <!-- Pestañas -->
             <div class="flex border-b border-gray-200 dark:border-gray-700">
-                <button id="tab-converter" class="px-4 py-2 font-semibold text-gray-500 dark:text-gray-400 border-b-2 border-transparent hover:border-gray-300 dark:hover:border-gray-600 hover:text-gray-700 dark:hover:text-gray-200">Convertir URL</button>
-                <button id="tab-browser" class="px-4 py-2 font-semibold border-b-2 border-blue-500 text-blue-600 dark:text-blue-400">Navegar</button>
+                <button id="tab-converter" class="tab-btn px-4 py-2 font-semibold">Convertir URL</button>
+                <button id="tab-browser" class="tab-btn px-4 py-2 font-semibold">Navegar</button>
+                <button id="tab-gists" class="tab-btn px-4 py-2 font-semibold">Gists</button>
             </div>
 
             <!-- Contenido de las Pestañas -->
             <div>
                 <!-- Pestaña CONVERTIR URL -->
-                <div id="content-converter">
+                <div id="content-converter" class="tab-content">
                      <div class="flex flex-col sm:flex-row items-center gap-4 mt-4">
                         <input type="text" id="url-input" placeholder="Pega aquí una URL de GitHub o de Pages" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                         <button id="convert-url-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Convertir</button>
                     </div>
-                    <div id="status-container-converter" class="text-center min-h-[40px] flex items-center justify-center">
-                        <div id="loader-converter" class="hidden animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
-                        <p id="error-message-converter" class="text-red-500 font-semibold"></p>
-                    </div>
-                     <div id="results-container-converter" class="space-y-3 mt-4"></div>
+                    <div id="status-container-converter" class="status-container"></div>
+                     <div id="results-container-converter" class="results-container"></div>
                 </div>
 
                 <!-- Pestaña NAVEGAR -->
-                <div id="content-browser" class="hidden">
-                    <!-- Sección de Autenticación -->
+                <div id="content-browser" class="tab-content hidden">
                     <div class="space-y-2 border-b border-gray-200 dark:border-gray-700 py-6">
                         <div class="flex flex-col sm:flex-row items-center gap-4">
                             <input type="password" id="github-token" placeholder="Pega tu Personal Access Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -83,24 +81,41 @@
                                 <ol class="list-decimal list-inside space-y-2">
                                     <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
                                     <li>En "Note", pon un nombre, ej: <strong class="text-gray-800 dark:text-gray-200">HerramientaRepos</strong>.</li>
-                                    <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800 dark:text-gray-200">`repo`</strong>.</li>
+                                    <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800 dark:text-gray-200">`repo`</strong> y <strong class="text-gray-800 dark:text-gray-200">`gist`</strong>.</li>
                                     <li>Haz clic en "Generate token". Cópialo y pégalo arriba.</li>
                                 </ol>
                             </div>
                         </details>
                     </div>
-                    <button id="load-repos-btn" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">Cargar Repositorios</button>
-                    <div id="status-container-browser" class="text-center min-h-[40px] flex items-center justify-center">
-                        <div id="loader-browser" class="hidden animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-                        <p id="error-message-browser" class="text-red-500 font-semibold"></p>
-                    </div>
+                    <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <div id="status-container-browser" class="status-container"></div>
                     <nav id="breadcrumbs" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap my-4"></nav>
-                    <div class="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-4 min-h-[300px] max-h-[50vh] overflow-y-auto">
-                        <div id="content-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+                    <div class="content-list-container">
+                        <div id="content-grid-browser" class="content-grid"></div>
                     </div>
-                    <div id="results-container-browser" class="space-y-3 mt-4"></div>
+                    <div id="results-container-browser" class="results-container"></div>
+                </div>
+
+                 <!-- Pestaña GISTS -->
+                <div id="content-gists" class="tab-content hidden">
+                    <input type="search" id="search-gists" placeholder="Filtrar por descripción..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <div id="status-container-gists" class="status-container"></div>
+                    <div class="content-list-container">
+                        <div id="content-grid-gists" class="content-grid"></div>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- Modal de Previsualización -->
+    <div id="preview-modal" class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col modal-content">
+            <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <h2 id="preview-title" class="text-lg font-semibold text-gray-900 dark:text-white truncate"></h2>
+                <button id="close-preview-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">&times;</button>
+            </header>
+            <div id="preview-body" class="p-4 overflow-auto"></div>
         </div>
     </div>
 
@@ -113,128 +128,131 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- DOM Elements ---
-            const tokenInput = document.getElementById('github-token');
-            const clearTokenBtn = document.getElementById('clear-token-btn');
-            const themeToggleButton = document.getElementById('theme-toggle');
-            const root = document.documentElement;
-            const tabBrowserBtn = document.getElementById('tab-browser');
-            const tabConverterBtn = document.getElementById('tab-converter');
-            const contentBrowser = document.getElementById('content-browser');
-            const contentConverter = document.getElementById('content-converter');
-            const loadReposBtn = document.getElementById('load-repos-btn');
-            const loaderBrowser = document.getElementById('loader-browser');
-            const errorBrowser = document.getElementById('error-message-browser');
-            const breadcrumbsContainer = document.getElementById('breadcrumbs');
-            const contentGrid = document.getElementById('content-grid');
-            const resultsContainerBrowser = document.getElementById('results-container-browser');
-            const urlInput = document.getElementById('url-input');
-            const convertUrlBtn = document.getElementById('convert-url-btn');
-            const loaderConverter = document.getElementById('loader-converter');
-            const errorConverter = document.getElementById('error-message-converter');
-            const resultsContainerConverter = document.getElementById('results-container-converter');
+            const dom = {
+                tokenInput: document.getElementById('github-token'),
+                clearTokenBtn: document.getElementById('clear-token-btn'),
+                themeToggleButton: document.getElementById('theme-toggle'),
+                root: document.documentElement,
+                tabs: document.querySelectorAll('.tab-btn'),
+                tabContents: document.querySelectorAll('.tab-content'),
+                // Browser
+                loadReposBtn: document.getElementById('load-repos-btn'),
+                statusBrowser: document.getElementById('status-container-browser'),
+                searchBrowser: document.getElementById('search-browser'),
+                breadcrumbs: document.getElementById('breadcrumbs'),
+                gridBrowser: document.getElementById('content-grid-browser'),
+                resultsBrowser: document.getElementById('results-container-browser'),
+                // Converter
+                urlInput: document.getElementById('url-input'),
+                convertUrlBtn: document.getElementById('convert-url-btn'),
+                statusConverter: document.getElementById('status-container-converter'),
+                resultsConverter: document.getElementById('results-container-converter'),
+                // Gists
+                searchGists: document.getElementById('search-gists'),
+                statusGists: document.getElementById('status-container-gists'),
+                gridGists: document.getElementById('content-grid-gists'),
+                // Preview Modal
+                previewModal: document.getElementById('preview-modal'),
+                previewTitle: document.getElementById('preview-title'),
+                previewBody: document.getElementById('preview-body'),
+                closePreviewBtn: document.getElementById('close-preview-btn'),
+            };
 
             // --- App State ---
-            let githubToken = '';
-            let currentUser = '';
-            let currentRepo = { name: '', default_branch: '', has_pages: false };
-            let currentPath = '';
-            let breadcrumbs = [];
+            let state = {
+                token: '',
+                currentUser: '',
+                currentRepo: { name: '', default_branch: '', has_pages: false },
+                currentPath: '',
+                breadcrumbs: [],
+                gists: [],
+            };
             
-            // --- Tab Logic ---
-            function switchTab(targetTab) {
-                const browserTabActive = targetTab === 'browser';
-                contentBrowser.classList.toggle('hidden', !browserTabActive);
-                contentConverter.classList.toggle('hidden', browserTabActive);
-                
-                const styleActiveTab = (btn) => {
-                    btn.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
-                    btn.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-                };
-                const styleInactiveTab = (btn) => {
-                    btn.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
-                    btn.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
-                };
+            // --- General Logic (Init, Tabs, Theme, Token) ---
+            function switchTab(targetId) {
+                dom.tabs.forEach(tab => {
+                    const isActive = `content-${tab.id.split('-')[1]}` === targetId;
+                    tab.classList.toggle('border-blue-500', isActive);
+                    tab.classList.toggle('text-blue-600', isActive);
+                    tab.classList.toggle('dark:text-blue-400', isActive);
+                    tab.classList.toggle('text-gray-500', !isActive);
+                    tab.classList.toggle('dark:text-gray-400', !isActive);
+                    tab.classList.toggle('border-transparent', !isActive);
+                });
+                dom.tabContents.forEach(content => content.classList.toggle('hidden', content.id !== targetId));
 
-                styleActiveTab(browserTabActive ? tabBrowserBtn : tabConverterBtn);
-                styleInactiveTab(browserTabActive ? tabConverterBtn : tabBrowserBtn);
-                
-                if (browserTabActive && tokenInput.value.trim() && !contentGrid.innerHTML.trim() && !breadcrumbsContainer.innerHTML.trim()) {
+                if (targetId === 'content-browser' && dom.tokenInput.value.trim() && !dom.gridBrowser.innerHTML.trim() && !dom.breadcrumbs.innerHTML.trim()) {
                     handleLoadRepos();
+                } else if (targetId === 'content-gists' && dom.tokenInput.value.trim() && state.gists.length === 0) {
+                    handleLoadGists();
                 }
             }
-
-            // --- Theme Logic ---
+            
             const applyTheme = (theme) => {
-                const lightIcon = document.getElementById('theme-icon-light');
-                const darkIcon = document.getElementById('theme-icon-dark');
-                if (theme === 'dark') {
-                    root.classList.add('dark'); root.classList.remove('light');
-                    lightIcon.classList.remove('hidden'); darkIcon.classList.add('hidden');
-                } else {
-                    root.classList.add('light'); root.classList.remove('dark');
-                    lightIcon.classList.add('hidden'); darkIcon.classList.remove('hidden');
-                }
-            };
-            const toggleTheme = () => {
-                const newTheme = root.classList.contains('light') ? 'dark' : 'light';
-                localStorage.setItem('theme', newTheme);
-                applyTheme(newTheme);
+                dom.root.className = theme;
+                document.getElementById('theme-icon-light').classList.toggle('hidden', theme === 'light');
+                document.getElementById('theme-icon-dark').classList.toggle('hidden', theme === 'dark');
             };
 
-            // --- Token Logic ---
-            const saveToken = (token) => localStorage.setItem('githubToken', token);
-            const getSavedToken = () => localStorage.getItem('githubToken');
-            const clearSavedToken = () => {
-                localStorage.removeItem('githubToken');
-                tokenInput.value = ''; githubToken = '';
-                resetFullUI();
-                errorBrowser.textContent = 'Token olvidado. La página se ha reiniciado.';
-            };
-
-            // --- Initialization ---
             const initializeApp = () => {
                 const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 applyTheme(savedTheme);
-                const savedToken = getSavedToken();
-                if (savedToken) tokenInput.value = savedToken;
+                state.token = localStorage.getItem('githubToken') || '';
+                if (state.token) dom.tokenInput.value = state.token;
                 
-                switchTab('converter'); 
+                switchTab('content-converter');
 
-                tabBrowserBtn.addEventListener('click', () => switchTab('browser'));
-                tabConverterBtn.addEventListener('click', () => switchTab('converter'));
-                clearTokenBtn.addEventListener('click', clearSavedToken);
-                themeToggleButton.addEventListener('click', toggleTheme);
-                loadReposBtn.addEventListener('click', handleLoadRepos);
-                convertUrlBtn.addEventListener('click', handleUrlConversion);
+                dom.tabs.forEach(tab => tab.addEventListener('click', () => switchTab(`content-${tab.id.split('-')[1]}`)));
+                dom.clearTokenBtn.addEventListener('click', () => {
+                    localStorage.removeItem('githubToken');
+                    dom.tokenInput.value = ''; state.token = '';
+                    resetFullUI();
+                    showError(dom.statusBrowser, 'Token olvidado. La página se ha reiniciado.');
+                });
+                dom.themeToggleButton.addEventListener('click', () => {
+                    const newTheme = dom.root.classList.contains('light') ? 'dark' : 'light';
+                    localStorage.setItem('theme', newTheme);
+                    applyTheme(newTheme);
+                });
+                dom.convertUrlBtn.addEventListener('click', handleUrlConversion);
+                dom.loadReposBtn.addEventListener('click', handleLoadRepos);
+                dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
+                dom.searchGists.addEventListener('input', (e) => filterGrid(dom.gridGists, e.target.value));
+                dom.closePreviewBtn.addEventListener('click', () => dom.previewModal.classList.add('hidden'));
             };
 
-            // --- API Fetch ---
+            // --- API & UI Helpers ---
             async function fetchFromGitHub(endpoint) {
-                githubToken = tokenInput.value.trim();
-                if (!githubToken) throw new Error('Se necesita un Token de Acceso. Introdúcelo en la pestaña "Navegar".');
+                state.token = dom.tokenInput.value.trim();
+                if (!state.token) throw new Error('Se necesita un Token de Acceso. Introdúcelo en la pestaña "Navegar".');
                 const url = `https://api.github.com${endpoint}`;
-                const headers = { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' };
+                const headers = { 'Authorization': `token ${state.token}`, 'Accept': 'application/vnd.github.v3+json' };
                 const response = await fetch(url, { headers });
                 if (!response.ok) {
                     const errorData = await response.json();
                     if(response.status === 401) {
-                        clearSavedToken(); throw new Error("Token no válido o caducado.");
+                         localStorage.removeItem('githubToken');
+                         dom.tokenInput.value = ''; state.token = '';
+                         resetFullUI();
+                         throw new Error("Token no válido o caducado.");
                     }
                     throw new Error(errorData.message || `Error ${response.status}`);
                 }
+                localStorage.setItem('githubToken', state.token);
                 return response.json();
             }
 
-            // --- UI & Rendering ---
-            function setLoading(loader, errorEl, isLoading) {
-                errorEl.textContent = '';
-                loader.style.display = isLoading ? 'block' : 'none';
+            function setLoading(statusEl, isLoading) {
+                statusEl.innerHTML = isLoading ? `<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>` : '';
+            }
+            function showError(statusEl, message) {
+                statusEl.innerHTML = `<p class="text-red-500 font-semibold">${message}</p>`;
             }
             function resetFullUI() {
-                contentGrid.innerHTML = ''; breadcrumbsContainer.innerHTML = '';
-                resultsContainerBrowser.innerHTML = ''; resultsContainerConverter.innerHTML = '';
-                currentUser = ''; currentRepo = { name: '', default_branch: '', has_pages: false }; 
-                currentPath = ''; breadcrumbs = [];
+                dom.gridBrowser.innerHTML = ''; dom.breadcrumbs.innerHTML = '';
+                dom.resultsBrowser.innerHTML = ''; dom.resultsConverter.innerHTML = ''; dom.gridGists.innerHTML = '';
+                state.currentUser = ''; state.currentRepo = { name: '', default_branch: '', has_pages: false }; 
+                state.currentPath = ''; state.breadcrumbs = []; state.gists = [];
             }
             function renderResult(container, label, url, labelColorClass = 'text-gray-600 dark:text-gray-300') {
                 const id = `url-${Math.random().toString(36).substr(2, 9)}`;
@@ -248,7 +266,7 @@
                         </div>
                     </div>`);
             }
-            document.addEventListener('click', (e) => {
+             document.addEventListener('click', (e) => {
                 const button = e.target.closest('button');
                 if (!button) return;
                 if (button.classList.contains('copy-btn')) copyToClipboard(button.dataset.target, button);
@@ -261,105 +279,126 @@
                     setTimeout(() => { button.textContent = originalText; button.classList.remove('bg-yellow-500'); }, 1500);
                 });
             }
+             function filterGrid(grid, searchTerm) {
+                const term = searchTerm.toLowerCase();
+                grid.querySelectorAll('.item-card').forEach(card => {
+                    const name = card.dataset.name.toLowerCase();
+                    card.classList.toggle('hidden', !name.includes(term));
+                });
+            }
 
-            // --- Browser Tab Logic ---
+            // --- Main Logic (Browser, Gists, Converter, Preview) ---
+            
+            // --- Browser Tab ---
             async function handleLoadRepos() {
-                setLoading(loaderBrowser, errorBrowser, true);
+                setLoading(dom.statusBrowser, true);
                 resetFullUI();
                 try {
                     const user = await fetchFromGitHub('/user');
-                    currentUser = user.login;
-                    saveToken(tokenInput.value.trim());
-                    breadcrumbs = [{ name: currentUser, path: '' }];
+                    state.currentUser = user.login;
+                    state.breadcrumbs = [{ name: state.currentUser, path: '' }];
                     renderBreadcrumbs();
                     const repos = await fetchFromGitHub('/user/repos?per_page=100&sort=updated');
                     renderRepos(repos);
-                } catch (error) { errorBrowser.textContent = error.message; } finally { setLoading(loaderBrowser, errorBrowser, false); }
+                } catch (error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             function renderRepos(repos) {
-                contentGrid.innerHTML = '';
+                dom.gridBrowser.innerHTML = '';
                  repos.forEach(repo => {
-                    const card = document.createElement('div');
-                    card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
-                    card.innerHTML = `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg><span class="font-medium truncate">${repo.name}</span>`;
-                    card.onclick = () => handleItemClick(repo);
-                    contentGrid.appendChild(card);
+                    const card = createCard(repo.name, 'repo', () => handleItemClick(repo));
+                    dom.gridBrowser.appendChild(card);
                 });
             }
             async function handleItemClick(item) {
-                setLoading(loaderBrowser, errorBrowser, true);
-                resultsContainerBrowser.innerHTML = '';
+                setLoading(dom.statusBrowser, true);
+                dom.resultsBrowser.innerHTML = '';
                 try {
-                    if (item.full_name && !currentRepo.name) {
+                    if (item.full_name && !state.currentRepo.name) {
                         const repoDetails = await fetchFromGitHub(`/repos/${item.full_name}`);
-                        currentRepo = { name: repoDetails.name, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
-                        currentPath = '';
-                        breadcrumbs.push({ name: item.name, path: '' });
-                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo.name}/contents/`);
+                        state.currentRepo = { name: repoDetails.name, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
+                        state.currentPath = '';
+                        state.breadcrumbs.push({ name: item.name, path: '' });
+                        const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/`);
                         renderItems(contents);
                     } else if (item.type === 'dir') {
-                        currentPath = item.path;
-                        breadcrumbs.push({ name: item.name, path: item.path });
-                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo.name}/contents/${currentPath}`);
+                        state.currentPath = item.path;
+                        state.breadcrumbs.push({ name: item.name, path: item.path });
+                        const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}`);
                         renderItems(contents);
                     } else if (item.type === 'file') {
-                        renderResult(resultsContainerBrowser, 'URL Repositorio', item.html_url);
-                        const rawUrl = `https://raw.githubusercontent.com/${currentUser}/${currentRepo.name}/${currentRepo.default_branch}/${item.path}`;
-                        renderResult(resultsContainerBrowser, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
-                        // Si el repositorio tiene GitHub Pages, genera la URL correspondiente para cualquier tipo de archivo.
-                        if (currentRepo.has_pages) {
-                             const pagesUrl = `https://${currentUser}.github.io/${currentRepo.name}/${item.path}`;
-                             renderResult(resultsContainerBrowser, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
+                        showPreview(item.name, item.download_url);
+                        renderResult(dom.resultsBrowser, 'URL Repositorio', item.html_url);
+                        const rawUrl = item.download_url;
+                        renderResult(dom.resultsBrowser, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                        if (state.currentRepo.has_pages) {
+                             const pagesUrl = `https://${state.currentUser}.github.io/${state.currentRepo.name}/${item.path}`;
+                             renderResult(dom.resultsBrowser, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
                         }
                     }
                     renderBreadcrumbs();
-                } catch (error) { errorBrowser.textContent = error.message; } finally { setLoading(loaderBrowser, errorBrowser, false); }
+                } catch (error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             function renderItems(items) {
-                contentGrid.innerHTML = '';
+                dom.gridBrowser.innerHTML = '';
                 items.sort((a, b) => (a.type === 'dir' && b.type !== 'dir') ? -1 : (a.type !== 'dir' && b.type === 'dir') ? 1 : a.name.localeCompare(b.name));
                 items.forEach(item => {
-                    const card = document.createElement('div');
-                    card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
-                    const icon = item.type === 'dir' ? `<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>` : `<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>`;
-                    card.innerHTML = `${icon}<span class="font-medium truncate">${item.name}</span>`;
-                    card.onclick = () => handleItemClick(item);
-                    contentGrid.appendChild(card);
+                    const card = createCard(item.name, item.type, () => handleItemClick(item));
+                    dom.gridBrowser.appendChild(card);
                 });
             }
             function renderBreadcrumbs() {
-                breadcrumbsContainer.innerHTML = '';
-                breadcrumbs.forEach((crumb, index) => {
-                    if (index > 0) breadcrumbsContainer.insertAdjacentHTML('beforeend', '<span class="text-gray-400 dark:text-gray-500 mx-1">/</span>');
+                dom.breadcrumbs.innerHTML = '';
+                state.breadcrumbs.forEach((crumb, index) => {
+                    if (index > 0) dom.breadcrumbs.insertAdjacentHTML('beforeend', '<span class="text-gray-400 dark:text-gray-500 mx-1">/</span>');
                     const el = document.createElement('span'); el.textContent = crumb.name;
                     el.className = 'cursor-pointer hover:text-blue-500 hover:underline transition';
                     el.onclick = () => handleBreadcrumbClick(index);
-                    breadcrumbsContainer.appendChild(el);
+                    dom.breadcrumbs.appendChild(el);
                 });
             }
             async function handleBreadcrumbClick(index) {
-                setLoading(loaderBrowser, errorBrowser, true);
-                breadcrumbs = breadcrumbs.slice(0, index + 1);
-                currentPath = breadcrumbs[index].path;
-                if (index === 0) { currentRepo = { name: '', default_branch: '', has_pages: false }; }
-                const endpoint = currentRepo.name ? `/repos/${currentUser}/${currentRepo.name}/contents/${currentPath}` : '/user/repos?per_page=100&sort=updated';
+                setLoading(dom.statusBrowser, true);
+                state.breadcrumbs = state.breadcrumbs.slice(0, index + 1);
+                state.currentPath = state.breadcrumbs[index].path;
+                if (index === 0) { state.currentRepo = { name: '', default_branch: '', has_pages: false }; }
+                const endpoint = state.currentRepo.name ? `/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}` : '/user/repos?per_page=100&sort=updated';
                 try {
                     const data = await fetchFromGitHub(endpoint);
-                    currentRepo.name ? renderItems(data) : renderRepos(data);
+                    state.currentRepo.name ? renderItems(data) : renderRepos(data);
                     renderBreadcrumbs();
-                } catch(error) { errorBrowser.textContent = error.message; } finally { setLoading(loaderBrowser, errorBrowser, false); }
+                } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             
-            // --- Converter Tab Logic ---
+            // --- Gists Tab ---
+            async function handleLoadGists() {
+                setLoading(dom.statusGists, true);
+                try {
+                    const gists = await fetchFromGitHub('/gists?per_page=100');
+                    state.gists = gists;
+                    renderGists(gists);
+                } catch(error) { showError(dom.statusGists, error.message); } finally { setLoading(dom.statusGists, false); }
+            }
+            function renderGists(gists) {
+                dom.gridGists.innerHTML = '';
+                gists.forEach(gist => {
+                    const desc = gist.description || Object.keys(gist.files)[0];
+                    const card = createCard(desc, 'gist', () => {
+                        dom.gridGists.innerHTML = '';
+                        Object.values(gist.files).forEach(file => {
+                            const fileCard = createCard(file.filename, 'file', () => showPreview(file.filename, file.raw_url));
+                            dom.gridGists.appendChild(fileCard);
+                        });
+                    });
+                    dom.gridGists.appendChild(card);
+                });
+            }
+
+            // --- Converter Tab ---
             async function handleUrlConversion() {
-                setLoading(loaderConverter, errorConverter, true);
-                resultsContainerConverter.innerHTML = '';
-                const url = urlInput.value.trim();
-                if (!url) {
-                    errorConverter.textContent = "Por favor, introduce una URL.";
-                    setLoading(loaderConverter, errorConverter, false);
-                    return;
-                }
+                setLoading(dom.statusConverter, true);
+                dom.resultsConverter.innerHTML = '';
+                const url = dom.urlInput.value.trim();
+                if (!url) { showError(dom.statusConverter, "Por favor, introduce una URL."); setLoading(dom.statusConverter, false); return; }
                 
                 let user, repo, filePath = '';
                 let isPagesUrl = false;
@@ -370,17 +409,9 @@
                 let matchPages = url.match(githubPagesRegex);
                 let matchRepo = url.match(githubRepoRegex);
 
-                if (matchPages) {
-                    isPagesUrl = true;
-                    [, user, repo, filePath] = matchPages;
-                } else if (matchRepo) {
-                    isPagesUrl = false;
-                    [, user, repo, filePath] = matchRepo;
-                } else {
-                    errorConverter.textContent = "URL no válida. Debe ser de un repositorio de GitHub o GitHub Pages.";
-                    setLoading(loaderConverter, errorConverter, false);
-                    return;
-                }
+                if (matchPages) { isPagesUrl = true; [, user, repo, filePath] = matchPages; }
+                else if (matchRepo) { [, user, repo, filePath] = matchRepo; }
+                else { showError(dom.statusConverter, "URL no válida. Debe ser de un repositorio de GitHub o GitHub Pages."); setLoading(dom.statusConverter, false); return; }
 
                 let effectivePath = (filePath || '').replace(/\/$/, '');
                 if (isPagesUrl && (effectivePath === '' || url.endsWith('/'))) {
@@ -390,24 +421,67 @@
 
                 try {
                     const repoData = await fetchFromGitHub(`/repos/${user}/${repo.replace(/\/$/, '')}`);
-                    
                     const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (effectivePath ? `/blob/${repoData.default_branch}/${effectivePath}` : '');
-                    renderResult(resultsContainerConverter, 'URL Repositorio', githubUrl);
+                    renderResult(dom.resultsConverter, 'URL Repositorio', githubUrl);
 
                     if (effectivePath) {
                         const rawUrl = `https://raw.githubusercontent.com/${repoData.owner.login}/${repoData.name}/${repoData.default_branch}/${effectivePath}`;
-                        renderResult(resultsContainerConverter, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                        renderResult(dom.resultsConverter, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
                     }
-                    
-                    // Si el repositorio tiene GitHub Pages, genera la URL correspondiente para el archivo.
-                    // Funciona para cualquier tipo de archivo que pueda ser servido por la web (html, txt, jpg, etc.).
                     if (repoData.has_pages) {
                         const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${effectivePath}`;
-                        renderResult(resultsContainerConverter, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
+                        renderResult(dom.resultsConverter, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
                     } else if (effectivePath) {
-                        resultsContainerConverter.insertAdjacentHTML('beforeend', '<p class="text-center text-gray-500 mt-4">Este repositorio no tiene GitHub Pages activado.</p>');
+                        dom.resultsConverter.insertAdjacentHTML('beforeend', '<p class="text-center text-gray-500 mt-4">Este repositorio no tiene GitHub Pages activado.</p>');
                     }
-                } catch (error) { errorConverter.textContent = `Error: ${error.message}`; } finally { setLoading(loaderConverter, errorConverter, false); }
+                } catch (error) { showError(dom.statusConverter, `Error: ${error.message}`); } finally { setLoading(dom.statusConverter, false); }
+            }
+            
+            // --- Preview Modal ---
+            async function showPreview(filename, rawUrl) {
+                dom.previewTitle.textContent = filename;
+                dom.previewBody.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>';
+                dom.previewModal.classList.remove('hidden');
+
+                try {
+                    const extension = filename.split('.').pop().toLowerCase();
+                    const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
+
+                    if (imageExtensions.includes(extension)) {
+                        dom.previewBody.innerHTML = `<img src="${rawUrl}" alt="${filename}" class="max-w-full max-h-full mx-auto object-contain">`;
+                    } else {
+                        const response = await fetch(rawUrl);
+                        if (!response.ok) throw new Error('No se pudo cargar el contenido del archivo.');
+                        const text = await response.text();
+                        const codeEl = document.createElement('code');
+                        codeEl.textContent = text;
+                        const preEl = document.createElement('pre');
+                        preEl.className = 'whitespace-pre-wrap break-all text-sm';
+                        preEl.appendChild(codeEl);
+                        dom.previewBody.innerHTML = '';
+                        dom.previewBody.appendChild(preEl);
+                    }
+                } catch(error) {
+                    dom.previewBody.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                }
+            }
+            
+            // --- Card Factory ---
+            function createCard(name, type, onClick) {
+                const card = document.createElement('div');
+                card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
+                card.dataset.name = name;
+                
+                const icons = {
+                    repo: '<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
+                    dir: '<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
+                    file: '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
+                    gist: '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2 2.5a.5.5 0 01.5-.5h8.5a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-1.5H3V12h5.5a.5.5 0 010 1H2.5a.5.5 0 01-.5-.5V2.5z"></path><path d="M7.646 5.646a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708-.708L9.293 8 7.646 6.354a.5.5 0 010-.708z"></path><path d="M12.646 12.354a.5.5 0 010-.708l2-2a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708 0l-1.646-1.647-1.647 1.647a.5.5 0 01-.708 0z"></path></svg>'
+                };
+
+                card.innerHTML = `${icons[type] || icons['file']}<span class="font-medium truncate">${name}</span>`;
+                card.onclick = onClick;
+                return card;
             }
 
             initializeApp();
