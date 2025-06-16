@@ -154,19 +154,22 @@
                 contentBrowser.classList.toggle('hidden', !browserTabActive);
                 contentConverter.classList.toggle('hidden', browserTabActive);
                 
-                tabBrowserBtn.classList.toggle('border-blue-500', browserTabActive);
-                tabBrowserBtn.classList.toggle('text-blue-600', browserTabActive);
-                tabBrowserBtn.classList.toggle('dark:text-blue-400', browserTabActive);
-                tabBrowserBtn.classList.toggle('text-gray-500', !browserTabActive);
-                tabBrowserBtn.classList.toggle('dark:text-gray-400', !browserTabActive);
-                tabBrowserBtn.classList.toggle('border-transparent', !browserTabActive);
+                const styleActiveTab = (btn) => {
+                    btn.classList.add('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+                    btn.classList.remove('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                };
+                const styleInactiveTab = (btn) => {
+                    btn.classList.remove('border-blue-500', 'text-blue-600', 'dark:text-blue-400');
+                    btn.classList.add('text-gray-500', 'dark:text-gray-400', 'border-transparent');
+                };
 
-                tabConverterBtn.classList.toggle('border-blue-500', !browserTabActive);
-                tabConverterBtn.classList.toggle('text-blue-600', !browserTabActive);
-                tabConverterBtn.classList.toggle('dark:text-blue-400', !browserTabActive);
-                tabConverterBtn.classList.toggle('text-gray-500', browserTabActive);
-                tabConverterBtn.classList.toggle('dark:text-gray-400', browserTabActive);
-                tabConverterBtn.classList.toggle('border-transparent', browserTabActive);
+                styleActiveTab(browserTabActive ? tabBrowserBtn : tabConverterBtn);
+                styleInactiveTab(browserTabActive ? tabConverterBtn : tabBrowserBtn);
+                
+                // Cargar repos automáticamente al cambiar a la pestaña de navegar si hay token y no se ha cargado nada
+                if (browserTabActive && tokenInput.value.trim() && !contentGrid.innerHTML.trim() && !breadcrumbsContainer.innerHTML.trim()) {
+                    handleLoadRepos();
+                }
             }
 
             // --- Lógica del Tema (Claro/Oscuro) ---
@@ -248,12 +251,20 @@
                     <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-100 dark:bg-gray-700/60 rounded-lg p-4">
                         <strong class="${labelColorClass} whitespace-nowrap">${label}:</strong>
                         <p id="${id}" class="font-mono break-all text-sm flex-grow text-left md:text-right">${url}</p>
-                        <button data-target="${id}" class="copy-btn bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-5 py-2 transition duration-300 w-full md:w-auto">Copiar</button>
+                        <div class="flex gap-2 w-full md:w-auto">
+                            <button data-url="${url}" class="open-btn flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg px-5 py-2 transition duration-300">Abrir</button>
+                            <button data-target="${id}" class="copy-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-5 py-2 transition duration-300">Copiar</button>
+                        </div>
                     </div>`);
             }
             document.addEventListener('click', (e) => {
-                if(e.target && e.target.classList.contains('copy-btn')) {
-                     copyToClipboard(e.target.dataset.target, e.target);
+                const button = e.target.closest('button');
+                if (!button) return;
+
+                if (button.classList.contains('copy-btn')) {
+                    copyToClipboard(button.dataset.target, button);
+                } else if (button.classList.contains('open-btn')) {
+                    window.open(button.dataset.url, '_blank');
                 }
             });
              function copyToClipboard(elementId, button) {
