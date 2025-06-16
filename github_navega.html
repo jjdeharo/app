@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Navegador de Repositorios de GitHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-light: #f3f4f6; /* gray-100 */
+            --bg-dark: #111827; /* gray-900 */
+            --card-bg-light: #ffffff; /* white */
+            --card-bg-dark: #1f2937; /* gray-800 */
+            --text-light: #1f2937; /* gray-800 */
+            --text-dark: #e5e7eb; /* gray-200 */
+            --text-muted-light: #6b7280; /* gray-500 */
+            --text-muted-dark: #9ca3af; /* gray-400 */
+            --input-bg-light: #e5e7eb; /* gray-200 */
+            --input-bg-dark: #374151; /* gray-700 */
+            --border-light: #d1d5db; /* gray-300 */
+            --border-dark: #4b5563; /* gray-600 */
+        }
+        html.light {
+            background-color: var(--bg-light);
+            color: var(--text-light);
+        }
+        html.dark {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        html.light ::-webkit-scrollbar-track { background: #e5e7eb; }
+        html.dark ::-webkit-scrollbar-track { background: #1f2937; }
+        html.light ::-webkit-scrollbar-thumb { background: #9ca3af; border-radius: 4px; }
+        html.dark ::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+        html.light ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        html.dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
+        .item-card { transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out; }
+        .item-card:hover { transform: translateY(-2px); }
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-4xl mx-auto relative">
+        <!-- Interruptor de Tema -->
+        <div class="absolute top-4 right-4">
+            <button id="theme-toggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                <svg id="theme-icon-light" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                <svg id="theme-icon-dark" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+            </button>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 mt-16">
+            <header class="text-center">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Navegador de Repositorios de GitHub</h1>
+                <p class="text-gray-600 dark:text-gray-400">Introduce tu Token de Acceso para explorar tus repositorios.</p>
+            </header>
+
+            <!-- Campo para el Token y Botones -->
+            <div class="space-y-4">
+                <div class="flex flex-col sm:flex-row items-center gap-4">
+                    <input type="password" id="github-token" placeholder="Pega tu Personal Access Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <div class="flex w-full sm:w-auto gap-2">
+                        <button id="load-repos-btn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar</button>
+                        <button id="clear-token-btn" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Olvidar</button>
+                    </div>
+                </div>
+                 <p class="text-xs text-gray-500 dark:text-gray-500 text-center">
+                    Tu token se guarda en este navegador. Pulsa "Olvidar" para borrarlo. No se comparte con nadie.
+                </p>
+            </div>
+
+            <!-- Instrucciones -->
+            <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg">
+                <summary class="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
+                <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
+                    <p>Para usar esta aplicación, necesitas un permiso especial de GitHub. Es como una contraseña de un solo uso que solo funciona para esta app. Es muy seguro.</p>
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
+                        <li>En "Note" (Nota), pon un nombre para recordar para qué es este token, por ejemplo: <strong class="text-gray-800 dark:text-gray-200">NavegadorDeArchivos</strong>.</li>
+                        <li>En "Expiration" (Caducidad), puedes dejar 30 días, que es lo habitual.</li>
+                        <li>En "Select scopes" (Seleccionar permisos), marca **SOLAMENTE** la casilla que dice <strong class="text-gray-800 dark:text-gray-200">`repo`</strong>. Esto le da acceso a tus repositorios.
+                            <img src="https://i.imgur.com/G5B1y4V.png" alt="Imagen mostrando la opción 'repo' seleccionada en GitHub" class="mt-2 rounded-md border border-gray-300 dark:border-gray-600">
+                        </li>
+                        <li>Baja hasta el final de la página y haz clic en el botón verde "Generate token".</li>
+                        <li>GitHub te mostrará el token. ¡Cópialo! No podrás volver a verlo. Pégalo en el campo de arriba.</li>
+                    </ol>
+                </div>
+            </details>
+            
+            <div id="status-container" class="text-center min-h-[40px] flex items-center justify-center">
+                <div id="loader" class="hidden animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                <p id="error-message" class="text-red-500 font-semibold"></p>
+            </div>
+
+            <nav id="breadcrumbs" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap"></nav>
+
+            <div id="content-browser" class="bg-gray-100 dark:bg-gray-900/50 rounded-lg p-4 min-h-[300px] max-h-[50vh] overflow-y-auto">
+                 <div id="content-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
+            </div>
+
+            <div id="results-container" class="space-y-3">
+                <div id="github-url-section" class="hidden min-h-[80px] bg-gray-100 dark:bg-gray-700/60 rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <strong class="text-gray-600 dark:text-gray-300 whitespace-nowrap">URL de GitHub:</strong>
+                    <p class="font-mono break-all text-sm flex-grow text-left md:text-right" id="file-url"></p>
+                    <button id="copy-url-btn" class="bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-5 py-2 transition duration-300 w-full md:w-auto">Copiar</button>
+                </div>
+                <div id="pages-url-section" class="hidden min-h-[80px] bg-gray-100 dark:bg-gray-700/60 rounded-lg p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <strong class="text-teal-600 dark:text-teal-300 whitespace-nowrap">URL de Pages:</strong>
+                    <p class="font-mono break-all text-sm flex-grow text-left md:text-right" id="pages-url"></p>
+                    <button id="copy-pages-url-btn" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold rounded-lg px-5 py-2 transition duration-300 w-full md:w-auto">Copiar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center mt-8 text-gray-500 dark:text-gray-400 text-sm">
+        <p><a href="https://labia.tiddlyhost.com" target="_blank" rel="noopener noreferrer" class="hover:text-gray-800 dark:hover:text-gray-200 transition">Laboratorio de aplicaciones educativas</a></p>
+        <p><a href="https://bilateria.org" target="_blank" rel="noopener noreferrer" class="hover:text-gray-800 dark:hover:text-gray-200 transition">Aplicación hecha por Juan José de Haro</a></p>
+        <p><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer" class="hover:text-gray-800 dark:hover:text-gray-200 transition">Licencia Creative Commons BY-SA</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Referencias a elementos del DOM ---
+            const tokenInput = document.getElementById('github-token');
+            const loadReposBtn = document.getElementById('load-repos-btn');
+            const clearTokenBtn = document.getElementById('clear-token-btn');
+            const loader = document.getElementById('loader');
+            const errorMessage = document.getElementById('error-message');
+            const contentGrid = document.getElementById('content-grid');
+            const breadcrumbsContainer = document.getElementById('breadcrumbs');
+            const githubUrlSection = document.getElementById('github-url-section');
+            const fileUrlElement = document.getElementById('file-url');
+            const copyUrlBtn = document.getElementById('copy-url-btn');
+            const pagesUrlSection = document.getElementById('pages-url-section');
+            const pagesUrlElement = document.getElementById('pages-url');
+            const copyPagesUrlBtn = document.getElementById('copy-pages-url-btn');
+            const themeToggleButton = document.getElementById('theme-toggle');
+            const themeIconLight = document.getElementById('theme-icon-light');
+            const themeIconDark = document.getElementById('theme-icon-dark');
+            const root = document.documentElement;
+
+            // --- Estado de la aplicación ---
+            let githubToken = '';
+            let currentUser = '';
+            let currentRepo = '';
+            let currentRepoHasPages = false;
+            let currentPath = '';
+            let breadcrumbs = [];
+            
+            // --- Lógica del Tema (Claro/Oscuro) ---
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    root.classList.add('dark');
+                    root.classList.remove('light');
+                    themeIconLight.classList.remove('hidden');
+                    themeIconDark.classList.add('hidden');
+                } else {
+                    root.classList.add('light');
+                    root.classList.remove('dark');
+                    themeIconLight.classList.add('hidden');
+                    themeIconDark.classList.remove('hidden');
+                }
+            };
+            
+            const toggleTheme = () => {
+                const currentTheme = localStorage.getItem('theme') || 'light';
+                const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            };
+
+            // --- Lógica del Token Persistente ---
+            const saveToken = (token) => localStorage.setItem('githubToken', token);
+            const getSavedToken = () => localStorage.getItem('githubToken');
+            const clearSavedToken = () => {
+                localStorage.removeItem('githubToken');
+                tokenInput.value = '';
+                resetUI();
+                showError('Token olvidado. La página se ha reiniciado.');
+            };
+
+            // --- Inicialización ---
+            const initializeApp = () => {
+                // Configurar tema
+                const savedTheme = localStorage.getItem('theme');
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                applyTheme(savedTheme || (systemPrefersDark ? 'dark' : 'light'));
+
+                // Cargar token
+                const savedToken = getSavedToken();
+                if (savedToken) {
+                    tokenInput.value = savedToken;
+                    handleLoadRepos(); // Intentar cargar repos automáticamente si hay token
+                }
+            };
+
+            // --- Funciones de la API de GitHub ---
+            async function fetchFromGitHub(endpoint) {
+                if (!githubToken) githubToken = tokenInput.value.trim();
+                const url = `https://api.github.com${endpoint}`;
+                const headers = { 'Authorization': `token ${githubToken}`, 'Accept': 'application/vnd.github.v3+json' };
+                const response = await fetch(url, { headers });
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    if(response.status === 401) { // Bad credentials
+                        clearSavedToken();
+                        showError("Token no válido o caducado. Por favor, introduce uno nuevo.");
+                    } else {
+                        showError(errorData.message || `Error ${response.status}`);
+                    }
+                    throw new Error(errorData.message);
+                }
+                return response.json();
+            }
+
+            // --- Funciones de renderizado y UI ---
+            function setLoading(isLoading) {
+                errorMessage.textContent = '';
+                loader.style.display = isLoading ? 'block' : 'none';
+            }
+            function showError(message) {
+                setLoading(false);
+                errorMessage.textContent = message;
+            }
+            function resetUI() {
+                contentGrid.innerHTML = '';
+                breadcrumbsContainer.innerHTML = '';
+                githubUrlSection.style.display = 'none';
+                pagesUrlSection.style.display = 'none';
+                currentUser = '';
+                currentRepo = '';
+                currentPath = '';
+                breadcrumbs = [];
+            }
+            function renderBreadcrumbs() {
+                breadcrumbsContainer.innerHTML = '';
+                breadcrumbs.forEach((crumb, index) => {
+                    if (index > 0) breadcrumbsContainer.insertAdjacentHTML('beforeend', `<span class="text-gray-400 dark:text-gray-500">/</span>`);
+                    const crumbElement = document.createElement('span');
+                    crumbElement.textContent = crumb.name;
+                    crumbElement.className = 'cursor-pointer hover:text-blue-500 hover:underline transition';
+                    crumbElement.onclick = () => handleBreadcrumbClick(index);
+                    breadcrumbsContainer.appendChild(crumbElement);
+                });
+            }
+            function renderItems(items, type) {
+                resetUI();
+                items.sort((a, b) => {
+                    if (type !== 'repo') {
+                        if (a.type === 'dir' && b.type !== 'dir') return -1;
+                        if (a.type !== 'dir' && b.type === 'dir') return 1;
+                    }
+                    return a.name.localeCompare(b.name, 'es', { numeric: true });
+                });
+                items.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
+                    const isDir = item.type === 'dir', isRepo = type === 'repo';
+                    const iconHTML = (isRepo || isDir) ? 
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>` : 
+                        `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-gray-500 dark:text-gray-400"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>`;
+                    card.innerHTML = `${iconHTML}<span class="font-medium truncate">${item.name}</span>`;
+                    card.onclick = () => handleItemClick(item);
+                    contentGrid.appendChild(card);
+                });
+                renderBreadcrumbs();
+            }
+
+            // --- Manejadores de eventos ---
+            async function handleLoadRepos() {
+                githubToken = tokenInput.value.trim();
+                if (!githubToken) {
+                    showError('Por favor, introduce un Personal Access Token.');
+                    return;
+                }
+                setLoading(true);
+                resetUI();
+                try {
+                    const user = await fetchFromGitHub('/user');
+                    currentUser = user.login;
+                    saveToken(githubToken); // Guardar token solo si es válido
+                    breadcrumbs = [{ name: currentUser, path: '' }];
+                    const repos = await fetchFromGitHub('/user/repos?per_page=100&sort=updated');
+                    renderItems(repos, 'repo');
+                } catch (error) {
+                    // El error ya se muestra en fetchFromGitHub
+                } finally {
+                    setLoading(false);
+                }
+            }
+            async function handleItemClick(item) {
+                setLoading(true);
+                githubUrlSection.style.display = 'none';
+                pagesUrlSection.style.display = 'none';
+                try {
+                    if (item.full_name && !currentRepo) { // Clic en repositorio
+                        currentRepo = item.name;
+                        currentPath = '';
+                        breadcrumbs.push({ name: item.name, path: '' });
+                        const repoDetails = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}`);
+                        currentRepoHasPages = repoDetails.has_pages;
+                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/`);
+                        renderItems(contents, 'dir-file');
+                    } else if (item.type === 'dir') { // Clic en carpeta
+                        currentPath = item.path;
+                        breadcrumbs.push({ name: item.name, path: item.path });
+                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/${currentPath}`);
+                        renderItems(contents, 'dir-file');
+                    } else if (item.type === 'file') { // Clic en archivo
+                        fileUrlElement.textContent = item.html_url;
+                        githubUrlSection.style.display = 'flex';
+                        if (currentRepoHasPages) {
+                            pagesUrlElement.textContent = `https://${currentUser}.github.io/${currentRepo}/${item.path}`;
+                            pagesUrlSection.style.display = 'flex';
+                        }
+                        setLoading(false); // No hay más que cargar, detener loader
+                    }
+                } catch (error) {
+                    setLoading(false);
+                } finally {
+                     if (item.type !== 'file') setLoading(false);
+                }
+            }
+            async function handleBreadcrumbClick(index) {
+                setLoading(true);
+                const crumb = breadcrumbs[index];
+                breadcrumbs = breadcrumbs.slice(0, index + 1);
+                currentPath = crumb.path;
+                if (index === 0) {
+                    currentRepo = '';
+                    currentRepoHasPages = false;
+                    await handleLoadRepos();
+                } else {
+                    try {
+                        const contents = await fetchFromGitHub(`/repos/${currentUser}/${currentRepo}/contents/${currentPath}`);
+                        renderItems(contents, 'dir-file');
+                    } catch (error) {
+                        showError(error.message);
+                    }
+                }
+                setLoading(false);
+            }
+
+            function copyToClipboard(elementId, button) {
+                const url = document.getElementById(elementId).textContent;
+                navigator.clipboard.writeText(url).then(() => {
+                    const originalText = button.textContent;
+                    button.textContent = '¡Copiado!';
+                    button.classList.add('bg-yellow-500');
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('bg-yellow-500');
+                    }, 1500);
+                });
+            }
+
+            // --- Asignación de eventos inicial ---
+            loadReposBtn.addEventListener('click', handleLoadRepos);
+            clearTokenBtn.addEventListener('click', clearSavedToken);
+            tokenInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') handleLoadRepos(); });
+            copyUrlBtn.addEventListener('click', () => copyToClipboard('file-url', copyUrlBtn));
+            copyPagesUrlBtn.addEventListener('click', () => copyToClipboard('pages-url', copyPagesUrlBtn));
+            themeToggleButton.addEventListener('click', toggleTheme);
+
+            // --- Iniciar la aplicación ---
+            initializeApp();
+        });
+    </script>
+</body>
+</html>
