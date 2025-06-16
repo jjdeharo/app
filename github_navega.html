@@ -113,7 +113,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow-2xl w-full max-w-4xl flex flex-col modal-content">
             <header class="p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                 <h2 id="preview-title" class="text-lg font-semibold text-gray-900 dark:text-white truncate"></h2>
-                <button id="close-preview-btn" class="text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">&times;</button>
+                <button id="close-preview-btn" class="text-2xl leading-none text-gray-500 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">&times;</button>
             </header>
             <div id="preview-body" class="p-4 overflow-auto"></div>
         </div>
@@ -128,36 +128,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- DOM Elements ---
-            const dom = {
-                tokenInput: document.getElementById('github-token'),
-                clearTokenBtn: document.getElementById('clear-token-btn'),
-                themeToggleButton: document.getElementById('theme-toggle'),
-                root: document.documentElement,
-                tabs: document.querySelectorAll('.tab-btn'),
-                tabContents: document.querySelectorAll('.tab-content'),
-                // Browser
-                loadReposBtn: document.getElementById('load-repos-btn'),
-                statusBrowser: document.getElementById('status-container-browser'),
-                searchBrowser: document.getElementById('search-browser'),
-                breadcrumbs: document.getElementById('breadcrumbs'),
-                gridBrowser: document.getElementById('content-grid-browser'),
-                resultsBrowser: document.getElementById('results-container-browser'),
-                // Converter
-                urlInput: document.getElementById('url-input'),
-                convertUrlBtn: document.getElementById('convert-url-btn'),
-                statusConverter: document.getElementById('status-container-converter'),
-                resultsConverter: document.getElementById('results-container-converter'),
-                // Gists
-                searchGists: document.getElementById('search-gists'),
-                statusGists: document.getElementById('status-container-gists'),
-                gridGists: document.getElementById('content-grid-gists'),
-                // Preview Modal
-                previewModal: document.getElementById('preview-modal'),
-                previewTitle: document.getElementById('preview-title'),
-                previewBody: document.getElementById('preview-body'),
-                closePreviewBtn: document.getElementById('close-preview-btn'),
-            };
-
+            const dom = {};
+            
             // --- App State ---
             let state = {
                 token: '',
@@ -169,6 +141,65 @@
             };
             
             // --- General Logic (Init, Tabs, Theme, Token) ---
+            function initializeApp() {
+                // Populate DOM object now that the DOM is loaded
+                Object.assign(dom, {
+                    tokenInput: document.getElementById('github-token'),
+                    clearTokenBtn: document.getElementById('clear-token-btn'),
+                    themeToggleButton: document.getElementById('theme-toggle'),
+                    root: document.documentElement,
+                    tabs: document.querySelectorAll('.tab-btn'),
+                    tabContents: document.querySelectorAll('.tab-content'),
+                    // Browser
+                    loadReposBtn: document.getElementById('load-repos-btn'),
+                    statusBrowser: document.getElementById('status-container-browser'),
+                    searchBrowser: document.getElementById('search-browser'),
+                    breadcrumbs: document.getElementById('breadcrumbs'),
+                    gridBrowser: document.getElementById('content-grid-browser'),
+                    resultsBrowser: document.getElementById('results-container-browser'),
+                    // Converter
+                    urlInput: document.getElementById('url-input'),
+                    convertUrlBtn: document.getElementById('convert-url-btn'),
+                    statusConverter: document.getElementById('status-container-converter'),
+                    resultsConverter: document.getElementById('results-container-converter'),
+                    // Gists
+                    searchGists: document.getElementById('search-gists'),
+                    statusGists: document.getElementById('status-container-gists'),
+                    gridGists: document.getElementById('content-grid-gists'),
+                    // Preview Modal
+                    previewModal: document.getElementById('preview-modal'),
+                    previewTitle: document.getElementById('preview-title'),
+                    previewBody: document.getElementById('preview-body'),
+                    closePreviewBtn: document.getElementById('close-preview-btn'),
+                });
+
+                const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                applyTheme(savedTheme);
+                state.token = localStorage.getItem('githubToken') || '';
+                if (state.token) dom.tokenInput.value = state.token;
+                
+                switchTab('content-converter');
+
+                addEventListeners();
+            }
+
+            function addEventListeners() {
+                dom.tabs.forEach(tab => tab.addEventListener('click', () => switchTab(`content-${tab.id.split('-')[1]}`)));
+                dom.clearTokenBtn.addEventListener('click', clearSavedToken);
+                dom.themeToggleButton.addEventListener('click', toggleTheme);
+                dom.convertUrlBtn.addEventListener('click', handleUrlConversion);
+                if (dom.loadReposBtn) dom.loadReposBtn.addEventListener('click', handleLoadRepos);
+                dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
+                dom.searchGists.addEventListener('input', (e) => filterGrid(dom.gridGists, e.target.value));
+                dom.closePreviewBtn.addEventListener('click', () => dom.previewModal.classList.add('hidden'));
+                // Close modal when clicking on the background overlay
+                dom.previewModal.addEventListener('click', (e) => {
+                    if (e.target === dom.previewModal) {
+                        dom.previewModal.classList.add('hidden');
+                    }
+                });
+            }
+
             function switchTab(targetId) {
                 dom.tabs.forEach(tab => {
                     const isActive = `content-${tab.id.split('-')[1]}` === targetId;
@@ -194,31 +225,17 @@
                 document.getElementById('theme-icon-dark').classList.toggle('hidden', theme === 'dark');
             };
 
-            const initializeApp = () => {
-                const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                applyTheme(savedTheme);
-                state.token = localStorage.getItem('githubToken') || '';
-                if (state.token) dom.tokenInput.value = state.token;
-                
-                switchTab('content-converter');
+            const toggleTheme = () => {
+                const newTheme = dom.root.classList.contains('light') ? 'dark' : 'light';
+                localStorage.setItem('theme', newTheme);
+                applyTheme(newTheme);
+            };
 
-                dom.tabs.forEach(tab => tab.addEventListener('click', () => switchTab(`content-${tab.id.split('-')[1]}`)));
-                dom.clearTokenBtn.addEventListener('click', () => {
-                    localStorage.removeItem('githubToken');
-                    dom.tokenInput.value = ''; state.token = '';
-                    resetFullUI();
-                    showError(dom.statusBrowser, 'Token olvidado. La página se ha reiniciado.');
-                });
-                dom.themeToggleButton.addEventListener('click', () => {
-                    const newTheme = dom.root.classList.contains('light') ? 'dark' : 'light';
-                    localStorage.setItem('theme', newTheme);
-                    applyTheme(newTheme);
-                });
-                dom.convertUrlBtn.addEventListener('click', handleUrlConversion);
-                dom.loadReposBtn.addEventListener('click', handleLoadRepos);
-                dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
-                dom.searchGists.addEventListener('input', (e) => filterGrid(dom.gridGists, e.target.value));
-                dom.closePreviewBtn.addEventListener('click', () => dom.previewModal.classList.add('hidden'));
+            const clearSavedToken = () => {
+                localStorage.removeItem('githubToken');
+                dom.tokenInput.value = ''; state.token = '';
+                resetFullUI();
+                showError(dom.statusBrowser, 'Token olvidado. La página se ha reiniciado.');
             };
 
             // --- API & UI Helpers ---
@@ -231,9 +248,7 @@
                 if (!response.ok) {
                     const errorData = await response.json();
                     if(response.status === 401) {
-                         localStorage.removeItem('githubToken');
-                         dom.tokenInput.value = ''; state.token = '';
-                         resetFullUI();
+                         clearSavedToken();
                          throw new Error("Token no válido o caducado.");
                     }
                     throw new Error(errorData.message || `Error ${response.status}`);
@@ -289,7 +304,6 @@
 
             // --- Main Logic (Browser, Gists, Converter, Preview) ---
             
-            // --- Browser Tab ---
             async function handleLoadRepos() {
                 setLoading(dom.statusBrowser, true);
                 resetFullUI();
@@ -369,7 +383,6 @@
                 } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             
-            // --- Gists Tab ---
             async function handleLoadGists() {
                 setLoading(dom.statusGists, true);
                 try {
@@ -393,7 +406,6 @@
                 });
             }
 
-            // --- Converter Tab ---
             async function handleUrlConversion() {
                 setLoading(dom.statusConverter, true);
                 dom.resultsConverter.innerHTML = '';
@@ -437,7 +449,6 @@
                 } catch (error) { showError(dom.statusConverter, `Error: ${error.message}`); } finally { setLoading(dom.statusConverter, false); }
             }
             
-            // --- Preview Modal ---
             async function showPreview(filename, rawUrl) {
                 dom.previewTitle.textContent = filename;
                 dom.previewBody.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>';
@@ -466,7 +477,6 @@
                 }
             }
             
-            // --- Card Factory ---
             function createCard(name, type, onClick) {
                 const card = document.createElement('div');
                 card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
