@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.3</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.4</p>
             </header>
             
             <!-- Pestañas -->
@@ -254,8 +254,11 @@
                 dom.tokenInput.addEventListener('input', (e) => {
                     const hasValue = e.target.value.trim();
                     dom.clearTokenBtn.classList.toggle('hidden', !hasValue);
+                    dom.statusBrowser.innerHTML = '';
                 });
-                dom.tokenInput.addEventListener('change', () => authenticateWithToken(true)); // Authenticate and load repos
+                dom.tokenInput.addEventListener('paste', () => {
+                    setTimeout(() => authenticateWithToken(true), 50);
+                });
                 
                 dom.previewModal.addEventListener('click', (e) => {
                     if (e.target === dom.previewModal) dom.previewModal.classList.add('hidden');
