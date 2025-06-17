@@ -45,15 +45,15 @@
     <div class="w-full max-w-4xl mx-auto relative">
         <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 mt-16 transition-colors duration-300">
             <header class="text-center relative">
-                 <button id="help-btn" class="absolute top-1/2 -translate-y-1/2 left-0 w-8 h-8 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 font-bold text-lg transition-colors">?</button>
+                 <button id="help-btn" class="absolute top-1/2 -translate-y-1/2 left-0 w-8 h-8 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 font-bold text-lg transition-colors" title="Mostrar ayuda de la aplicación">?</button>
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Navegador de repositorios de GitHub</h1>
                 <p class="text-gray-600">Navega por repositorios y convierte URLs de GitHub.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.4</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.6</p>
             </header>
             
             <div class="border-b border-gray-200">
-                <button type="button" id="tab-converter" class="tab-btn px-4 py-2 font-semibold">Convertir URL</button>
-                <button type="button" id="tab-browser" class="tab-btn px-4 py-2 font-semibold">Navegar</button>
+                <button type="button" id="tab-converter" class="tab-btn px-4 py-2 font-semibold" title="Ir a la sección para convertir URLs">Convertir URL</button>
+                <button type="button" id="tab-browser" class="tab-btn px-4 py-2 font-semibold" title="Ir a la sección para navegar repositorios">Navegar</button>
             </div>
 
             <div>
@@ -61,7 +61,7 @@
                     <label for="url-input" class="block text-sm font-medium text-gray-700 mt-4 mb-2">Pega aquí una dirección de GitHub:</label>
                      <div class="flex flex-col sm:flex-row items-center gap-4">
                         <input type="text" id="url-input" placeholder="P. ej. https://github.com/usuario/repo" class="flex-grow w-full bg-gray-200 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                        <button type="button" id="convert-url-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Convertir</button>
+                        <button type="button" id="convert-url-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap" title="Analiza la URL de GitHub y genera enlaces directos">Convertir</button>
                     </div>
                     <div id="status-container-converter" class="status-container mt-4"></div>
                      <div id="results-container-converter" class="results-container mt-4 space-y-4"></div>
@@ -91,7 +91,7 @@
                             </div>
                              <div id="auth-status-container" class="hidden items-center gap-4 mt-4">
                                 <p class="text-green-600 font-semibold"></p>
-                                <button type="button" id="clear-token-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 whitespace-nowrap text-sm">Olvidar Token</button>
+                                <button type="button" id="clear-token-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 whitespace-nowrap text-sm" title="Elimina el token de la memoria de la aplicación">Olvidar Token</button>
                             </div>
                         </div>
                     </div>
@@ -102,11 +102,11 @@
                          <label for="github-username" class="block text-sm font-medium text-gray-800 mb-2">Escribe un nombre de usuario para explorar:</label>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
                             <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-white text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:outline-none transition">
-                            <button type="button" id="load-user-repos-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar</button>
+                            <button type="button" id="load-user-repos-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap" title="Carga los repositorios públicos del usuario introducido">Cargar</button>
                         </div>
                     </div>
 
-                    <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition" title="Filtra los elementos actuales por su nombre">
                     <div id="status-container-browser" class="status-container mt-4"></div>
                     <nav id="breadcrumbs" class="flex items-center gap-2 text-sm text-gray-500 flex-wrap my-4"></nav>
                     <div id="results-container-browser" class="results-container mt-4 space-y-4"></div>
@@ -120,7 +120,7 @@
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-4xl flex flex-col modal-content">
             <header class="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 id="preview-title" class="text-lg font-semibold text-gray-900 truncate"></h2>
-                <button id="close-preview-btn" class="text-2xl leading-none text-gray-500 hover:text-gray-800 transition-colors">&times;</button>
+                <button id="close-preview-btn" class="text-2xl leading-none text-gray-500 hover:text-gray-800 transition-colors" title="Cerrar previsualización">&times;</button>
             </header>
             <div id="preview-body" class="flex-grow overflow-auto"></div>
         </div>
@@ -130,7 +130,7 @@
         <div class="bg-white rounded-lg shadow-2xl w-full max-w-2xl flex flex-col modal-content">
             <header class="p-4 border-b border-gray-200 flex justify-between items-center">
                 <h2 class="text-lg font-semibold text-gray-900">Ayuda</h2>
-                <button id="close-help-btn" class="text-2xl leading-none text-gray-500 hover:text-gray-800 transition-colors">&times;</button>
+                <button id="close-help-btn" class="text-2xl leading-none text-gray-500 hover:text-gray-800 transition-colors" title="Cerrar ayuda">&times;</button>
             </header>
             <div class="p-6 overflow-auto flex-grow prose max-w-none prose-indigo">
                 <h3>¿Qué hace esta aplicación?</h3>
@@ -377,9 +377,9 @@
                     const inactiveClass = "bg-gray-200 hover:bg-gray-300 text-gray-800";
 
                     controlsHTML = `
-                        <button id="ctrl-my-repos" class="${baseClass} ${state.currentBrowserView === 'repos' ? activeClass : inactiveClass}">Mis Repositorios</button>
-                        <button id="ctrl-my-gists" class="${baseClass} ${state.currentBrowserView === 'gists' ? activeClass : inactiveClass}">Mis Gists</button>
-                        <button id="ctrl-explore-public" class="${baseClass} ${state.currentBrowserView === 'public' ? activeClass : inactiveClass}">Explorar Usuario Público</button>
+                        <button id="ctrl-my-repos" class="${baseClass} ${state.currentBrowserView === 'repos' ? activeClass : inactiveClass}" title="Ver tus repositorios públicos y privados">Mis Repositorios</button>
+                        <button id="ctrl-my-gists" class="${baseClass} ${state.currentBrowserView === 'gists' ? activeClass : inactiveClass}" title="Ver tus Gists públicos y privados">Mis Gists</button>
+                        <button id="ctrl-explore-public" class="${baseClass} ${state.currentBrowserView === 'public' ? activeClass : inactiveClass}" title="Muestra el campo para buscar repositorios de cualquier usuario público">Explorar Usuario Público</button>
                     `;
                 }
                 dom.browserControls.innerHTML = controlsHTML;
@@ -463,23 +463,23 @@
                         const contents = await fetchFromGitHub(item.url);
                         renderItemsGrid(contents);
                     } else if (item.type === 'file') {
-                        renderResult(dom.resultsBrowser, 'Repo', item.html_url, item.name, 'iframe', 'text-gray-600', false);
-                        renderResult(dom.resultsBrowser, 'Raw', item.download_url, item.name, 'raw', 'text-green-600', true);
+                        renderResult(dom.resultsBrowser, 'Repo', 'Enlace a la página del repositorio o del archivo en la web de GitHub.', item.html_url, item.name, 'iframe', 'text-gray-600', false);
+                        renderResult(dom.resultsBrowser, 'Raw', 'Enlace al contenido del archivo en formato crudo, sin la interfaz de GitHub. Útil para descargar o usar en otros programas.', item.download_url, item.name, 'raw', 'text-green-600', true);
                         if (state.currentRepo.has_pages) {
                             const pagesUrl = `https://${state.currentRepo.owner}.github.io/${state.currentRepo.name}/${item.path}`;
-                            renderResult(dom.resultsBrowser, 'Pages', pagesUrl, item.name, 'iframe', 'text-teal-600', true);
+                            renderResult(dom.resultsBrowser, 'Pages', 'Enlace a la página web generada por GitHub Pages, si el repositorio tiene esta función activada.', pagesUrl, item.name, 'iframe', 'text-teal-600', true);
                         }
                     } else if (itemType === 'gist') {
                         const gistDetails = await fetchFromGitHub(item.url);
                         state.breadcrumbs.push({ name: item.description || Object.keys(item.files)[0], path: item.id });
                         renderItemsGrid(Object.values(gistDetails.files), 'gist-file');
                     } else if (itemType === 'gist-file') {
-                         renderResult(dom.resultsBrowser, 'Raw', item.raw_url, item.filename, 'raw', 'text-green-600', true);
+                         renderResult(dom.resultsBrowser, 'Raw', 'Enlace al contenido del archivo en formato crudo, sin la interfaz de GitHub. Útil para descargar o usar en otros programas.', item.raw_url, item.filename, 'raw', 'text-green-600', true);
                     }
                      if (item.name?.toLowerCase().endsWith('.md') || item.filename?.toLowerCase().endsWith('.md')) {
                         const url = item.download_url || item.raw_url;
                         const filename = item.name || item.filename;
-                        dom.resultsBrowser.insertAdjacentHTML('beforeend', `<div class="flex justify-center mt-2"><button type="button" data-url="${url}" data-filename="${filename}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">Ver Formateado</button></div>`);
+                        dom.resultsBrowser.insertAdjacentHTML('beforeend', `<div class="flex justify-center mt-2"><button type="button" data-url="${url}" data-filename="${filename}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300" title="Muestra el archivo Markdown con el formato aplicado (y fórmulas si las tiene)">Ver Formateado</button></div>`);
                      }
                     renderBreadcrumbs();
                 } catch (error) { showError(dom.statusBrowser, error.message); } 
@@ -501,15 +501,16 @@
                     const actionHeader = document.createElement('div');
                     actionHeader.className = "flex justify-center items-center gap-4 mb-4";
 
-                    const githubButtonHTML = `<a href="${folderUrl}" target="_blank" rel="noopener noreferrer" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg px-5 py-2.5 transition duration-300 inline-flex items-center">
+                    const githubButtonHTML = `<a href="${folderUrl}" target="_blank" rel="noopener noreferrer" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg px-5 py-2.5 transition duration-300 inline-flex items-center" title="Abre la carpeta actual directamente en la web de GitHub">
                                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                                            Abrir en GitHub
+                                            Abrir la carpeta en GitHub
                                           </a>`;
 
                     if (indexHtmlFile) {
                         const indexButton = document.createElement('button');
                         indexButton.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Seleccionar index.html`;
                         indexButton.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-4 py-2.5 transition duration-300 inline-flex items-center';
+                        indexButton.title = "Selecciona el archivo index.html para ver sus enlaces directos.";
                         indexButton.onclick = () => {
                             const card = dom.gridBrowser.querySelector('[data-name="index.html"]');
                             handleItemClick(indexHtmlFile, card, 'file');
@@ -584,18 +585,18 @@
                 } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
 
-            function renderResult(container, label, url, filename, previewType, labelColorClass = 'text-gray-700', showPreviewButton = true) {
+            function renderResult(container, label, tooltip, url, filename, previewType, labelColorClass = 'text-gray-700', showPreviewButton = true) {
                 const id = `url-${Math.random().toString(36).substr(2, 9)}`;
                 const baseBtnClass = "flex-1 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm";
-                const previewBtn = showPreviewButton ? `<button type="button" data-url="${url}" data-filename="${filename}" data-type="${previewType}" class="preview-btn ${baseBtnClass} bg-purple-600 hover:bg-purple-700">Previsualizar</button>` : '';
+                const previewBtn = showPreviewButton ? `<button type="button" data-url="${url}" data-filename="${filename}" data-type="${previewType}" class="preview-btn ${baseBtnClass} bg-purple-600 hover:bg-purple-700" title="Abre una vista previa del contenido en un modal">Previsualizar</button>` : '';
                 container.insertAdjacentHTML('beforeend', `
                     <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-100 rounded-lg p-3">
-                        <strong class="${labelColorClass} whitespace-nowrap">${label}:</strong>
+                        <strong class="${labelColorClass} whitespace-nowrap" title="${tooltip}">${label}:</strong>
                         <p id="${id}" class="font-mono break-all text-sm flex-grow text-left md:text-right text-gray-800">${url}</p>
                         <div class="flex gap-2 w-full md:w-auto">
                             ${previewBtn}
-                            <button type="button" data-url="${url}" class="open-btn ${baseBtnClass} bg-sky-600 hover:bg-sky-700">Abrir</button>
-                            <button type="button" data-target="${id}" class="copy-btn ${baseBtnClass} bg-blue-600 hover:bg-blue-700">Copiar</button>
+                            <button type="button" data-url="${url}" class="open-btn ${baseBtnClass} bg-sky-600 hover:bg-sky-700" title="Abre este enlace en una nueva pestaña del navegador">Abrir</button>
+                            <button type="button" data-target="${id}" class="copy-btn ${baseBtnClass} bg-blue-600 hover:bg-blue-700" title="Copia el enlace al portapapeles">Copiar</button>
                         </div>
                     </div>`);
             }
@@ -604,7 +605,7 @@
                 const card = document.createElement('div');
                 card.className = 'item-card bg-white p-3 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-100 shadow border-2 border-transparent';
                 
-                let name, icon;
+                let name, icon, tooltip;
                 const iconClass = "w-6 h-6 flex-shrink-0";
                 const icons = {
                     repo: `<svg class="${iconClass} text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>`,
@@ -616,15 +617,19 @@
                 if (type === 'gist') {
                     name = item.description || Object.keys(item.files)[0];
                     icon = icons.gist;
+                    tooltip = "Gist";
                 } else if (type === 'gist-file') {
                     name = item.filename;
                     icon = icons.file;
+                    tooltip = "Archivo de Gist";
                 } else {
                     name = item.name;
-                    icon = icons[item.type] || icons.file;
+                    if(item.type === 'repo') { icon = icons.repo; tooltip = "Repositorio"; }
+                    else if(item.type === 'dir') { icon = icons.dir; tooltip = "Carpeta"; }
+                    else { icon = icons.file; tooltip = "Archivo"; }
                 }
                 card.dataset.name = name;
-                card.innerHTML = `${icon}<span class="font-medium truncate text-gray-800">${name}</span>`;
+                card.innerHTML = `<span title="${tooltip}">${icon}</span><span class="font-medium truncate text-gray-800">${name}</span>`;
                 return card;
             }
 
@@ -660,19 +665,19 @@
                     
                     dom.resultsConverter.innerHTML = `<div class="bg-gray-100 rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-4">
                             <span class="font-semibold text-gray-800">Repositorio: <span class="font-mono">${repoData.full_name}</span></span>
-                            <button id="examine-repo-btn" data-user="${repoData.owner.login}" data-repo="${repoData.name}" data-path="${containingFolderPath}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm whitespace-nowrap">
+                            <button id="examine-repo-btn" data-user="${repoData.owner.login}" data-repo="${repoData.name}" data-path="${containingFolderPath}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm whitespace-nowrap" title="Cambia a la pestaña 'Navegar' y abre esta carpeta">
                                 Examinar carpeta
                             </button>
                         </div>`;
                     const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (effectivePath ? `/blob/${repoData.default_branch}/${effectivePath}` : '');
-                    renderResult(dom.resultsConverter, 'Repo', githubUrl, filename, 'iframe', 'text-gray-700', false);
+                    renderResult(dom.resultsConverter, 'Repo', 'Enlace a la página del repositorio o del archivo en la web de GitHub.', githubUrl, filename, 'iframe', 'text-gray-700', false);
                     if (effectivePath) {
                         const rawUrl = `https://raw.githubusercontent.com/${repoData.owner.login}/${repoData.name}/${repoData.default_branch}/${effectivePath}`;
-                        renderResult(dom.resultsConverter, 'Raw', rawUrl, filename, 'raw', 'text-green-600', true);
+                        renderResult(dom.resultsConverter, 'Raw', 'Enlace al contenido del archivo en formato crudo, sin la interfaz de GitHub. Útil para descargar o usar en otros programas.', rawUrl, filename, 'raw', 'text-green-600', true);
                     }
                     if (repoData.has_pages) {
                         const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${effectivePath || ''}`;
-                        renderResult(dom.resultsConverter, 'Pages', pagesUrl, filename, 'iframe', 'text-teal-600', true);
+                        renderResult(dom.resultsConverter, 'Pages', 'Enlace a la página web generada por GitHub Pages, si el repositorio tiene esta función activada.', pagesUrl, filename, 'iframe', 'text-teal-600', true);
                     }
                 } catch (error) { showError(dom.statusConverter, `Error al obtener datos del repo: ${error.message}`); } finally { setLoading(dom.statusConverter, false); }
             }
