@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v3.0</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v3.1</p>
             </header>
             
             <!-- Pestañas -->
@@ -111,7 +111,7 @@
                         
                         <!-- Sección del Token -->
                         <div id="token-help-banner" class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
-                          <p class="text-sm"><strong class="font-semibold">Consejo:</strong> Añadir un Token te permite ver tus repositorios <strong class="font-semibold">privados</strong> y evita que la aplicación se bloquee por exceso de uso al navegar.</p>
+                          <p class="text-sm"><strong class="font-semibold">Consejo:</strong> GitHub limita las consultas anónimas. Añadir un token personal aumenta este límite, evitando bloqueos temporales al navegar.</p>
                         </div>
                         
                         <div id="token-help-details">
@@ -121,7 +121,7 @@
                                     <ol class="list-decimal list-inside space-y-2">
                                         <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
                                         <li>En "Note", pon un nombre, ej: <strong class="text-gray-800 dark:text-gray-200">HerramientaRepos</strong>.</li>
-                                        <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800 dark:text-gray-200">`repo`</strong> y <strong class="text-gray-800 dark:text-gray-200">`gist`</strong>.</li>
+                                        <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800 dark:text-gray-200">`repo`</strong>.</li>
                                         <li>Haz clic en "Generate token". Cópialo y pégalo arriba.</li>
                                     </ol>
                                 </div>
@@ -439,12 +439,14 @@
                 if (state.isExploring) {
                     dom.exploreToggleBtn.textContent = '← Volver a mis repositorios';
                     dom.userInputSection.classList.remove('hidden');
+                    dom.viewSwitcher.classList.add('hidden'); // Ocultar botones
                     dom.usernameInput.value = '';
                     resetBrowserUI();
                     dom.usernameInput.focus();
                 } else {
                     dom.exploreToggleBtn.textContent = 'Explorar usuario público';
                     dom.userInputSection.classList.add('hidden');
+                    dom.viewSwitcher.classList.remove('hidden'); // Mostrar botones
                     dom.usernameInput.value = state.authenticatedUser;
                     switchBrowserView(state.currentBrowserView || 'repos');
                 }
