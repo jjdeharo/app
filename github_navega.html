@@ -114,7 +114,7 @@
                              <button id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar Repositorios</button>
                         </div>
                         <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
-                          <p class="text-sm">Introduce un usuario para ver sus repositorios públicos. Si añades tu <strong class="font-semibold">Token de Acceso Personal</strong>, tu nombre de usuario se cargará automáticamente y podrás ver tus repositorios privados y aumentar el límite de acceso.</p>
+                          <p class="text-sm">Introduce un usuario para ver sus repositorios públicos. Si añades tu <strong class="font-semibold">Token de Acceso Personal</strong>, tu nombre se cargará como punto de partida, pero podrás cambiarlo para explorar otros usuarios aprovechando el mayor límite de acceso.</p>
                         </div>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
                             <input type="password" id="github-token" placeholder="Opcional: Pega tu Token de Acceso Personal" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -236,6 +236,8 @@
                 dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
                 dom.searchGists.addEventListener('input', (e) => filterGrid(dom.gridGists, e.target.value));
                 dom.closePreviewBtn.addEventListener('click', () => dom.previewModal.classList.add('hidden'));
+                dom.tokenInput.addEventListener('change', authenticateWithToken);
+                
                 dom.previewModal.addEventListener('click', (e) => {
                     if (e.target === dom.previewModal) dom.previewModal.classList.add('hidden');
                 });
@@ -291,10 +293,10 @@
             };
 
             async function authenticateWithToken() {
+                if (!dom.tokenInput.value.trim()) return;
                 try {
                     const user = await fetchFromGitHub('https://api.github.com/user');
                     dom.usernameInput.value = user.login;
-                    // dom.usernameInput.disabled = true; // REMOVED: Allow user to change username
                     localStorage.setItem('githubToken', dom.tokenInput.value.trim());
                 } catch(e) {
                     clearSavedToken();
@@ -307,7 +309,6 @@
                 dom.tokenInput.value = ''; 
                 state.token = '';
                 dom.usernameInput.value = '';
-                dom.usernameInput.disabled = false;
                 resetBrowserUI();
                 showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
             };
@@ -388,11 +389,6 @@
                 setLoading(dom.statusBrowser, true);
                 resetBrowserUI();
                 
-                // If a token is present, validate it and get the username
-                if (dom.tokenInput.value.trim()) {
-                    await authenticateWithToken();
-                }
-
                 let userToFetch = dom.usernameInput.value.trim();
                 
                 if (!userToFetch) {
