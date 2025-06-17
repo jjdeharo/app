@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.8</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.0</p>
             </header>
             
             <!-- Pestañas -->
@@ -109,28 +109,41 @@
                 <!-- Pestaña NAVEGAR -->
                 <div id="content-browser" class="tab-content hidden">
                     <div class="space-y-4 border-b border-gray-200 dark:border-gray-700 py-6">
-                        <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                             <button id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar Repositorios</button>
-                        </div>
+                        
+                        <!-- Sección del Token -->
                         <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
-                          <p class="text-sm">Introduce un usuario para ver sus repositorios públicos. Si añades tu <strong class="font-semibold">Token de Acceso Personal</strong>, tu nombre se cargará como punto de partida, pero podrás cambiarlo para explorar otros usuarios aprovechando el mayor límite de acceso.</p>
+                          <p class="text-sm"><strong class="font-semibold">Consejo:</strong> Añade tu Token para ver repositorios <strong class="font-semibold">privados</strong> y aumentar el límite de acceso a la API (de 60 a 5.000 peticiones/hora), evitando bloqueos al navegar.</p>
                         </div>
-                        <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="password" id="github-token" placeholder="Opcional: Pega tu Token de Acceso Personal" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                            <button id="clear-token-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Olvidar Token</button>
-                        </div>
-                         <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg">
-                            <summary class="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
-                            <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
-                                <ol class="list-decimal list-inside space-y-2">
-                                    <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
-                                    <li>En "Note", pon un nombre, ej: <strong class="text-gray-800 dark:text-gray-200">HerramientaRepos</strong>.</li>
-                                    <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800 dark:text-gray-200">`repo`</strong> y <strong class="text-gray-800 dark:text-gray-200">`gist`</strong>.</li>
-                                    <li>Haz clic en "Generate token". Cópialo y pégalo arriba.</li>
-                                </ol>
+                        
+                        <div>
+                            <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg mb-4">
+                                <summary class="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
+                                <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
+                                    <ol class="list-decimal list-inside space-y-2">
+                                        <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-500 hover:underline">página de creación de tokens de GitHub</a>.</li>
+                                        <li>En "Note", pon un nombre, ej: <strong class="text-gray-800 dark:text-gray-200">HerramientaRepos</strong>.</li>
+                                        <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800 dark:text-gray-200">`repo`</strong> y <strong class="text-gray-800 dark:text-gray-200">`gist`</strong>.</li>
+                                        <li>Haz clic en "Generate token". Cópialo y pégalo arriba.</li>
+                                    </ol>
+                                </div>
+                            </details>
+                            <div class="flex flex-col sm:flex-row items-center gap-4">
+                                <input type="password" id="github-token" placeholder="Opcional: Pega tu Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                                <button id="clear-token-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Olvidar Token</button>
                             </div>
-                        </details>
+                        </div>
+                        
+                        <hr class="border-gray-200 dark:border-gray-600">
+
+                        <!-- Sección del Usuario -->
+                        <div>
+                             <label for="github-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Escribe un nombre de usuario para explorar sus repositorios:</label>
+                            <div class="flex flex-col sm:flex-row items-center gap-4">
+                                <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                                <button id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar Repositorios</button>
+                            </div>
+                        </div>
+
                     </div>
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <div id="status-container-browser" class="status-container mt-4"></div>
@@ -305,12 +318,22 @@
             }
             
             function clearSavedToken() {
-                localStorage.removeItem('githubToken');
-                dom.tokenInput.value = ''; 
-                state.token = '';
-                dom.usernameInput.value = '';
-                resetBrowserUI();
-                showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
+                if (localStorage.getItem('githubToken')) {
+                    localStorage.removeItem('githubToken');
+                    dom.tokenInput.value = ''; 
+                    state.token = '';
+                    dom.usernameInput.value = '';
+                    resetBrowserUI();
+                    showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
+                } else {
+                    const originalText = dom.clearTokenBtn.textContent;
+                    dom.clearTokenBtn.textContent = 'No hay token guardado';
+                    dom.clearTokenBtn.disabled = true;
+                    setTimeout(() => {
+                        dom.clearTokenBtn.textContent = originalText;
+                        dom.clearTokenBtn.disabled = false;
+                    }, 2000);
+                }
             };
             
             // --- API & UI Helpers ---
