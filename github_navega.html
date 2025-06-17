@@ -57,7 +57,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por tus repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.1</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.2</p>
             </header>
             
             <!-- Pestañas -->
@@ -319,7 +319,7 @@
                 dom.gridBrowser.innerHTML = '';
                 repos.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
                 repos.forEach(repo => {
-                    const card = createCard(repo.name, 'repo', (item, el) => handleItemClick(item, el));
+                    const card = createCard(repo, (item, el) => handleItemClick(item, el));
                     dom.gridBrowser.appendChild(card);
                 });
             }
@@ -334,6 +334,7 @@
                 setLoading(dom.statusBrowser, true);
                 
                 try {
+                    // Case 1: Clicking a repository from the root list
                     if (item.full_name && !state.currentRepo.name) {
                         const repoDetails = await fetchFromGitHub(`/repos/${item.full_name}`);
                         state.currentRepo = { name: repoDetails.name, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
@@ -341,12 +342,16 @@
                         state.breadcrumbs.push({ name: item.name, path: '' });
                         const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/`);
                         renderItems(contents);
-                    } else if (item.type === 'dir') {
+                    } 
+                    // Case 2: Clicking a directory inside a repository
+                    else if (item.type === 'dir') {
                         state.currentPath = item.path;
                         state.breadcrumbs.push({ name: item.name, path: item.path });
                         const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}`);
                         renderItems(contents);
-                    } else if (item.type === 'file') {
+                    } 
+                    // Case 3: Clicking a file
+                    else if (item.type === 'file') {
                         renderResult(dom.resultsBrowser, 'Repo', item.html_url, item.name, 'iframe');
                         renderResult(dom.resultsBrowser, 'Raw', item.download_url, item.name, 'raw', 'text-green-600 dark:text-green-400');
                         if (state.currentRepo.has_pages) {
@@ -361,7 +366,7 @@
                 dom.gridBrowser.innerHTML = '';
                 items.sort((a, b) => (a.type === 'dir' ? -1 : 1) - (b.type === 'dir' ? -1 : 1) || a.name.localeCompare(b.name));
                 items.forEach(item => {
-                    const card = createCard(item.name, item.type, (i, el) => handleItemClick(i, el));
+                    const card = createCard(item, (i, el) => handleItemClick(i, el));
                     dom.gridBrowser.appendChild(card);
                 });
             }
@@ -403,10 +408,12 @@
                 dom.gridGists.innerHTML = '';
                 gists.forEach(gist => {
                     const desc = gist.description || Object.keys(gist.files)[0];
-                    const card = createCard(desc, 'gist', () => {
+                    const gistItem = { name: desc, type: 'gist' };
+                    const card = createCard(gistItem, () => {
                         dom.gridGists.innerHTML = '';
                         Object.values(gist.files).forEach(file => {
-                            const fileCard = createCard(file.filename, 'file', () => showPreview(file.filename, file.raw_url, 'raw'));
+                            const fileItem = { name: file.filename, type: 'file' };
+                            const fileCard = createCard(fileItem, () => showPreview(file.filename, file.raw_url, 'raw'));
                             dom.gridGists.appendChild(fileCard);
                         });
                     });
@@ -484,7 +491,7 @@
                         codeEl.textContent = text;
                         const preEl = document.createElement('pre');
                         preEl.className = 'whitespace-pre-wrap break-all text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-md';
-                        preEl.appendChild(codeEl);
+                        preEl.appendChild(preEl);
                         dom.previewBody.innerHTML = '';
                         dom.previewBody.appendChild(preEl);
                     }
@@ -493,10 +500,14 @@
                 }
             }
             
-            function createCard(name, type, onClick) {
+            function createCard(item, onClick) {
                 const card = document.createElement('div');
                 card.className = 'item-card bg-white dark:bg-gray-700/60 p-3 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 shadow';
-                card.dataset.name = name;
+                
+                // Repos from the initial list don't have a 'type' property from the API. We'll treat them as 'repo'.
+                // Gist files also lack a type, so we default to 'file'.
+                const type = item.type || (item.full_name ? 'repo' : 'file');
+                card.dataset.name = item.name;
                 
                 const icons = {
                     repo: '<svg class="w-6 h-6 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
@@ -505,8 +516,8 @@
                     gist: '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2 2.5a.5.5 0 01.5-.5h8.5a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-1.5H3V12h5.5a.5.5 0 010 1H2.5a.5.5 0 01-.5-.5V2.5z"></path><path d="M7.646 5.646a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708-.708L9.293 8 7.646 6.354a.5.5 0 010-.708zM12.646 12.354a.5.5 0 010-.708l2-2a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708 0L14 12.293l-1.646 1.647a.5.5 0 01-.708 0l-2-2zM12 5.5a.5.5 0 01.5.5v5a.5.5 0 01-1 0V6a.5.5 0 01.5-.5z"></path></svg>'
                 };
 
-                card.innerHTML = `${icons[type] || icons['file']}<span class="font-medium truncate text-gray-800 dark:text-gray-200">${name}</span>`;
-                card.onclick = (e) => onClick(name === '..' ? { ...card.dataset } : {name, type}, e.currentTarget);
+                card.innerHTML = `${icons[type] || icons['file']}<span class="font-medium truncate text-gray-800 dark:text-gray-200">${item.name}</span>`;
+                card.onclick = (e) => onClick(item, e.currentTarget);
                 return card;
             }
 
