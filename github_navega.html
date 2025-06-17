@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.7</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.8</p>
             </header>
             
             <!-- Pestañas -->
@@ -114,7 +114,7 @@
                              <button id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar Repositorios</button>
                         </div>
                         <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
-                          <p class="text-sm">Para ver repositorios <strong class="font-semibold">privados</strong> o <strong class="font-semibold">aumentar el límite de acceso</strong> (de 60 a 5000 peticiones/hora), introduce un Token de Acceso Personal a continuación.</p>
+                          <p class="text-sm">Introduce un usuario para ver sus repositorios públicos. Si añades tu <strong class="font-semibold">Token de Acceso Personal</strong>, tu nombre de usuario se cargará automáticamente y podrás ver tus repositorios privados y aumentar el límite de acceso.</p>
                         </div>
                         <div class="flex flex-col sm:flex-row items-center gap-4">
                             <input type="password" id="github-token" placeholder="Opcional: Pega tu Token de Acceso Personal" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -294,7 +294,7 @@
                 try {
                     const user = await fetchFromGitHub('https://api.github.com/user');
                     dom.usernameInput.value = user.login;
-                    dom.usernameInput.disabled = true;
+                    // dom.usernameInput.disabled = true; // REMOVED: Allow user to change username
                     localStorage.setItem('githubToken', dom.tokenInput.value.trim());
                 } catch(e) {
                     clearSavedToken();
