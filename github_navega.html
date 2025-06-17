@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.8</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.9</p>
             </header>
             
             <!-- Pestañas -->
@@ -155,8 +155,8 @@
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <div id="status-container-browser" class="status-container mt-4"></div>
                     <nav id="breadcrumbs" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap my-4"></nav>
-                    <div id="content-grid-browser" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     <div id="results-container-browser" class="results-container mt-4 space-y-4"></div>
+                    <div id="content-grid-browser" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"></div>
                 </div>
             </div>
         </div>
@@ -434,7 +434,7 @@
                     dom.exploreToggleBtn.textContent = 'Explorar usuario público';
                     dom.viewSwitcher.classList.remove('hidden');
                     dom.userInputSection.classList.add('hidden');
-                    switchBrowserView('repos'); // Go back to authenticated user's repos
+                    switchBrowserView('repos');
                 }
             }
 
@@ -498,18 +498,20 @@
                 setLoading(dom.statusBrowser, true);
                 
                 try {
-                    if (item.full_name && !state.currentRepo.name) {
+                    if (item.full_name && (!state.currentRepo.name || item.full_name !== `${state.currentRepo.owner}/${state.currentRepo.name}`)) {
                         const repoDetails = await fetchFromGitHub(`https://api.github.com/repos/${item.full_name}`);
                         state.currentRepo = { name: repoDetails.name, owner: repoDetails.owner.login, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
                         state.currentPath = '';
                         state.breadcrumbs.push({ name: item.name, path: '' });
                         const contents = await fetchFromGitHub(`https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/`);
+                        renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}`);
                         renderItems(contents);
                     } 
                     else if (item.type === 'dir') {
                         state.currentPath = item.path;
                         state.breadcrumbs.push({ name: item.name, path: item.path });
                         const contents = await fetchFromGitHub(`https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`);
+                        renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}/tree/${state.currentRepo.default_branch}/${state.currentPath}`);
                         renderItems(contents);
                     } 
                     else if (item.type === 'file') {
@@ -561,6 +563,7 @@
                     const endpoint = `https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`;
                     try {
                         const data = await fetchFromGitHub(endpoint);
+                        renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}/tree/${state.currentRepo.default_branch}/${state.currentPath}`);
                         renderItems(data);
                     } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
                 }
@@ -663,6 +666,16 @@
             }
             
             // --- Preview & Card Creation ---
+            function renderFolderButton(url) {
+                dom.resultsBrowser.innerHTML = `
+                    <div class="flex justify-center">
+                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-semibold rounded-lg px-5 py-2.5 transition duration-300 inline-flex items-center">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                            Abrir carpeta en GitHub
+                        </a>
+                    </div>
+                `;
+            }
             async function showPreview(filename, url, type = 'raw') {
                 dom.previewTitle.textContent = filename;
                 dom.previewBody.innerHTML = ''; 
