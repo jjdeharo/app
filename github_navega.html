@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.5</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.6</p>
             </header>
             
             <!-- Pestañas -->
@@ -132,14 +132,14 @@
                             </div>
                         </div>
                         
-                        <hr class="border-gray-200 dark:border-gray-600">
+                        <hr id="user-section-separator" class="border-gray-200 dark:border-gray-600">
 
                         <!-- Sección del Usuario -->
-                        <div>
+                        <div id="user-input-section">
                              <label for="github-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Escribe un nombre de usuario para explorar sus repositorios:</label>
                             <div class="flex flex-col sm:flex-row items-center gap-4">
                                 <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                                <button type="button" id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar Repositorios</button>
+                                <button type="button" id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar</button>
                             </div>
                         </div>
 
@@ -147,7 +147,7 @@
                     
                     <!-- View switcher (Repos vs Gists) -->
                     <div id="view-switcher" class="mb-4 flex justify-center gap-2 hidden">
-                        <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Repositorios</button>
+                        <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Repositorios</button>
                         <button type="button" id="view-gists-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Gists</button>
                     </div>
 
@@ -201,6 +201,8 @@
                     tokenInput: document.getElementById('github-token'), 
                     clearTokenBtn: document.getElementById('clear-token-btn'),
                     usernameInput: document.getElementById('github-username'),
+                    userInputSection: document.getElementById('user-input-section'),
+                    userSectionSeparator: document.getElementById('user-section-separator'),
                     loadUserReposBtn: document.getElementById('load-user-repos-btn'),
                     themeToggleButton: document.getElementById('theme-toggle'), 
                     root: document.documentElement,
@@ -230,10 +232,8 @@
                 if (state.token) {
                     dom.tokenInput.value = state.token;
                     dom.clearTokenBtn.classList.remove('hidden');
-                    dom.viewSwitcher.classList.remove('hidden');
-                    authenticateWithToken(false);
+                    authenticateWithToken(true);
                 }
-                updateViewSwitcherUI();
                 
                 switchTab('content-converter');
                 addEventListeners();
@@ -306,8 +306,10 @@
                     dom.usernameInput.value = user.login;
                     localStorage.setItem('githubToken', dom.tokenInput.value.trim());
                     dom.viewSwitcher.classList.remove('hidden');
+                    dom.userInputSection.classList.add('hidden');
+                    dom.userSectionSeparator.classList.add('hidden');
                     if (loadRepos) {
-                        handleLoadUserRepos();
+                        switchBrowserView('repos');
                     }
                 } catch(e) {
                     clearSavedToken();
@@ -323,6 +325,8 @@
                     dom.usernameInput.value = '';
                     dom.clearTokenBtn.classList.add('hidden');
                     dom.viewSwitcher.classList.add('hidden');
+                    dom.userInputSection.classList.remove('hidden');
+                    dom.userSectionSeparator.classList.remove('hidden');
                     resetBrowserUI();
                     showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
                 } else {
@@ -434,8 +438,6 @@
                 dom.viewGistsBtn.classList.toggle('bg-gray-200', !isGists);
                 dom.viewGistsBtn.classList.toggle('dark:bg-gray-700', !isGists);
                 
-                dom.loadUserReposBtn.classList.toggle('hidden', isGists);
-                dom.usernameInput.parentElement.parentElement.classList.toggle('hidden', isGists);
                 dom.breadcrumbs.classList.toggle('hidden', isGists && state.breadcrumbs.length <= 1);
             }
             
