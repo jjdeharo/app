@@ -6,6 +6,19 @@
     <title>Navegador de repositorios de GitHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      MathJax = {
+        tex: {
+          inlineMath: [['$', '$'], ['\\(', '\\)']]
+        },
+        svg: {
+          fontCache: 'global'
+        }
+      };
+    </script>
+    <script type="text/javascript" id="MathJax-script" async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -35,7 +48,7 @@
                  <button id="help-btn" class="absolute top-1/2 -translate-y-1/2 left-0 w-8 h-8 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 font-bold text-lg transition-colors">?</button>
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Navegador de repositorios de GitHub</h1>
                 <p class="text-gray-600">Navega por repositorios y convierte URLs de GitHub.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.3</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.4</p>
             </header>
             
             <div class="border-b border-gray-200">
@@ -701,16 +714,13 @@
                 dom.previewTitle.textContent = filename;
                 dom.previewModal.classList.remove('hidden');
 
-                // Reset preview body classes and content
-                dom.previewBody.className = 'flex-grow overflow-auto'; // Base classes
+                dom.previewBody.className = 'flex-grow overflow-auto'; 
                 setLoading(dom.previewBody, true);
 
                 try {
                     if (type === 'iframe') {
-                        // For iframe, no padding, let it fill the space
                         dom.previewBody.innerHTML = `<iframe src="${url}" class="w-full h-full border-0 rounded-b-lg bg-white"></iframe>`;
                     } else {
-                        // For other content, add padding and prose styles
                         dom.previewBody.classList.add('p-6', 'prose', 'max-w-none', 'prose-indigo');
                         
                         const extension = filename.split('.').pop().toLowerCase();
@@ -725,6 +735,9 @@
 
                             if (type === 'markdown') {
                                 dom.previewBody.innerHTML = marked.parse(text);
+                                if (window.MathJax) {
+                                    MathJax.typesetPromise([dom.previewBody]).catch((err) => console.error('Error al renderizar MathJax:', err));
+                                }
                             } else {
                                 const preEl = document.createElement('pre');
                                 preEl.className = 'whitespace-pre-wrap break-all text-sm';
@@ -735,7 +748,6 @@
                         }
                     }
                 } catch(error) {
-                    // Ensure container has padding for error message
                     dom.previewBody.classList.add('p-6');
                     showError(dom.previewBody, error.message);
                 }
