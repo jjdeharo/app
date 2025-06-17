@@ -35,7 +35,7 @@
                  <button id="help-btn" class="absolute top-1/2 -translate-y-1/2 left-0 w-8 h-8 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 font-bold text-lg transition-colors">?</button>
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Navegador de repositorios de GitHub</h1>
                 <p class="text-gray-600">Navega por repositorios y convierte URLs de GitHub.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.2</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.3</p>
             </header>
             
             <div class="border-b border-gray-200">
@@ -57,18 +57,22 @@
                 <div id="content-browser" class="tab-content hidden">
                     <div class="space-y-4 border-b border-gray-200 py-6">
                         <div id="token-section">
-                            <details class="bg-gray-100 p-4 rounded-lg mb-4">
-                                <summary class="font-semibold text-gray-700 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
-                                <div class="mt-4 text-sm text-gray-600 space-y-3">
-                                    <p>GitHub limita las consultas anónimas. Añadir un token personal aumenta este límite, evitando bloqueos temporales, y te permite ver tus repositorios privados.</p>
-                                    <ol class="list-decimal list-inside space-y-2">
-                                        <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">página de creación de tokens de GitHub</a>.</li>
-                                        <li>En "Note", pon un nombre, ej: <strong class="text-gray-800">HerramientaRepos</strong>.</li>
-                                        <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800">`repo`</strong>.</li>
-                                        <li>Haz clic en "Generate token". Cópialo y pégalo a continuación.</li>
-                                    </ol>
-                                </div>
-                            </details>
+                            <div id="token-help-banner" class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-4 rounded-r-lg mb-4" role="alert">
+                              <p class="text-sm"><strong class="font-semibold">Consejo:</strong> GitHub limita las consultas anónimas. Añadir un token personal aumenta este límite, evitando bloqueos temporales, y te permite ver tus repositorios privados.</p>
+                            </div>
+                            <div id="token-help-details">
+                                <details class="bg-gray-100 p-4 rounded-lg mb-4">
+                                    <summary class="font-semibold text-gray-700 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
+                                    <div class="mt-4 text-sm text-gray-600 space-y-3">
+                                        <ol class="list-decimal list-inside space-y-2">
+                                            <li>Ve a la <a href="https://github.com/settings/tokens/new" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline">página de creación de tokens de GitHub</a>.</li>
+                                            <li>En "Note", pon un nombre, ej: <strong class="text-gray-800">HerramientaRepos</strong>.</li>
+                                            <li>En "Select scopes", marca **SOLAMENTE** la casilla <strong class="text-gray-800">`repo`</strong>.</li>
+                                            <li>Haz clic en "Generate token". Cópialo y pégalo a continuación.</li>
+                                        </ol>
+                                    </div>
+                                </details>
+                            </div>
                             <div id="token-input-container" class="flex flex-col sm:flex-row items-center gap-4">
                                 <input type="password" id="github-token" placeholder="Opcional: Pega tu Token aquí" class="flex-grow w-full bg-gray-200 text-gray-900 placeholder-gray-500 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                             </div>
@@ -180,6 +184,8 @@
                     // Browser
                     tokenInput: document.getElementById('github-token'),
                     tokenInputContainer: document.getElementById('token-input-container'),
+                    tokenHelpBanner: document.getElementById('token-help-banner'),
+                    tokenHelpDetails: document.getElementById('token-help-details'),
                     authStatusContainer: document.getElementById('auth-status-container'),
                     authStatusText: document.querySelector('#auth-status-container p'),
                     clearTokenBtn: document.getElementById('clear-token-btn'),
@@ -336,21 +342,23 @@
             }
             
             function renderBrowserUI() {
-                // Auth status
-                if(state.authenticatedUser) {
-                    dom.tokenInputContainer.classList.add('hidden');
+                const hasAuth = !!state.authenticatedUser;
+
+                // Show/hide token help, input, and auth status
+                dom.tokenHelpBanner.classList.toggle('hidden', hasAuth);
+                dom.tokenHelpDetails.classList.toggle('hidden', hasAuth);
+                dom.tokenInputContainer.classList.toggle('hidden', hasAuth);
+                dom.authStatusContainer.classList.toggle('hidden', !hasAuth);
+                if (hasAuth) {
                     dom.authStatusText.textContent = `Conectado como: ${state.authenticatedUser}`;
-                    dom.authStatusContainer.classList.remove('hidden');
                     dom.authStatusContainer.classList.add('flex');
                 } else {
-                    dom.tokenInputContainer.classList.remove('hidden');
-                    dom.authStatusContainer.classList.add('hidden');
-                    dom.authStatusContainer.classList.remove('flex');
+                     dom.authStatusContainer.classList.remove('flex');
                 }
 
                 // Controls
                 let controlsHTML = '';
-                if(state.authenticatedUser) {
+                if(hasAuth) {
                     const baseClass = "px-4 py-2 font-semibold rounded-lg transition-colors duration-200";
                     const activeClass = "bg-blue-600 text-white";
                     const inactiveClass = "bg-gray-200 hover:bg-gray-300 text-gray-800";
@@ -364,7 +372,7 @@
                 dom.browserControls.innerHTML = controlsHTML;
 
                 // Public user section
-                const showPublicSection = !state.authenticatedUser || state.isExploringPublic;
+                const showPublicSection = !hasAuth || state.isExploringPublic;
                 dom.publicUserSection.classList.toggle('hidden', !showPublicSection);
             }
             
