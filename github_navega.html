@@ -83,15 +83,14 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 mt-16">
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
-                <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.4</p>
+                <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.5</p>
             </header>
             
             <!-- Pestañas -->
             <div class="flex border-b border-gray-200 dark:border-gray-700">
                 <button type="button" id="tab-converter" class="tab-btn px-4 py-2 font-semibold">Convertir URL</button>
                 <button type="button" id="tab-browser" class="tab-btn px-4 py-2 font-semibold">Navegar</button>
-                <button type="button" id="tab-gists" class="tab-btn px-4 py-2 font-semibold">Gists</button>
             </div>
 
             <!-- Contenido de las Pestañas -->
@@ -106,13 +105,13 @@
                      <div id="results-container-converter" class="results-container mt-4 space-y-4"></div>
                 </div>
 
-                <!-- Pestaña NAVEGAR -->
+                <!-- Pestaña NAVEGAR (y Gists) -->
                 <div id="content-browser" class="tab-content hidden">
                     <div class="space-y-4 border-b border-gray-200 dark:border-gray-700 py-6">
                         
                         <!-- Sección del Token -->
                         <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
-                          <p class="text-sm"><strong class="font-semibold">Consejo:</strong> Añade tu Token para ver repositorios <strong class="font-semibold">privados</strong> y aumentar el límite de acceso a la API (de 60 a 5.000 peticiones/hora), evitando bloqueos al navegar.</p>
+                          <p class="text-sm"><strong class="font-semibold">Consejo:</strong> Añadir un Token te permite ver tus repositorios <strong class="font-semibold">privados</strong> y evita que la aplicación se bloquee por exceso de uso al navegar.</p>
                         </div>
                         
                         <div>
@@ -145,20 +144,18 @@
                         </div>
 
                     </div>
+                    
+                    <!-- View switcher (Repos vs Gists) -->
+                    <div id="view-switcher" class="mb-4 flex justify-center gap-2 hidden">
+                        <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Repositorios</button>
+                        <button type="button" id="view-gists-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Gists</button>
+                    </div>
+
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                     <div id="status-container-browser" class="status-container mt-4"></div>
                     <nav id="breadcrumbs" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap my-4"></nav>
                     <div id="content-grid-browser" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                     <div id="results-container-browser" class="results-container mt-4 space-y-4"></div>
-                </div>
-
-                 <!-- Pestaña GISTS -->
-                <div id="content-gists" class="tab-content hidden">
-                    <div id="gists-auth-message" class="text-center p-4"></div>
-                    <input type="search" id="search-gists" placeholder="Filtrar por descripción..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hidden">
-                    <div id="status-container-gists" class="status-container mt-4"></div>
-                    <div id="content-grid-gists" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"></div>
-                    <div id="results-container-gists" class="results-container mt-4 space-y-4"></div>
                 </div>
             </div>
         </div>
@@ -190,6 +187,7 @@
             let state = {
                 token: '',
                 currentUser: '',
+                currentBrowserView: 'repos',
                 currentRepo: { name: '', owner: '', default_branch: '', has_pages: false },
                 currentPath: '',
                 breadcrumbs: [],
@@ -217,11 +215,9 @@
                     convertUrlBtn: document.getElementById('convert-url-btn'), 
                     statusConverter: document.getElementById('status-container-converter'),
                     resultsConverter: document.getElementById('results-container-converter'), 
-                    searchGists: document.getElementById('search-gists'),
-                    statusGists: document.getElementById('status-container-gists'), 
-                    gridGists: document.getElementById('content-grid-gists'),
-                    resultsGists: document.getElementById('results-container-gists'),
-                    gistsAuthMessage: document.getElementById('gists-auth-message'),
+                    viewSwitcher: document.getElementById('view-switcher'),
+                    viewReposBtn: document.getElementById('view-repos-btn'),
+                    viewGistsBtn: document.getElementById('view-gists-btn'),
                     previewModal: document.getElementById('preview-modal'), 
                     previewTitle: document.getElementById('preview-title'),
                     previewBody: document.getElementById('preview-body'), 
@@ -234,8 +230,10 @@
                 if (state.token) {
                     dom.tokenInput.value = state.token;
                     dom.clearTokenBtn.classList.remove('hidden');
+                    dom.viewSwitcher.classList.remove('hidden');
                     authenticateWithToken(false);
                 }
+                updateViewSwitcherUI();
                 
                 switchTab('content-converter');
                 addEventListeners();
@@ -248,18 +246,19 @@
                 dom.themeToggleButton.addEventListener('click', toggleTheme);
                 dom.convertUrlBtn.addEventListener('click', handleUrlConversion);
                 dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
-                dom.searchGists.addEventListener('input', (e) => filterGrid(dom.gridGists, e.target.value));
                 dom.closePreviewBtn.addEventListener('click', () => dom.previewModal.classList.add('hidden'));
                 
                 dom.tokenInput.addEventListener('input', (e) => {
-                    const hasValue = e.target.value.trim();
-                    dom.clearTokenBtn.classList.toggle('hidden', !hasValue);
+                    dom.clearTokenBtn.classList.toggle('hidden', !e.target.value.trim());
                     dom.statusBrowser.innerHTML = '';
                 });
                 dom.tokenInput.addEventListener('paste', () => {
                     setTimeout(() => authenticateWithToken(true), 50);
                 });
                 
+                dom.viewReposBtn.addEventListener('click', () => switchBrowserView('repos'));
+                dom.viewGistsBtn.addEventListener('click', () => switchBrowserView('gists'));
+
                 dom.previewModal.addEventListener('click', (e) => {
                     if (e.target === dom.previewModal) dom.previewModal.classList.add('hidden');
                 });
@@ -286,20 +285,6 @@
                     tab.classList.toggle('border-transparent', !isActive);
                 });
                 dom.tabContents.forEach(content => content.classList.toggle('hidden', content.id !== targetId));
-
-                if (targetId === 'content-gists') {
-                    state.token = dom.tokenInput.value.trim();
-                    if (state.token) {
-                        dom.gistsAuthMessage.innerHTML = '';
-                        dom.searchGists.classList.remove('hidden');
-                        if (dom.gridGists.children.length === 0) handleLoadGists();
-                    } else {
-                        dom.gridGists.innerHTML = '';
-                        dom.resultsGists.innerHTML = '';
-                        dom.searchGists.classList.add('hidden');
-                        showError(dom.gistsAuthMessage, 'Se necesita un Token de Acceso Personal para ver los gists.');
-                    }
-                }
             }
             
             const applyTheme = (theme) => {
@@ -320,6 +305,7 @@
                     const user = await fetchFromGitHub('https://api.github.com/user');
                     dom.usernameInput.value = user.login;
                     localStorage.setItem('githubToken', dom.tokenInput.value.trim());
+                    dom.viewSwitcher.classList.remove('hidden');
                     if (loadRepos) {
                         handleLoadUserRepos();
                     }
@@ -336,6 +322,7 @@
                     state.token = '';
                     dom.usernameInput.value = '';
                     dom.clearTokenBtn.classList.add('hidden');
+                    dom.viewSwitcher.classList.add('hidden');
                     resetBrowserUI();
                     showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
                 } else {
@@ -365,7 +352,7 @@
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({ message: `Error ${response.status}` }));
                     if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
-                        throw new Error("Límite de acceso a la API de GitHub alcanzado. Por favor, introduce un token o espera una hora.");
+                        throw new Error("Límite de acceso a GitHub alcanzado. Por favor, introduce un token o espera una hora.");
                     }
                     if (response.status === 401) {
                          clearSavedToken();
@@ -422,7 +409,35 @@
                 });
             }
 
-            // --- Browser Logic ---
+            // --- Browser & Gists Unified Logic ---
+            function switchBrowserView(view) {
+                state.currentBrowserView = view;
+                updateViewSwitcherUI();
+                resetBrowserUI();
+                if (view === 'repos') {
+                    handleLoadUserRepos();
+                } else if (view === 'gists') {
+                    handleLoadGists();
+                }
+            }
+
+            function updateViewSwitcherUI() {
+                const isRepos = state.currentBrowserView === 'repos';
+                dom.viewReposBtn.classList.toggle('bg-blue-600', isRepos);
+                dom.viewReposBtn.classList.toggle('text-white', isRepos);
+                dom.viewReposBtn.classList.toggle('bg-gray-200', !isRepos);
+                dom.viewReposBtn.classList.toggle('dark:bg-gray-700', !isRepos);
+                
+                const isGists = state.currentBrowserView === 'gists';
+                dom.viewGistsBtn.classList.toggle('bg-blue-600', isGists);
+                dom.viewGistsBtn.classList.toggle('text-white', isGists);
+                dom.viewGistsBtn.classList.toggle('bg-gray-200', !isGists);
+                dom.viewGistsBtn.classList.toggle('dark:bg-gray-700', !isGists);
+                
+                dom.loadUserReposBtn.classList.toggle('hidden', isGists);
+                dom.usernameInput.parentElement.parentElement.classList.toggle('hidden', isGists);
+                dom.breadcrumbs.classList.toggle('hidden', isGists && state.breadcrumbs.length <= 1);
+            }
             
             async function handleLoadUserRepos() {
                 setLoading(dom.statusBrowser, true);
@@ -506,14 +521,16 @@
             }
             function renderBreadcrumbs() {
                 dom.breadcrumbs.innerHTML = '';
-                state.breadcrumbs.forEach((crumb, index) => {
-                    if (index > 0) dom.breadcrumbs.insertAdjacentHTML('beforeend', '<span class="text-gray-400 dark:text-gray-500 mx-1">/</span>');
-                    const el = document.createElement('a'); el.textContent = crumb.name;
-                    el.className = 'cursor-pointer hover:text-blue-500 hover:underline transition';
-                    el.href = '#';
-                    el.onclick = (e) => { e.preventDefault(); handleBreadcrumbClick(index); };
-                    dom.breadcrumbs.appendChild(el);
-                });
+                if(state.currentBrowserView !== 'gists' || state.breadcrumbs.length > 1) {
+                    state.breadcrumbs.forEach((crumb, index) => {
+                        if (index > 0) dom.breadcrumbs.insertAdjacentHTML('beforeend', '<span class="text-gray-400 dark:text-gray-500 mx-1">/</span>');
+                        const el = document.createElement('a'); el.textContent = crumb.name;
+                        el.className = 'cursor-pointer hover:text-blue-500 hover:underline transition';
+                        el.href = '#';
+                        el.onclick = (e) => { e.preventDefault(); handleBreadcrumbClick(index); };
+                        dom.breadcrumbs.appendChild(el);
+                    });
+                }
             }
             async function handleBreadcrumbClick(index) {
                 setLoading(dom.statusBrowser, true);
@@ -521,10 +538,10 @@
                 dom.gridBrowser.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
                 state.breadcrumbs = state.breadcrumbs.slice(0, index + 1);
                 
-                if (index === 0) { // Clicked on username, go back to repo list
+                if (index === 0) {
                     state.currentRepo = { name: '', owner: '', default_branch: '', has_pages: false };
                     await handleLoadUserRepos();
-                } else { // Clicked on a directory
+                } else {
                     state.currentPath = state.breadcrumbs[index].path;
                     const endpoint = `https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`;
                     try {
@@ -533,57 +550,54 @@
                     } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
                 }
             }
-
-            // --- Gist Logic ---
             
             async function handleLoadGists() {
-                setLoading(dom.statusGists, true);
-                dom.gridGists.innerHTML = '';
-                dom.resultsGists.innerHTML = '';
+                setLoading(dom.statusBrowser, true);
+                resetBrowserUI();
                 try {
                     const gists = await fetchFromGitHub('https://api.github.com/gists?per_page=100');
                     state.gists = gists;
                     renderGists(gists);
-                } catch(error) { showError(dom.statusGists, error.message); } finally { setLoading(dom.statusGists, false); }
+                } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             function renderGists(gists) {
-                dom.gridGists.innerHTML = '';
-                dom.resultsGists.innerHTML = '';
+                dom.gridBrowser.innerHTML = '';
+                dom.resultsBrowser.innerHTML = '';
                 gists.forEach(gist => {
                     const desc = gist.description || Object.keys(gist.files)[0];
                     const gistItem = { ...gist, name: desc, type: 'gist' };
                     const card = createCard(gistItem, () => handleGistClick(gist));
-                    dom.gridGists.appendChild(card);
+                    dom.gridBrowser.appendChild(card);
                 });
             }
             async function handleGistClick(gist) {
-                setLoading(dom.statusGists, true);
-                dom.gridGists.innerHTML = '';
-                dom.resultsGists.innerHTML = '';
+                setLoading(dom.statusBrowser, true);
+                dom.gridBrowser.innerHTML = '';
+                dom.resultsBrowser.innerHTML = '';
                 try {
                     const gistDetails = await fetchFromGitHub(gist.url);
                     const backButton = document.createElement('button');
                     backButton.innerHTML = '&larr; Volver a Gists';
                     backButton.className = "col-span-full text-left font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-4";
                     backButton.onclick = handleLoadGists;
-                    dom.gridGists.appendChild(backButton);
+                    dom.gridBrowser.appendChild(backButton);
 
                     Object.values(gistDetails.files).forEach(file => {
                         const fileItem = { ...file, name: file.filename, type: 'file' };
                         const card = createCard(fileItem, (item, el) => handleGistFileClick(item, el));
-                        dom.gridGists.appendChild(card);
+                        dom.gridBrowser.appendChild(card);
                     });
-                } catch (error) { showError(dom.statusGists, error.message); } finally { setLoading(dom.statusGists, false); }
+                } catch (error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             function handleGistFileClick(file, element) {
-                dom.gridGists.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+                dom.gridBrowser.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
                 if (element) {
                     element.classList.add('selected');
                 }
-                dom.resultsGists.innerHTML = '';
-                renderResult(dom.resultsGists, 'Raw', file.raw_url, file.filename, 'raw', 'text-green-600 dark:text-green-400', true);
+                dom.resultsBrowser.innerHTML = '';
+                renderResult(dom.resultsBrowser, 'Raw', file.raw_url, file.filename, 'raw', 'text-green-600 dark:text-green-400', true);
                 if (file.filename.toLowerCase().endsWith('.md')) {
-                    dom.resultsGists.insertAdjacentHTML('beforeend', `<div class="flex justify-center mt-2"><button type="button" data-url="${file.raw_url}" data-filename="${file.filename}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">Ver Formateado</button></div>`);
+                    dom.resultsBrowser.insertAdjacentHTML('beforeend', `<div class="flex justify-center mt-2"><button type="button" data-url="${file.raw_url}" data-filename="${file.filename}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">Ver Formateado</button></div>`);
                 }
             }
 
