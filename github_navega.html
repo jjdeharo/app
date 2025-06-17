@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.9</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v3.0</p>
             </header>
             
             <!-- Pestañas -->
@@ -105,16 +105,16 @@
                      <div id="results-container-converter" class="results-container mt-4 space-y-4"></div>
                 </div>
 
-                <!-- Pestaña NAVEGAR (y Gists) -->
+                <!-- Pestaña NAVEGAR -->
                 <div id="content-browser" class="tab-content hidden">
                     <div class="space-y-4 border-b border-gray-200 dark:border-gray-700 py-6">
                         
                         <!-- Sección del Token -->
-                        <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
+                        <div id="token-help-banner" class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
                           <p class="text-sm"><strong class="font-semibold">Consejo:</strong> Añadir un Token te permite ver tus repositorios <strong class="font-semibold">privados</strong> y evita que la aplicación se bloquee por exceso de uso al navegar.</p>
                         </div>
                         
-                        <div>
+                        <div id="token-help-details">
                             <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg mb-4">
                                 <summary class="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
                                 <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
@@ -126,15 +126,15 @@
                                     </ol>
                                 </div>
                             </details>
-                            <div class="flex flex-col sm:flex-row items-center gap-4">
-                                <input type="password" id="github-token" placeholder="Opcional: Pega tu Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                                <button type="button" id="clear-token-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap hidden">Olvidar Token</button>
-                            </div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center gap-4">
+                            <input type="password" id="github-token" placeholder="Opcional: Pega tu Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                            <button type="button" id="clear-token-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap hidden">Olvidar Token</button>
                         </div>
                         
                         <hr id="user-section-separator" class="border-gray-200 dark:border-gray-600">
 
-                        <!-- Sección del Usuario / Exploración -->
+                        <!-- Sección de Exploración de Usuario Público (inicialmente oculta si hay token) -->
                         <div id="user-input-section" class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
                              <label for="github-username" class="block text-sm font-medium text-gray-800 dark:text-green-200 mb-2">Escribe un nombre de usuario para explorar sus repositorios públicos:</label>
                             <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -145,11 +145,13 @@
 
                     </div>
                     
-                    <!-- View switcher (Repos vs Gists) -->
-                    <div id="view-switcher" class="mb-4 flex justify-center gap-2 hidden">
-                        <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Repositorios</button>
-                        <button type="button" id="view-gists-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Gists</button>
-                        <button type="button" id="explore-toggle-btn" class="px-4 py-2 font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700">Explorar usuario público</button>
+                    <!-- Controles de Vista y Exploración -->
+                    <div class="flex justify-center items-center flex-wrap gap-4 mt-4">
+                        <div id="view-switcher" class="flex justify-center gap-2 hidden">
+                            <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Repositorios</button>
+                            <button type="button" id="view-gists-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Gists</button>
+                        </div>
+                        <button type="button" id="explore-toggle-btn" class="px-4 py-2 font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700 hidden">Explorar usuario público</button>
                     </div>
 
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -228,11 +230,15 @@
                     previewTitle: document.getElementById('preview-title'),
                     previewBody: document.getElementById('preview-body'), 
                     closePreviewBtn: document.getElementById('close-preview-btn'),
+                    tokenHelpBanner: document.getElementById('token-help-banner'),
+                    tokenHelpDetails: document.getElementById('token-help-details'),
                 });
 
                 const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 applyTheme(savedTheme);
                 state.token = localStorage.getItem('githubToken') || '';
+                dom.userInputSection.classList.remove('hidden'); // Show by default
+                
                 if (state.token) {
                     dom.tokenInput.value = state.token;
                     authenticateWithToken(true);
@@ -313,8 +319,11 @@
                     
                     dom.clearTokenBtn.classList.remove('hidden');
                     dom.viewSwitcher.classList.remove('hidden');
+                    dom.exploreToggleBtn.classList.remove('hidden');
                     dom.userInputSection.classList.add('hidden');
                     dom.userSectionSeparator.classList.add('hidden');
+                    dom.tokenHelpBanner.classList.add('hidden');
+                    dom.tokenHelpDetails.classList.add('hidden');
                     
                     if (loadRepos) {
                         switchBrowserView('repos');
@@ -333,8 +342,11 @@
                 dom.usernameInput.value = '';
                 dom.clearTokenBtn.classList.add('hidden');
                 dom.viewSwitcher.classList.add('hidden');
+                dom.exploreToggleBtn.classList.add('hidden');
                 dom.userInputSection.classList.remove('hidden');
                 dom.userSectionSeparator.classList.remove('hidden');
+                dom.tokenHelpBanner.classList.remove('hidden');
+                dom.tokenHelpDetails.classList.remove('hidden');
                 resetBrowserUI();
                 showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
             };
@@ -424,17 +436,17 @@
             
             function toggleExploreMode() {
                 state.isExploring = !state.isExploring;
-                if(state.isExploring) {
-                    dom.exploreToggleBtn.textContent = '← Volver a mi contenido';
-                    dom.viewSwitcher.classList.add('hidden');
+                if (state.isExploring) {
+                    dom.exploreToggleBtn.textContent = '← Volver a mis repositorios';
                     dom.userInputSection.classList.remove('hidden');
                     dom.usernameInput.value = '';
                     resetBrowserUI();
+                    dom.usernameInput.focus();
                 } else {
                     dom.exploreToggleBtn.textContent = 'Explorar usuario público';
-                    dom.viewSwitcher.classList.remove('hidden');
                     dom.userInputSection.classList.add('hidden');
-                    switchBrowserView('repos');
+                    dom.usernameInput.value = state.authenticatedUser;
+                    switchBrowserView(state.currentBrowserView || 'repos');
                 }
             }
 
