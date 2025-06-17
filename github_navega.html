@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.6</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.7</p>
             </header>
             
             <!-- Pestañas -->
@@ -134,7 +134,7 @@
                         
                         <hr id="user-section-separator" class="border-gray-200 dark:border-gray-600">
 
-                        <!-- Sección del Usuario -->
+                        <!-- Sección del Usuario / Exploración -->
                         <div id="user-input-section">
                              <label for="github-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Escribe un nombre de usuario para explorar sus repositorios:</label>
                             <div class="flex flex-col sm:flex-row items-center gap-4">
@@ -149,6 +149,7 @@
                     <div id="view-switcher" class="mb-4 flex justify-center gap-2 hidden">
                         <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Repositorios</button>
                         <button type="button" id="view-gists-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Gists</button>
+                        <button type="button" id="explore-toggle-btn" class="px-4 py-2 font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700">Explorar otro usuario</button>
                     </div>
 
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -186,7 +187,9 @@
             // --- App State ---
             let state = {
                 token: '',
+                authenticatedUser: '',
                 currentUser: '',
+                isExploring: false,
                 currentBrowserView: 'repos',
                 currentRepo: { name: '', owner: '', default_branch: '', has_pages: false },
                 currentPath: '',
@@ -220,6 +223,7 @@
                     viewSwitcher: document.getElementById('view-switcher'),
                     viewReposBtn: document.getElementById('view-repos-btn'),
                     viewGistsBtn: document.getElementById('view-gists-btn'),
+                    exploreToggleBtn: document.getElementById('explore-toggle-btn'),
                     previewModal: document.getElementById('preview-modal'), 
                     previewTitle: document.getElementById('preview-title'),
                     previewBody: document.getElementById('preview-body'), 
@@ -231,7 +235,6 @@
                 state.token = localStorage.getItem('githubToken') || '';
                 if (state.token) {
                     dom.tokenInput.value = state.token;
-                    dom.clearTokenBtn.classList.remove('hidden');
                     authenticateWithToken(true);
                 }
                 
@@ -258,6 +261,7 @@
                 
                 dom.viewReposBtn.addEventListener('click', () => switchBrowserView('repos'));
                 dom.viewGistsBtn.addEventListener('click', () => switchBrowserView('gists'));
+                dom.exploreToggleBtn.addEventListener('click', toggleExploreMode);
 
                 dom.previewModal.addEventListener('click', (e) => {
                     if (e.target === dom.previewModal) dom.previewModal.classList.add('hidden');
@@ -303,11 +307,15 @@
                 if (!dom.tokenInput.value.trim()) return;
                 try {
                     const user = await fetchFromGitHub('https://api.github.com/user');
+                    state.authenticatedUser = user.login;
                     dom.usernameInput.value = user.login;
                     localStorage.setItem('githubToken', dom.tokenInput.value.trim());
+                    
+                    dom.clearTokenBtn.classList.remove('hidden');
                     dom.viewSwitcher.classList.remove('hidden');
                     dom.userInputSection.classList.add('hidden');
                     dom.userSectionSeparator.classList.add('hidden');
+                    
                     if (loadRepos) {
                         switchBrowserView('repos');
                     }
@@ -318,29 +326,17 @@
             }
             
             function clearSavedToken() {
-                if (localStorage.getItem('githubToken') || dom.tokenInput.value) {
-                    localStorage.removeItem('githubToken');
-                    dom.tokenInput.value = ''; 
-                    state.token = '';
-                    dom.usernameInput.value = '';
-                    dom.clearTokenBtn.classList.add('hidden');
-                    dom.viewSwitcher.classList.add('hidden');
-                    dom.userInputSection.classList.remove('hidden');
-                    dom.userSectionSeparator.classList.remove('hidden');
-                    resetBrowserUI();
-                    showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
-                } else {
-                    const originalText = dom.clearTokenBtn.textContent;
-                    const originalClasses = dom.clearTokenBtn.className;
-                    dom.clearTokenBtn.textContent = 'No hay token';
-                    dom.clearTokenBtn.className = dom.clearTokenBtn.className.replace('bg-red-600', 'bg-gray-400').replace('hover:bg-red-700', 'cursor-not-allowed');
-                    dom.clearTokenBtn.disabled = true;
-                    setTimeout(() => {
-                        dom.clearTokenBtn.textContent = originalText;
-                        dom.clearTokenBtn.className = originalClasses;
-                        dom.clearTokenBtn.disabled = false;
-                    }, 2000);
-                }
+                localStorage.removeItem('githubToken');
+                dom.tokenInput.value = ''; 
+                state.token = '';
+                state.authenticatedUser = '';
+                dom.usernameInput.value = '';
+                dom.clearTokenBtn.classList.add('hidden');
+                dom.viewSwitcher.classList.add('hidden');
+                dom.userInputSection.classList.remove('hidden');
+                dom.userSectionSeparator.classList.remove('hidden');
+                resetBrowserUI();
+                showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
             };
             
             // --- API & UI Helpers ---
@@ -419,9 +415,26 @@
                 updateViewSwitcherUI();
                 resetBrowserUI();
                 if (view === 'repos') {
+                    dom.usernameInput.value = state.authenticatedUser; // Set username for loading
                     handleLoadUserRepos();
                 } else if (view === 'gists') {
                     handleLoadGists();
+                }
+            }
+            
+            function toggleExploreMode() {
+                state.isExploring = !state.isExploring;
+                if(state.isExploring) {
+                    dom.exploreToggleBtn.textContent = '← Volver a mis repositorios';
+                    dom.viewSwitcher.classList.add('hidden');
+                    dom.userInputSection.classList.remove('hidden');
+                    dom.usernameInput.value = '';
+                    resetBrowserUI();
+                } else {
+                    dom.exploreToggleBtn.textContent = 'Explorar otro usuario';
+                    dom.viewSwitcher.classList.remove('hidden');
+                    dom.userInputSection.classList.add('hidden');
+                    switchBrowserView('repos'); // Go back to authenticated user's repos
                 }
             }
 
