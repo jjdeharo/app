@@ -20,7 +20,7 @@
         
         details > summary { list-style: none; }
         details > summary::-webkit-details-marker { display: none; }
-        .modal-content { max-height: 80vh; height: auto; }
+        .modal-content { height: 80vh; }
         
         /* Estilos para Markdown renderizado */
         .prose { --tw-prose-body: #374151; --tw-prose-headings: #111827; --tw-prose-links: #1d4ed8; --tw-prose-code: #111827; --tw-prose-pre-code: #e5e7eb; --tw-prose-pre-bg: #1f2937; --tw-prose-blockquote: #6b7280; --tw-prose-hr: #d1d5db; }
@@ -35,7 +35,7 @@
                  <button id="help-btn" class="absolute top-1/2 -translate-y-1/2 left-0 w-8 h-8 flex items-center justify-center bg-gray-200 text-gray-600 rounded-full hover:bg-gray-300 font-bold text-lg transition-colors">?</button>
                 <h1 class="text-3xl font-bold text-gray-900 mb-2">Navegador de repositorios de GitHub</h1>
                 <p class="text-gray-600">Navega por repositorios y convierte URLs de GitHub.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.1</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v4.2</p>
             </header>
             
             <div class="border-b border-gray-200">
@@ -435,13 +435,11 @@
                         state.currentPath = '';
                         state.breadcrumbs.push({ name: item.name, path: '' });
                         const contents = await fetchFromGitHub(repoDetails.contents_url.replace('{+path}', ''));
-                        renderFolderButton(repoDetails.html_url);
                         renderItemsGrid(contents);
                     } else if (item.type === 'dir') {
                         state.currentPath = item.path;
                         state.breadcrumbs.push({ name: item.name, path: item.path });
                         const contents = await fetchFromGitHub(item.url);
-                        renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}/tree/${state.currentRepo.default_branch}/${state.currentPath}`);
                         renderItemsGrid(contents);
                     } else if (item.type === 'file') {
                         renderResult(dom.resultsBrowser, 'Repo', item.html_url, item.name, 'iframe', 'text-gray-600', false);
@@ -470,20 +468,42 @@
             // --- Rendering ---
             function renderItemsGrid(items, type) {
                 dom.gridBrowser.innerHTML = '';
-                if (!type) { // Infer type if not provided (content of a repo)
+                dom.resultsBrowser.innerHTML = ''; 
+
+                // Action Header Logic (for repo contents)
+                if (!type) {
                     items.sort((a, b) => (a.type === 'dir' ? -1 : 1) - (b.type === 'dir' ? -1 : 1) || a.name.localeCompare(b.name));
+                    
                     const indexHtmlFile = items.find(item => item.name.toLowerCase() === 'index.html' && item.type === 'file');
+                    const folderUrl = `https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}` + (state.currentPath ? `/tree/${state.currentRepo.default_branch}/${state.currentPath}` : '');
+                    
+                    const actionHeader = document.createElement('div');
+                    actionHeader.className = "flex justify-center items-center gap-4 mb-4";
+
+                    const githubButtonHTML = `<a href="${folderUrl}" target="_blank" rel="noopener noreferrer" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg px-5 py-2.5 transition duration-300 inline-flex items-center">
+                                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                            Abrir en GitHub
+                                          </a>`;
+
                     if (indexHtmlFile) {
-                        const btn = document.createElement('button');
-                        btn.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Seleccionar index.html`;
-                        btn.className = 'col-span-full w-full flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-4 py-3 transition duration-300 mb-4';
-                        btn.onclick = () => {
+                        const indexButton = document.createElement('button');
+                        indexButton.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Seleccionar index.html`;
+                        indexButton.className = 'bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-4 py-2.5 transition duration-300 inline-flex items-center';
+                        indexButton.onclick = () => {
                             const card = dom.gridBrowser.querySelector('[data-name="index.html"]');
                             handleItemClick(indexHtmlFile, card, 'file');
                         };
-                        dom.gridBrowser.appendChild(btn);
+                        actionHeader.innerHTML = githubButtonHTML;
+                        actionHeader.appendChild(indexButton);
+                        dom.resultsBrowser.appendChild(actionHeader);
+                    } else if (state.currentRepo.name) {
+                        actionHeader.innerHTML = githubButtonHTML;
+                        dom.resultsBrowser.appendChild(actionHeader);
                     }
-                } else if (type === 'repo') {
+                }
+
+                // Grid rendering logic
+                if (type === 'repo') {
                     items.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
                 }
                 
@@ -557,14 +577,6 @@
                             <button type="button" data-target="${id}" class="copy-btn ${baseBtnClass} bg-blue-600 hover:bg-blue-700">Copiar</button>
                         </div>
                     </div>`);
-            }
-
-            function renderFolderButton(url) {
-                dom.resultsBrowser.innerHTML = `<div class="flex justify-center">
-                        <a href="${url}" target="_blank" rel="noopener noreferrer" class="bg-gray-500 hover:bg-gray-600 text-white font-semibold rounded-lg px-5 py-2.5 transition duration-300 inline-flex items-center">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
-                            Abrir en GitHub
-                        </a></div>`;
             }
 
             function createCard(item, type) {
