@@ -83,8 +83,8 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 mt-16">
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
-                <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por tus repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.4</p>
+                <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por repositorios o explora tus Gists.</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.7</p>
             </header>
             
             <!-- Pestañas -->
@@ -108,12 +108,19 @@
 
                 <!-- Pestaña NAVEGAR -->
                 <div id="content-browser" class="tab-content hidden">
-                    <div class="space-y-2 border-b border-gray-200 dark:border-gray-700 py-6">
+                    <div class="space-y-4 border-b border-gray-200 dark:border-gray-700 py-6">
                         <div class="flex flex-col sm:flex-row items-center gap-4">
-                            <input type="password" id="github-token" placeholder="Pega tu Personal Access Token aquí" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                            <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                             <button id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar Repositorios</button>
+                        </div>
+                        <div class="bg-blue-100 dark:bg-blue-900/50 border-l-4 border-blue-500 text-blue-800 dark:text-blue-200 p-4 rounded-r-lg" role="alert">
+                          <p class="text-sm">Para ver repositorios <strong class="font-semibold">privados</strong> o <strong class="font-semibold">aumentar el límite de acceso</strong> (de 60 a 5000 peticiones/hora), introduce un Token de Acceso Personal a continuación.</p>
+                        </div>
+                        <div class="flex flex-col sm:flex-row items-center gap-4">
+                            <input type="password" id="github-token" placeholder="Opcional: Pega tu Token de Acceso Personal" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                             <button id="clear-token-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Olvidar Token</button>
                         </div>
-                        <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg mt-4">
+                         <details class="bg-gray-100 dark:bg-gray-900/50 p-4 rounded-lg">
                             <summary class="font-semibold text-gray-700 dark:text-gray-300 cursor-pointer">Cómo obtener un Token de Acceso Personal</summary>
                             <div class="mt-4 text-sm text-gray-600 dark:text-gray-400 space-y-3">
                                 <ol class="list-decimal list-inside space-y-2">
@@ -134,9 +141,11 @@
 
                  <!-- Pestaña GISTS -->
                 <div id="content-gists" class="tab-content hidden">
-                    <input type="search" id="search-gists" placeholder="Filtrar por descripción..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
+                    <div id="gists-auth-message" class="text-center p-4"></div>
+                    <input type="search" id="search-gists" placeholder="Filtrar por descripción..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hidden">
                     <div id="status-container-gists" class="status-container mt-4"></div>
                     <div id="content-grid-gists" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"></div>
+                    <div id="results-container-gists" class="results-container mt-4 space-y-4"></div>
                 </div>
             </div>
         </div>
@@ -168,7 +177,7 @@
             let state = {
                 token: '',
                 currentUser: '',
-                currentRepo: { name: '', default_branch: '', has_pages: false },
+                currentRepo: { name: '', owner: '', default_branch: '', has_pages: false },
                 currentPath: '',
                 breadcrumbs: [],
                 gists: [],
@@ -178,23 +187,41 @@
             function initializeApp() {
                 // Populate DOM object
                 Object.assign(dom, {
-                    tokenInput: document.getElementById('github-token'), clearTokenBtn: document.getElementById('clear-token-btn'),
-                    themeToggleButton: document.getElementById('theme-toggle'), root: document.documentElement,
-                    tabs: document.querySelectorAll('.tab-btn'), tabContents: document.querySelectorAll('.tab-content'),
-                    statusBrowser: document.getElementById('status-container-browser'), searchBrowser: document.getElementById('search-browser'),
-                    breadcrumbs: document.getElementById('breadcrumbs'), gridBrowser: document.getElementById('content-grid-browser'),
-                    resultsBrowser: document.getElementById('results-container-browser'), urlInput: document.getElementById('url-input'),
-                    convertUrlBtn: document.getElementById('convert-url-btn'), statusConverter: document.getElementById('status-container-converter'),
-                    resultsConverter: document.getElementById('results-container-converter'), searchGists: document.getElementById('search-gists'),
-                    statusGists: document.getElementById('status-container-gists'), gridGists: document.getElementById('content-grid-gists'),
-                    previewModal: document.getElementById('preview-modal'), previewTitle: document.getElementById('preview-title'),
-                    previewBody: document.getElementById('preview-body'), closePreviewBtn: document.getElementById('close-preview-btn'),
+                    tokenInput: document.getElementById('github-token'), 
+                    clearTokenBtn: document.getElementById('clear-token-btn'),
+                    usernameInput: document.getElementById('github-username'),
+                    loadUserReposBtn: document.getElementById('load-user-repos-btn'),
+                    themeToggleButton: document.getElementById('theme-toggle'), 
+                    root: document.documentElement,
+                    tabs: document.querySelectorAll('.tab-btn'), 
+                    tabContents: document.querySelectorAll('.tab-content'),
+                    statusBrowser: document.getElementById('status-container-browser'), 
+                    searchBrowser: document.getElementById('search-browser'),
+                    breadcrumbs: document.getElementById('breadcrumbs'), 
+                    gridBrowser: document.getElementById('content-grid-browser'),
+                    resultsBrowser: document.getElementById('results-container-browser'), 
+                    urlInput: document.getElementById('url-input'),
+                    convertUrlBtn: document.getElementById('convert-url-btn'), 
+                    statusConverter: document.getElementById('status-container-converter'),
+                    resultsConverter: document.getElementById('results-container-converter'), 
+                    searchGists: document.getElementById('search-gists'),
+                    statusGists: document.getElementById('status-container-gists'), 
+                    gridGists: document.getElementById('content-grid-gists'),
+                    resultsGists: document.getElementById('results-container-gists'),
+                    gistsAuthMessage: document.getElementById('gists-auth-message'),
+                    previewModal: document.getElementById('preview-modal'), 
+                    previewTitle: document.getElementById('preview-title'),
+                    previewBody: document.getElementById('preview-body'), 
+                    closePreviewBtn: document.getElementById('close-preview-btn'),
                 });
 
                 const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
                 applyTheme(savedTheme);
                 state.token = localStorage.getItem('githubToken') || '';
-                if (state.token) dom.tokenInput.value = state.token;
+                if (state.token) {
+                    dom.tokenInput.value = state.token;
+                    authenticateWithToken();
+                }
                 
                 switchTab('content-converter');
                 addEventListeners();
@@ -203,6 +230,7 @@
             function addEventListeners() {
                 dom.tabs.forEach(tab => tab.addEventListener('click', () => switchTab(`content-${tab.id.split('-')[1]}`)));
                 dom.clearTokenBtn.addEventListener('click', clearSavedToken);
+                dom.loadUserReposBtn.addEventListener('click', handleLoadUserRepos);
                 dom.themeToggleButton.addEventListener('click', toggleTheme);
                 dom.convertUrlBtn.addEventListener('click', handleUrlConversion);
                 dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
@@ -235,10 +263,18 @@
                 });
                 dom.tabContents.forEach(content => content.classList.toggle('hidden', content.id !== targetId));
 
-                if (targetId === 'content-browser' && dom.tokenInput.value.trim() && !dom.gridBrowser.innerHTML.trim() && !dom.breadcrumbs.innerHTML.trim()) {
-                    handleLoadRepos();
-                } else if (targetId === 'content-gists' && dom.tokenInput.value.trim() && state.gists.length === 0) {
-                    handleLoadGists();
+                if (targetId === 'content-gists') {
+                    state.token = dom.tokenInput.value.trim();
+                    if (state.token) {
+                        dom.gistsAuthMessage.innerHTML = '';
+                        dom.searchGists.classList.remove('hidden');
+                        if (dom.gridGists.children.length === 0) handleLoadGists();
+                    } else {
+                        dom.gridGists.innerHTML = '';
+                        dom.resultsGists.innerHTML = '';
+                        dom.searchGists.classList.add('hidden');
+                        showError(dom.gistsAuthMessage, 'Se necesita un Token de Acceso Personal para ver los gists.');
+                    }
                 }
             }
             
@@ -254,37 +290,49 @@
                 applyTheme(newTheme);
             };
 
-            const clearSavedToken = () => {
+            async function authenticateWithToken() {
+                try {
+                    const user = await fetchFromGitHub('https://api.github.com/user');
+                    dom.usernameInput.value = user.login;
+                    dom.usernameInput.disabled = true;
+                    localStorage.setItem('githubToken', dom.tokenInput.value.trim());
+                } catch(e) {
+                    clearSavedToken();
+                    showError(dom.statusBrowser, "Token no válido o caducado.");
+                }
+            }
+            
+            function clearSavedToken() {
                 localStorage.removeItem('githubToken');
-                dom.tokenInput.value = ''; state.token = '';
-                resetFullUI();
-                showError(dom.statusBrowser, 'Token olvidado. La página se ha reiniciado.');
+                dom.tokenInput.value = ''; 
+                state.token = '';
+                dom.usernameInput.value = '';
+                dom.usernameInput.disabled = false;
+                resetBrowserUI();
+                showError(dom.statusBrowser, 'Token olvidado. Introduce un usuario para explorar repositorios públicos.');
             };
-
+            
             // --- API & UI Helpers ---
-            async function fetchFromGitHub(endpoint) {
+            async function fetchFromGitHub(url) {
                 state.token = dom.tokenInput.value.trim();
-                if (!state.token) {
-                    let message = 'Se necesita un Token de Acceso Personal de GitHub.';
-                    if (endpoint.startsWith('/repos/')) {
-                       const response = await fetch(`https://api.github.com${endpoint}`);
-                       if (response.ok) return response.json();
-                    }
-                    throw new Error(message + ' Introdúcelo en la pestaña "Navegar".');
+                const headers = { 'Accept': 'application/vnd.github.v3+json' };
+                if (state.token) {
+                    headers['Authorization'] = `token ${state.token}`;
                 }
 
-                const url = `https://api.github.com${endpoint}`;
-                const headers = { 'Authorization': `token ${state.token}`, 'Accept': 'application/vnd.github.v3+json' };
                 const response = await fetch(url, { headers });
+
                 if (!response.ok) {
-                    const errorData = await response.json();
-                    if(response.status === 401) {
+                    const errorData = await response.json().catch(() => ({ message: `Error ${response.status}` }));
+                    if (response.status === 403 && response.headers.get('X-RateLimit-Remaining') === '0') {
+                        throw new Error("Límite de acceso a la API de GitHub alcanzado. Por favor, introduce un token o espera una hora.");
+                    }
+                    if (response.status === 401) {
                          clearSavedToken();
-                         throw new Error("Token no válido o caducado. Introduce uno nuevo.");
+                         throw new Error("Token no válido o caducado.");
                     }
                     throw new Error(errorData.message || `Error ${response.status}`);
                 }
-                localStorage.setItem('githubToken', state.token);
                 return response.json();
             }
 
@@ -294,11 +342,14 @@
             function showError(statusEl, message) {
                 statusEl.innerHTML = `<p class="text-red-500 font-semibold text-center">${message}</p>`;
             }
-            function resetFullUI() {
-                dom.gridBrowser.innerHTML = ''; dom.breadcrumbs.innerHTML = '';
-                dom.resultsBrowser.innerHTML = ''; dom.gridGists.innerHTML = '';
-                state.currentUser = ''; state.currentRepo = { name: '', default_branch: '', has_pages: false }; 
-                state.currentPath = ''; state.breadcrumbs = []; state.gists = [];
+            function resetBrowserUI() {
+                dom.gridBrowser.innerHTML = ''; 
+                dom.breadcrumbs.innerHTML = '';
+                dom.resultsBrowser.innerHTML = '';
+                state.currentUser = ''; 
+                state.currentRepo = { name: '', owner: '', default_branch: '', has_pages: false };
+                state.currentPath = ''; 
+                state.breadcrumbs = [];
             }
             function renderResult(container, label, url, filename, previewType, labelColorClass = 'text-gray-600 dark:text-gray-300', showPreviewButton = true) {
                 const id = `url-${Math.random().toString(36).substr(2, 9)}`;
@@ -331,20 +382,38 @@
                 });
             }
 
-            // --- Main Logic ---
+            // --- Browser Logic ---
             
-            async function handleLoadRepos() {
+            async function handleLoadUserRepos() {
                 setLoading(dom.statusBrowser, true);
-                resetFullUI();
+                resetBrowserUI();
+                
+                // If a token is present, validate it and get the username
+                if (dom.tokenInput.value.trim()) {
+                    await authenticateWithToken();
+                }
+
+                let userToFetch = dom.usernameInput.value.trim();
+                
+                if (!userToFetch) {
+                    showError(dom.statusBrowser, "Por favor, introduce un nombre de usuario.");
+                    setLoading(dom.statusBrowser, false);
+                    return;
+                }
+                
                 try {
-                    const user = await fetchFromGitHub('/user');
-                    state.currentUser = user.login;
+                    const repos = await fetchFromGitHub(`https://api.github.com/users/${userToFetch}/repos?per_page=100&sort=updated`);
+                    state.currentUser = userToFetch;
                     state.breadcrumbs = [{ name: state.currentUser, path: '' }];
                     renderBreadcrumbs();
-                    const repos = await fetchFromGitHub('/user/repos?per_page=100&sort=updated');
                     renderRepos(repos);
-                } catch (error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
+                } catch (error) {
+                    showError(dom.statusBrowser, error.message);
+                } finally {
+                    setLoading(dom.statusBrowser, false);
+                }
             }
+
             function renderRepos(repos) {
                 dom.gridBrowser.innerHTML = '';
                 repos.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
@@ -364,38 +433,29 @@
                 setLoading(dom.statusBrowser, true);
                 
                 try {
-                    // Case 1: Clicking a repository from the root list
                     if (item.full_name && !state.currentRepo.name) {
-                        const repoDetails = await fetchFromGitHub(`/repos/${item.full_name}`);
-                        state.currentRepo = { name: repoDetails.name, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
+                        const repoDetails = await fetchFromGitHub(`https://api.github.com/repos/${item.full_name}`);
+                        state.currentRepo = { name: repoDetails.name, owner: repoDetails.owner.login, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
                         state.currentPath = '';
                         state.breadcrumbs.push({ name: item.name, path: '' });
-                        const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/`);
+                        const contents = await fetchFromGitHub(`https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/`);
                         renderItems(contents);
                     } 
-                    // Case 2: Clicking a directory inside a repository
                     else if (item.type === 'dir') {
                         state.currentPath = item.path;
                         state.breadcrumbs.push({ name: item.name, path: item.path });
-                        const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}`);
+                        const contents = await fetchFromGitHub(`https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`);
                         renderItems(contents);
                     } 
-                    // Case 3: Clicking a file
                     else if (item.type === 'file') {
                         renderResult(dom.resultsBrowser, 'Repo', item.html_url, item.name, 'iframe', 'text-gray-600 dark:text-gray-300', false);
                         renderResult(dom.resultsBrowser, 'Raw', item.download_url, item.name, 'raw', 'text-green-600 dark:text-green-400', true);
                         if (state.currentRepo.has_pages) {
-                             const pagesUrl = `https://${state.currentUser}.github.io/${state.currentRepo.name}/${item.path}`;
+                             const pagesUrl = `https://${state.currentRepo.owner}.github.io/${state.currentRepo.name}/${item.path}`;
                              renderResult(dom.resultsBrowser, 'Pages', pagesUrl, item.name, 'iframe', 'text-teal-600 dark:text-teal-300', true);
                         }
-                        // Add special button for MD files
                         if (item.name.toLowerCase().endsWith('.md')) {
-                            dom.resultsBrowser.insertAdjacentHTML('beforeend', `
-                                <div class="flex justify-center mt-2">
-                                    <button data-url="${item.download_url}" data-filename="${item.name}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">
-                                        Ver Formateado
-                                    </button>
-                                </div>`);
+                            dom.resultsBrowser.insertAdjacentHTML('beforeend', `<div class="flex justify-center mt-2"><button data-url="${item.download_url}" data-filename="${item.name}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">Ver Formateado</button></div>`);
                         }
                     }
                     renderBreadcrumbs();
@@ -425,41 +485,75 @@
                 dom.resultsBrowser.innerHTML = '';
                 dom.gridBrowser.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
                 state.breadcrumbs = state.breadcrumbs.slice(0, index + 1);
-                state.currentPath = state.breadcrumbs[index].path;
-                if (index === 0) { state.currentRepo = { name: '', default_branch: '', has_pages: false }; }
-                const endpoint = state.currentRepo.name ? `/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}` : '/user/repos?per_page=100&sort=updated';
-                try {
-                    const data = await fetchFromGitHub(endpoint);
-                    if (state.currentRepo.name) { renderItems(data); } else { renderRepos(data); }
-                    renderBreadcrumbs();
-                } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
+                
+                if (index === 0) { // Clicked on username, go back to repo list
+                    state.currentRepo = { name: '', owner: '', default_branch: '', has_pages: false };
+                    await handleLoadUserRepos();
+                } else { // Clicked on a directory
+                    state.currentPath = state.breadcrumbs[index].path;
+                    const endpoint = `https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`;
+                    try {
+                        const data = await fetchFromGitHub(endpoint);
+                        renderItems(data);
+                    } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
+                }
             }
+
+            // --- Gist Logic ---
             
             async function handleLoadGists() {
                 setLoading(dom.statusGists, true);
+                dom.gridGists.innerHTML = '';
+                dom.resultsGists.innerHTML = '';
                 try {
-                    const gists = await fetchFromGitHub('/gists?per_page=100');
+                    const gists = await fetchFromGitHub('https://api.github.com/gists?per_page=100');
                     state.gists = gists;
                     renderGists(gists);
                 } catch(error) { showError(dom.statusGists, error.message); } finally { setLoading(dom.statusGists, false); }
             }
             function renderGists(gists) {
                 dom.gridGists.innerHTML = '';
+                dom.resultsGists.innerHTML = '';
                 gists.forEach(gist => {
                     const desc = gist.description || Object.keys(gist.files)[0];
-                    const gistItem = { name: desc, type: 'gist' };
-                    const card = createCard(gistItem, () => {
-                        dom.gridGists.innerHTML = '';
-                        Object.values(gist.files).forEach(file => {
-                            const fileItem = { name: file.filename, type: 'file' };
-                            const fileCard = createCard(fileItem, () => showPreview(file.filename, file.raw_url, 'raw'));
-                            dom.gridGists.appendChild(fileCard);
-                        });
-                    });
+                    const gistItem = { ...gist, name: desc, type: 'gist' };
+                    const card = createCard(gistItem, () => handleGistClick(gist));
                     dom.gridGists.appendChild(card);
                 });
             }
+            async function handleGistClick(gist) {
+                setLoading(dom.statusGists, true);
+                dom.gridGists.innerHTML = '';
+                dom.resultsGists.innerHTML = '';
+                try {
+                    const gistDetails = await fetchFromGitHub(gist.url);
+                    const backButton = document.createElement('button');
+                    backButton.innerHTML = '&larr; Volver a Gists';
+                    backButton.className = "col-span-full text-left font-semibold text-blue-600 dark:text-blue-400 hover:underline mb-4";
+                    backButton.onclick = handleLoadGists;
+                    dom.gridGists.appendChild(backButton);
 
+                    Object.values(gistDetails.files).forEach(file => {
+                        const fileItem = { ...file, name: file.filename, type: 'file' };
+                        const card = createCard(fileItem, (item, el) => handleGistFileClick(item, el));
+                        dom.gridGists.appendChild(card);
+                    });
+                } catch (error) { showError(dom.statusGists, error.message); } finally { setLoading(dom.statusGists, false); }
+            }
+            function handleGistFileClick(file, element) {
+                dom.gridGists.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+                if (element) {
+                    element.classList.add('selected');
+                }
+                dom.resultsGists.innerHTML = '';
+                renderResult(dom.resultsGists, 'Raw', file.raw_url, file.filename, 'raw', 'text-green-600 dark:text-green-400', true);
+                if (file.filename.toLowerCase().endsWith('.md')) {
+                    dom.resultsGists.insertAdjacentHTML('beforeend', `<div class="flex justify-center mt-2"><button data-url="${file.raw_url}" data-filename="${file.filename}" data-type="markdown" class="preview-btn w-full md:w-auto bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">Ver Formateado</button></div>`);
+                }
+            }
+
+
+            // --- Converter Logic ---
             async function handleUrlConversion() {
                 setLoading(dom.statusConverter, true);
                 dom.resultsConverter.innerHTML = '';
@@ -487,7 +581,7 @@
                 const filename = effectivePath.split('/').pop();
 
                 try {
-                    const repoData = await fetchFromGitHub(`/repos/${user}/${repo.replace(/\/$/, '')}`);
+                    const repoData = await fetchFromGitHub(`https://api.github.com/repos/${user}/${repo.replace(/\/$/, '')}`);
                     const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (effectivePath ? `/blob/${repoData.default_branch}/${effectivePath}` : '');
                     renderResult(dom.resultsConverter, 'Repo', githubUrl, filename, 'iframe', 'text-gray-600 dark:text-gray-300', false);
 
@@ -504,13 +598,13 @@
                 } catch (error) { showError(dom.statusConverter, `Error: ${error.message}`); } finally { setLoading(dom.statusConverter, false); }
             }
             
+            // --- Preview & Card Creation ---
             async function showPreview(filename, url, type = 'raw') {
                 dom.previewTitle.textContent = filename;
                 dom.previewBody.innerHTML = ''; 
                 dom.previewBody.className = 'p-4 overflow-auto flex-grow'; // Reset class
                 dom.previewModal.classList.remove('hidden');
                 
-                // Common loading indicator
                 dom.previewBody.innerHTML = '<div class="flex justify-center items-center h-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
 
                 try {
@@ -519,7 +613,6 @@
                         return;
                     }
                     
-                    // Logic for raw text, images, and markdown
                     const extension = filename.split('.').pop().toLowerCase();
                     const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'];
 
