@@ -57,7 +57,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs, navega por tus repositorios o explora tus Gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.2</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v1.3</p>
             </header>
             
             <!-- Pestañas -->
@@ -273,14 +273,17 @@
                 state.currentUser = ''; state.currentRepo = { name: '', default_branch: '', has_pages: false }; 
                 state.currentPath = ''; state.breadcrumbs = []; state.gists = [];
             }
-            function renderResult(container, label, url, filename, previewType, labelColorClass = 'text-gray-600 dark:text-gray-300') {
+            function renderResult(container, label, url, filename, previewType, labelColorClass = 'text-gray-600 dark:text-gray-300', showPreviewButton = true) {
                 const id = `url-${Math.random().toString(36).substr(2, 9)}`;
+                const previewButtonHTML = showPreviewButton 
+                    ? `<button data-url="${url}" data-filename="${filename}" data-type="${previewType}" class="preview-btn flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm">Previsualizar</button>`
+                    : '';
                 container.insertAdjacentHTML('beforeend', `
                     <div class="flex flex-col md:flex-row items-center justify-between gap-4 bg-gray-100 dark:bg-gray-700/60 rounded-lg p-3">
                         <strong class="${labelColorClass} whitespace-nowrap">${label}:</strong>
                         <p id="${id}" class="font-mono break-all text-sm flex-grow text-left md:text-right">${url}</p>
                         <div class="flex gap-2 w-full md:w-auto">
-                            <button data-url="${url}" data-filename="${filename}" data-type="${previewType}" class="preview-btn flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm">Previsualizar</button>
+                            ${previewButtonHTML}
                             <button data-url="${url}" class="open-btn flex-1 bg-sky-600 hover:bg-sky-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm">Abrir</button>
                             <button data-target="${id}" class="copy-btn flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm">Copiar</button>
                         </div>
@@ -352,11 +355,11 @@
                     } 
                     // Case 3: Clicking a file
                     else if (item.type === 'file') {
-                        renderResult(dom.resultsBrowser, 'Repo', item.html_url, item.name, 'iframe');
-                        renderResult(dom.resultsBrowser, 'Raw', item.download_url, item.name, 'raw', 'text-green-600 dark:text-green-400');
+                        renderResult(dom.resultsBrowser, 'Repo', item.html_url, item.name, 'iframe', 'text-gray-600 dark:text-gray-300', false);
+                        renderResult(dom.resultsBrowser, 'Raw', item.download_url, item.name, 'raw', 'text-green-600 dark:text-green-400', true);
                         if (state.currentRepo.has_pages) {
                              const pagesUrl = `https://${state.currentUser}.github.io/${state.currentRepo.name}/${item.path}`;
-                             renderResult(dom.resultsBrowser, 'Pages', pagesUrl, item.name, 'iframe', 'text-teal-600 dark:text-teal-300');
+                             renderResult(dom.resultsBrowser, 'Pages', pagesUrl, item.name, 'iframe', 'text-teal-600 dark:text-teal-300', true);
                         }
                     }
                     renderBreadcrumbs();
@@ -450,15 +453,15 @@
                 try {
                     const repoData = await fetchFromGitHub(`/repos/${user}/${repo.replace(/\/$/, '')}`);
                     const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (effectivePath ? `/blob/${repoData.default_branch}/${effectivePath}` : '');
-                    renderResult(dom.resultsConverter, 'Repo', githubUrl, filename, 'iframe');
+                    renderResult(dom.resultsConverter, 'Repo', githubUrl, filename, 'iframe', 'text-gray-600 dark:text-gray-300', false);
 
                     if (effectivePath) {
                         const rawUrl = `https://raw.githubusercontent.com/${repoData.owner.login}/${repoData.name}/${repoData.default_branch}/${effectivePath}`;
-                        renderResult(dom.resultsConverter, 'Raw', rawUrl, filename, 'raw', 'text-green-600 dark:text-green-400');
+                        renderResult(dom.resultsConverter, 'Raw', rawUrl, filename, 'raw', 'text-green-600 dark:text-green-400', true);
                     }
                     if (repoData.has_pages) {
                         const pagesUrl = `https://${repoData.owner.login}.github.io/${repoData.name}/${effectivePath}`;
-                        renderResult(dom.resultsConverter, 'Pages', pagesUrl, filename, 'iframe', 'text-teal-600 dark:text-teal-300');
+                        renderResult(dom.resultsConverter, 'Pages', pagesUrl, filename, 'iframe', 'text-teal-600 dark:text-teal-300', true);
                     } else if (effectivePath) {
                         dom.resultsConverter.insertAdjacentHTML('beforeend', '<p class="text-center text-gray-500 mt-4">Este repositorio no tiene GitHub Pages activado.</p>');
                     }
@@ -491,7 +494,7 @@
                         codeEl.textContent = text;
                         const preEl = document.createElement('pre');
                         preEl.className = 'whitespace-pre-wrap break-all text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-md';
-                        preEl.appendChild(preEl);
+                        preEl.appendChild(codeEl); // BUG FIX: Was preEl.appendChild(preEl)
                         dom.previewBody.innerHTML = '';
                         dom.previewBody.appendChild(preEl);
                     }
@@ -504,8 +507,6 @@
                 const card = document.createElement('div');
                 card.className = 'item-card bg-white dark:bg-gray-700/60 p-3 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 shadow';
                 
-                // Repos from the initial list don't have a 'type' property from the API. We'll treat them as 'repo'.
-                // Gist files also lack a type, so we default to 'file'.
                 const type = item.type || (item.full_name ? 'repo' : 'file');
                 card.dataset.name = item.name;
                 
