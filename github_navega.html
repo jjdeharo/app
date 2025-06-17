@@ -84,7 +84,7 @@
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
                 <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.7</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v2.8</p>
             </header>
             
             <!-- Pestañas -->
@@ -135,11 +135,11 @@
                         <hr id="user-section-separator" class="border-gray-200 dark:border-gray-600">
 
                         <!-- Sección del Usuario / Exploración -->
-                        <div id="user-input-section">
-                             <label for="github-username" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Escribe un nombre de usuario para explorar sus repositorios:</label>
+                        <div id="user-input-section" class="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                             <label for="github-username" class="block text-sm font-medium text-gray-800 dark:text-green-200 mb-2">Escribe un nombre de usuario para explorar sus repositorios públicos:</label>
                             <div class="flex flex-col sm:flex-row items-center gap-4">
-                                <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                                <button type="button" id="load-user-repos-btn" class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar</button>
+                                <input type="text" id="github-username" placeholder="Nombre de usuario de GitHub" class="flex-grow w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-green-500 focus:outline-none transition">
+                                <button type="button" id="load-user-repos-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Cargar</button>
                             </div>
                         </div>
 
@@ -149,7 +149,7 @@
                     <div id="view-switcher" class="mb-4 flex justify-center gap-2 hidden">
                         <button type="button" id="view-repos-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Repositorios</button>
                         <button type="button" id="view-gists-btn" class="view-btn px-4 py-2 font-semibold rounded-lg">Mis Gists</button>
-                        <button type="button" id="explore-toggle-btn" class="px-4 py-2 font-semibold rounded-lg bg-green-600 text-white hover:bg-green-700">Explorar otro usuario</button>
+                        <button type="button" id="explore-toggle-btn" class="px-4 py-2 font-semibold rounded-lg bg-teal-600 text-white hover:bg-teal-700">Explorar usuario público</button>
                     </div>
 
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
@@ -415,7 +415,7 @@
                 updateViewSwitcherUI();
                 resetBrowserUI();
                 if (view === 'repos') {
-                    dom.usernameInput.value = state.authenticatedUser; // Set username for loading
+                    dom.usernameInput.value = state.authenticatedUser; 
                     handleLoadUserRepos();
                 } else if (view === 'gists') {
                     handleLoadGists();
@@ -425,13 +425,13 @@
             function toggleExploreMode() {
                 state.isExploring = !state.isExploring;
                 if(state.isExploring) {
-                    dom.exploreToggleBtn.textContent = '← Volver a mis repositorios';
+                    dom.exploreToggleBtn.textContent = '← Volver a mi contenido';
                     dom.viewSwitcher.classList.add('hidden');
                     dom.userInputSection.classList.remove('hidden');
                     dom.usernameInput.value = '';
                     resetBrowserUI();
                 } else {
-                    dom.exploreToggleBtn.textContent = 'Explorar otro usuario';
+                    dom.exploreToggleBtn.textContent = 'Explorar usuario público';
                     dom.viewSwitcher.classList.remove('hidden');
                     dom.userInputSection.classList.add('hidden');
                     switchBrowserView('repos'); // Go back to authenticated user's repos
