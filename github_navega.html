@@ -64,8 +64,8 @@
                         <input type="text" id="url-input" placeholder="Pega aquí una URL de GitHub o de Pages" class="flex-grow w-full bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
                         <button id="convert-url-btn" class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300 whitespace-nowrap">Convertir</button>
                     </div>
-                    <div id="status-container-converter" class="status-container"></div>
-                     <div id="results-container-converter" class="results-container"></div>
+                    <div id="status-container-converter" class="status-container mt-4"></div>
+                     <div id="results-container-converter" class="results-container mt-4 space-y-4"></div>
                 </div>
 
                 <!-- Pestaña NAVEGAR -->
@@ -88,21 +88,17 @@
                         </details>
                     </div>
                     <input type="search" id="search-browser" placeholder="Filtrar por nombre..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                    <div id="status-container-browser" class="status-container"></div>
+                    <div id="status-container-browser" class="status-container mt-4"></div>
                     <nav id="breadcrumbs" class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 flex-wrap my-4"></nav>
-                    <div class="content-list-container">
-                        <div id="content-grid-browser" class="content-grid"></div>
-                    </div>
-                    <div id="results-container-browser" class="results-container"></div>
+                    <div id="content-grid-browser" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                    <div id="results-container-browser" class="results-container mt-4 space-y-4"></div>
                 </div>
 
                  <!-- Pestaña GISTS -->
                 <div id="content-gists" class="tab-content hidden">
                     <input type="search" id="search-gists" placeholder="Filtrar por descripción..." class="w-full mt-4 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition">
-                    <div id="status-container-gists" class="status-container"></div>
-                    <div class="content-list-container">
-                        <div id="content-grid-gists" class="content-grid"></div>
-                    </div>
+                    <div id="status-container-gists" class="status-container mt-4"></div>
+                    <div id="content-grid-gists" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4"></div>
                 </div>
             </div>
         </div>
@@ -151,7 +147,6 @@
                     tabs: document.querySelectorAll('.tab-btn'),
                     tabContents: document.querySelectorAll('.tab-content'),
                     // Browser
-                    loadReposBtn: document.getElementById('load-repos-btn'),
                     statusBrowser: document.getElementById('status-container-browser'),
                     searchBrowser: document.getElementById('search-browser'),
                     breadcrumbs: document.getElementById('breadcrumbs'),
@@ -188,7 +183,6 @@
                 dom.clearTokenBtn.addEventListener('click', clearSavedToken);
                 dom.themeToggleButton.addEventListener('click', toggleTheme);
                 dom.convertUrlBtn.addEventListener('click', handleUrlConversion);
-                if (dom.loadReposBtn) dom.loadReposBtn.addEventListener('click', handleLoadRepos);
                 dom.searchBrowser.addEventListener('input', (e) => filterGrid(dom.gridBrowser, e.target.value));
                 dom.searchGists.addEventListener('input', (e) => filterGrid(dom.gridGists, e.target.value));
                 dom.closePreviewBtn.addEventListener('click', () => dom.previewModal.classList.add('hidden'));
@@ -241,7 +235,16 @@
             // --- API & UI Helpers ---
             async function fetchFromGitHub(endpoint) {
                 state.token = dom.tokenInput.value.trim();
-                if (!state.token) throw new Error('Se necesita un Token de Acceso. Introdúcelo en la pestaña "Navegar".');
+                if (!state.token) {
+                    let message = 'Se necesita un Token de Acceso Personal de GitHub.';
+                    if (endpoint.startsWith('/repos/')) {
+                       // Converter tab can work without a token for public repos
+                       const response = await fetch(`https://api.github.com${endpoint}`);
+                       if (response.ok) return response.json();
+                    }
+                    throw new Error(message + ' Introdúcelo en la pestaña "Navegar".');
+                }
+
                 const url = `https://api.github.com${endpoint}`;
                 const headers = { 'Authorization': `token ${state.token}`, 'Accept': 'application/vnd.github.v3+json' };
                 const response = await fetch(url, { headers });
@@ -249,7 +252,7 @@
                     const errorData = await response.json();
                     if(response.status === 401) {
                          clearSavedToken();
-                         throw new Error("Token no válido o caducado.");
+                         throw new Error("Token no válido o caducado. Introduce uno nuevo.");
                     }
                     throw new Error(errorData.message || `Error ${response.status}`);
                 }
@@ -258,14 +261,14 @@
             }
 
             function setLoading(statusEl, isLoading) {
-                statusEl.innerHTML = isLoading ? `<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>` : '';
+                statusEl.innerHTML = isLoading ? `<div class="flex justify-center items-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>` : '';
             }
             function showError(statusEl, message) {
-                statusEl.innerHTML = `<p class="text-red-500 font-semibold">${message}</p>`;
+                statusEl.innerHTML = `<p class="text-red-500 font-semibold text-center">${message}</p>`;
             }
             function resetFullUI() {
                 dom.gridBrowser.innerHTML = ''; dom.breadcrumbs.innerHTML = '';
-                dom.resultsBrowser.innerHTML = ''; dom.resultsConverter.innerHTML = ''; dom.gridGists.innerHTML = '';
+                dom.resultsBrowser.innerHTML = ''; dom.gridGists.innerHTML = '';
                 state.currentUser = ''; state.currentRepo = { name: '', default_branch: '', has_pages: false }; 
                 state.currentPath = ''; state.breadcrumbs = []; state.gists = [];
             }
@@ -318,7 +321,8 @@
             }
             function renderRepos(repos) {
                 dom.gridBrowser.innerHTML = '';
-                 repos.forEach(repo => {
+                repos.sort((a,b) => new Date(b.updated_at) - new Date(a.updated_at));
+                repos.forEach(repo => {
                     const card = createCard(repo.name, 'repo', () => handleItemClick(repo));
                     dom.gridBrowser.appendChild(card);
                 });
@@ -340,14 +344,23 @@
                         const contents = await fetchFromGitHub(`/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}`);
                         renderItems(contents);
                     } else if (item.type === 'file') {
-                        showPreview(item.name, item.download_url);
                         renderResult(dom.resultsBrowser, 'URL Repositorio', item.html_url);
-                        const rawUrl = item.download_url;
-                        renderResult(dom.resultsBrowser, 'URL Directa (Raw)', rawUrl, 'text-green-600 dark:text-green-400');
+                        renderResult(dom.resultsBrowser, 'URL Directa (Raw)', item.download_url, 'text-green-600 dark:text-green-400');
                         if (state.currentRepo.has_pages) {
                              const pagesUrl = `https://${state.currentUser}.github.io/${state.currentRepo.name}/${item.path}`;
                              renderResult(dom.resultsBrowser, 'URL Web (Pages)', pagesUrl, 'text-teal-600 dark:text-teal-300');
                         }
+                        const previewButtonHTML = `
+                            <div class="flex justify-center mt-4">
+                                <button id="file-preview-btn" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg px-6 py-3 transition duration-300">
+                                    Previsualizar Archivo
+                                </button>
+                            </div>
+                        `;
+                        dom.resultsBrowser.insertAdjacentHTML('beforeend', previewButtonHTML);
+                        document.getElementById('file-preview-btn').addEventListener('click', () => {
+                            showPreview(item.name, item.download_url);
+                        });
                     }
                     renderBreadcrumbs();
                 } catch (error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
@@ -364,21 +377,23 @@
                 dom.breadcrumbs.innerHTML = '';
                 state.breadcrumbs.forEach((crumb, index) => {
                     if (index > 0) dom.breadcrumbs.insertAdjacentHTML('beforeend', '<span class="text-gray-400 dark:text-gray-500 mx-1">/</span>');
-                    const el = document.createElement('span'); el.textContent = crumb.name;
+                    const el = document.createElement('a'); el.textContent = crumb.name;
                     el.className = 'cursor-pointer hover:text-blue-500 hover:underline transition';
-                    el.onclick = () => handleBreadcrumbClick(index);
+                    el.href = '#';
+                    el.onclick = (e) => { e.preventDefault(); handleBreadcrumbClick(index); };
                     dom.breadcrumbs.appendChild(el);
                 });
             }
             async function handleBreadcrumbClick(index) {
                 setLoading(dom.statusBrowser, true);
+                dom.resultsBrowser.innerHTML = '';
                 state.breadcrumbs = state.breadcrumbs.slice(0, index + 1);
                 state.currentPath = state.breadcrumbs[index].path;
                 if (index === 0) { state.currentRepo = { name: '', default_branch: '', has_pages: false }; }
                 const endpoint = state.currentRepo.name ? `/repos/${state.currentUser}/${state.currentRepo.name}/contents/${state.currentPath}` : '/user/repos?per_page=100&sort=updated';
                 try {
                     const data = await fetchFromGitHub(endpoint);
-                    state.currentRepo.name ? renderItems(data) : renderRepos(data);
+                    if (state.currentRepo.name) { renderItems(data); } else { renderRepos(data); }
                     renderBreadcrumbs();
                 } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
@@ -451,7 +466,7 @@
             
             async function showPreview(filename, rawUrl) {
                 dom.previewTitle.textContent = filename;
-                dom.previewBody.innerHTML = '<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>';
+                dom.previewBody.innerHTML = '<div class="flex justify-center items-center h-full"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div></div>';
                 dom.previewModal.classList.remove('hidden');
 
                 try {
@@ -467,29 +482,29 @@
                         const codeEl = document.createElement('code');
                         codeEl.textContent = text;
                         const preEl = document.createElement('pre');
-                        preEl.className = 'whitespace-pre-wrap break-all text-sm';
+                        preEl.className = 'whitespace-pre-wrap break-all text-sm bg-gray-50 dark:bg-gray-900 p-4 rounded-md';
                         preEl.appendChild(codeEl);
                         dom.previewBody.innerHTML = '';
                         dom.previewBody.appendChild(preEl);
                     }
                 } catch(error) {
-                    dom.previewBody.innerHTML = `<p class="text-red-500">${error.message}</p>`;
+                    dom.previewBody.innerHTML = `<p class="text-red-500 text-center">${error.message}</p>`;
                 }
             }
             
             function createCard(name, type, onClick) {
                 const card = document.createElement('div');
-                card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600';
+                card.className = 'item-card bg-white dark:bg-gray-700/60 p-4 rounded-lg flex items-center gap-4 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 shadow';
                 card.dataset.name = name;
                 
                 const icons = {
-                    repo: '<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
-                    dir: '<svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
-                    file: '<svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
-                    gist: '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2 2.5a.5.5 0 01.5-.5h8.5a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-1.5H3V12h5.5a.5.5 0 010 1H2.5a.5.5 0 01-.5-.5V2.5z"></path><path d="M7.646 5.646a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708-.708L9.293 8 7.646 6.354a.5.5 0 010-.708z"></path><path d="M12.646 12.354a.5.5 0 010-.708l2-2a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708 0l-1.646-1.647-1.647 1.647a.5.5 0 01-.708 0z"></path></svg>'
+                    repo: '<svg class="w-6 h-6 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
+                    dir: '<svg class="w-6 h-6 text-yellow-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path></svg>',
+                    file: '<svg class="w-6 h-6 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>',
+                    gist: '<svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500 flex-shrink-0" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M2 2.5a.5.5 0 01.5-.5h8.5a.5.5 0 01.5.5v2a.5.5 0 01-1 0v-1.5H3V12h5.5a.5.5 0 010 1H2.5a.5.5 0 01-.5-.5V2.5z"></path><path d="M7.646 5.646a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708-.708L9.293 8 7.646 6.354a.5.5 0 010-.708zM12.646 12.354a.5.5 0 010-.708l2-2a.5.5 0 01.708 0l2 2a.5.5 0 010 .708l-2 2a.5.5 0 01-.708 0L14 12.293l-1.646 1.647a.5.5 0 01-.708 0l-2-2zM12 5.5a.5.5 0 01.5.5v5a.5.5 0 01-1 0V6a.5.5 0 01.5-.5z"></path></svg>'
                 };
 
-                card.innerHTML = `${icons[type] || icons['file']}<span class="font-medium truncate">${name}</span>`;
+                card.innerHTML = `${icons[type] || icons['file']}<span class="font-medium truncate text-gray-800 dark:text-gray-200">${name}</span>`;
                 card.onclick = onClick;
                 return card;
             }
