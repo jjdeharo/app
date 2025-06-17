@@ -83,8 +83,8 @@
         <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 mt-16">
             <header class="text-center">
                 <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Herramientas de GitHub</h1>
-                <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios y gists.</p>
-                <p id="version-number" class="text-xs text-gray-500 mt-1">v3.1</p>
+                <p class="text-gray-600 dark:text-gray-400">Convierte URLs o navega por repositorios.</p>
+                <p id="version-number" class="text-xs text-gray-500 mt-1">v3.2</p>
             </header>
             
             <!-- Pestañas -->
@@ -280,6 +280,13 @@
                     else if (button.classList.contains('open-btn')) window.open(button.dataset.url, '_blank');
                     else if (button.classList.contains('preview-btn')) {
                         showPreview(button.dataset.filename, button.dataset.url, button.dataset.type);
+                    }
+                });
+
+                dom.resultsConverter.addEventListener('click', e => {
+                    if(e.target.id === 'examine-repo-btn') {
+                        const { user, repo, path } = e.target.dataset;
+                        examineRepo(user, repo, path);
                     }
                 });
             }
@@ -505,7 +512,7 @@
                 dom.gridBrowser.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
                 dom.resultsBrowser.innerHTML = '';
 
-                if (element && item.type === 'file') {
+                if (element) {
                     element.classList.add('selected');
                 }
 
@@ -544,9 +551,29 @@
             }
             function renderItems(items) {
                 dom.gridBrowser.innerHTML = '';
+
+                const indexHtmlFile = items.find(item => item.name.toLowerCase() === 'index.html' && item.type === 'file');
+                if (indexHtmlFile) {
+                    const btn = document.createElement('button');
+                    btn.innerHTML = `<svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>Seleccionar index.html`;
+                    btn.className = 'col-span-full w-full flex items-center justify-center bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg px-4 py-3 transition duration-300 mb-4';
+                    btn.onclick = () => {
+                        handleItemClick(indexHtmlFile, null);
+                        const card = dom.gridBrowser.querySelector('[data-name="index.html"]');
+                        if (card) {
+                            dom.gridBrowser.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+                            card.classList.add('selected');
+                        }
+                    };
+                    dom.gridBrowser.appendChild(btn);
+                }
+
                 items.sort((a, b) => (a.type === 'dir' ? -1 : 1) - (b.type === 'dir' ? -1 : 1) || a.name.localeCompare(b.name));
                 items.forEach(item => {
                     const card = createCard(item, (i, el) => handleItemClick(i, el));
+                    if (item.name.toLowerCase() === 'index.html') {
+                        card.dataset.name = 'index.html'; // Ensure consistent casing for selector
+                    }
                     dom.gridBrowser.appendChild(card);
                 });
             }
@@ -567,20 +594,28 @@
                 setLoading(dom.statusBrowser, true);
                 dom.resultsBrowser.innerHTML = '';
                 dom.gridBrowser.querySelectorAll('.item-card').forEach(c => c.classList.remove('selected'));
+                
+                const clickedCrumb = state.breadcrumbs[index];
                 state.breadcrumbs = state.breadcrumbs.slice(0, index + 1);
                 
-                if (index === 0) {
-                    state.currentRepo = { name: '', owner: '', default_branch: '', has_pages: false };
-                    await handleLoadUserRepos();
-                } else {
-                    state.currentPath = state.breadcrumbs[index].path;
-                    const endpoint = `https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`;
-                    try {
+                try {
+                    if (index === 0) {
+                        state.currentRepo = { name: '', owner: '', default_branch: '', has_pages: false };
+                        await handleLoadUserRepos();
+                    } else {
+                        state.currentPath = clickedCrumb.path;
+                        const endpoint = `https://api.github.com/repos/${state.currentRepo.owner}/${state.currentRepo.name}/contents/${state.currentPath}`;
                         const data = await fetchFromGitHub(endpoint);
-                        renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}/tree/${state.currentRepo.default_branch}/${state.currentPath}`);
+                        
+                        if (state.currentPath) {
+                            renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}/tree/${state.currentRepo.default_branch}/${state.currentPath}`);
+                        } else {
+                             renderFolderButton(`https://github.com/${state.currentRepo.owner}/${state.currentRepo.name}`);
+                        }
                         renderItems(data);
-                    } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
-                }
+                    }
+                    renderBreadcrumbs();
+                } catch(error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
             }
             
             async function handleLoadGists() {
@@ -633,7 +668,6 @@
                 }
             }
 
-
             // --- Converter Logic ---
             async function handleUrlConversion() {
                 setLoading(dom.statusConverter, true);
@@ -659,10 +693,22 @@
                 }
                 effectivePath = effectivePath.replace(/\/+/g, '/').replace(/^\//, '');
                 
-                const filename = effectivePath.split('/').pop();
+                const filename = effectivePath.split('/').pop() || 'repositorio';
+                const containingFolderPath = effectivePath.substring(0, effectivePath.lastIndexOf('/'));
+
 
                 try {
                     const repoData = await fetchFromGitHub(`https://api.github.com/repos/${user}/${repo.replace(/\/$/, '')}`);
+                    
+                    dom.resultsConverter.innerHTML = `
+                        <div class="bg-gray-100 dark:bg-gray-700/60 rounded-lg p-3 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span class="font-semibold text-gray-800 dark:text-gray-200">Repositorio: <span class="font-mono">${repoData.full_name}</span></span>
+                            <button id="examine-repo-btn" data-user="${repoData.owner.login}" data-repo="${repoData.name}" data-path="${containingFolderPath}" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-4 py-2 transition duration-300 text-sm whitespace-nowrap">
+                                Examinar carpeta
+                            </button>
+                        </div>
+                    `;
+
                     const githubUrl = `https://github.com/${repoData.owner.login}/${repoData.name}` + (effectivePath ? `/blob/${repoData.default_branch}/${effectivePath}` : '');
                     renderResult(dom.resultsConverter, 'Repo', githubUrl, filename, 'iframe', 'text-gray-600 dark:text-gray-300', false);
 
@@ -679,6 +725,38 @@
                 } catch (error) { showError(dom.statusConverter, `Error: ${error.message}`); } finally { setLoading(dom.statusConverter, false); }
             }
             
+             async function examineRepo(user, repo, path) {
+                switchTab('content-browser');
+                setLoading(dom.statusBrowser, true);
+                resetBrowserUI();
+                try {
+                    const repoDetails = await fetchFromGitHub(`https://api.github.com/repos/${user}/${repo}`);
+                    state.currentRepo = { name: repoDetails.name, owner: repoDetails.owner.login, default_branch: repoDetails.default_branch, has_pages: repoDetails.has_pages };
+                    state.currentUser = user;
+                    state.currentPath = path;
+
+                    const pathParts = path ? path.split('/').filter(Boolean) : [];
+                    state.breadcrumbs = [{ name: user, path: '' }, { name: repoDetails.name, path: '' }];
+                    let cumulativePath = '';
+                    for (const part of pathParts) {
+                        cumulativePath += (cumulativePath ? '/' : '') + part;
+                        state.breadcrumbs.push({ name: part, path: cumulativePath });
+                    }
+                    renderBreadcrumbs();
+
+                    const contents = await fetchFromGitHub(repoDetails.contents_url.replace('{+path}', path || ''));
+                    
+                    if (Array.isArray(contents)) {
+                        renderFolderButton(`https://github.com/${user}/${repo}/tree/${repoDetails.default_branch}/${path}`);
+                        renderItems(contents);
+                    } else if (contents.type === 'file') {
+                        dom.gridBrowser.innerHTML = '';
+                        handleItemClick(contents, null);
+                    }
+
+                } catch (error) { showError(dom.statusBrowser, error.message); } finally { setLoading(dom.statusBrowser, false); }
+            }
+
             // --- Preview & Card Creation ---
             function renderFolderButton(url) {
                 dom.resultsBrowser.innerHTML = `
@@ -716,7 +794,7 @@
 
                         if (type === 'markdown') {
                             dom.previewBody.innerHTML = marked.parse(text);
-                            dom.previewBody.classList.add('prose');
+                            dom.previewBody.classList.add('prose', 'dark:prose-invert');
                         } else { // Raw text
                             const codeEl = document.createElement('code');
                             codeEl.textContent = text;
