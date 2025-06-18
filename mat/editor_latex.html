@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor LaTeX online</title>
-    <!-- Librería para convertir HTML a Canvas (para la descarga de imágenes) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <!-- Configuración de MathJax -->
     <script>
@@ -642,47 +640,57 @@
             }
 
             /**
-             * Genera una imagen del preview y la pasa a un callback, usando un clon para evitar conflictos.
+             * Genera una imagen a partir del SVG renderizado por MathJax.
              * @param {function} callback - Función que se ejecuta con el canvas como argumento.
              */
             function generateImage(callback) {
-                const originalPreview = document.getElementById('preview');
-                const mathJaxOutput = originalPreview.querySelector('mjx-container');
+                const svgElement = preview.querySelector('svg');
 
-                if (!mathJaxOutput) {
-                     showModal("No se ha encontrado ninguna fórmula para capturar.", [{text: 'OK', class: 'btn-primary'}]);
-                     return;
+                if (!svgElement) {
+                    showModal("No se ha encontrado ninguna fórmula para capturar. Asegúrate de que la previsualización es correcta.", [{text: 'OK', class: 'btn-primary'}]);
+                    return;
                 }
 
-                const clone = mathJaxOutput.cloneNode(true);
-                
-                const tempContainer = document.createElement('div');
-                tempContainer.style.position = 'absolute';
-                tempContainer.style.left = '-9999px';
-                tempContainer.style.top = '0px';
-                tempContainer.style.display = 'inline-block'; // Para que se ajuste al contenido
-                tempContainer.style.background = 'white'; 
-                tempContainer.style.padding = '20px'; 
-                
-                tempContainer.appendChild(clone);
-                document.body.appendChild(tempContainer);
+                // Serializar el SVG a un string
+                const serializer = new XMLSerializer();
+                const svgString = serializer.serializeToString(svgElement);
 
-                setTimeout(() => {
-                    html2canvas(tempContainer, { 
-                        backgroundColor: '#ffffff',
-                        logging: false,
-                        scale: 3,
-                        useCORS: true,
-                        allowTaint: true
-                    }).then(canvas => {
-                        document.body.removeChild(tempContainer);
-                        callback(canvas);
-                    }).catch(err => {
-                        console.error("Error al generar la imagen con html2canvas:", err);
-                        showModal("Error al generar la imagen. Por favor, intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
-                        document.body.removeChild(tempContainer);
-                    });
-                }, 100);
+                // Crear un objeto de imagen a partir del SVG
+                const img = new Image();
+                const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
+                const url = URL.createObjectURL(svgBlob);
+
+                img.onload = function() {
+                    // Crear un canvas con las dimensiones del SVG
+                    const canvas = document.createElement('canvas');
+                    const padding = 20; // 20px de margen
+                    
+                    // Ajustar las dimensiones del canvas para incluir el padding
+                    canvas.width = img.width + padding * 2;
+                    canvas.height = img.height + padding * 2;
+                    
+                    const ctx = canvas.getContext('2d');
+
+                    // Rellenar el fondo de blanco
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Dibujar la imagen del SVG en el canvas con padding
+                    ctx.drawImage(img, padding, padding);
+                    
+                    URL.revokeObjectURL(url); // Liberar memoria
+                    
+                    // Ejecutar el callback con el canvas final
+                    callback(canvas);
+                };
+                
+                img.onerror = function(e) {
+                     console.error("Error al cargar el SVG como imagen:", e);
+                     showModal("Hubo un error al procesar la fórmula como imagen.", [{text: 'OK', class: 'btn-primary'}]);
+                     URL.revokeObjectURL(url);
+                };
+
+                img.src = url;
             }
 
             function handleDownload() {
@@ -776,7 +784,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.3</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.4</p>
                 `;
             }
 
