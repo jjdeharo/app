@@ -39,6 +39,7 @@
             --primary-dark: #0056b3;
             --secondary-color: #6c757d;
             --danger-color: #dc3545;
+            --danger-dark: #a71d2a;
             --success-color: #28a745;
             --light-gray: #f8f9fa;
             --medium-gray: #e9ecef;
@@ -262,7 +263,7 @@
         }
         
         .btn-danger {
-            background: linear-gradient(45deg, var(--danger-color), #a71d2a);
+            background: linear-gradient(45deg, var(--danger-color), var(--danger-dark));
             color: white;
         }
 
@@ -560,17 +561,10 @@
             const modalMessage = document.getElementById('modal-message');
             const modalButtons = document.getElementById('modal-buttons');
 
-            // --- FUNCIONES DEL MODAL ---
-            
-            /**
-             * Muestra un modal con un mensaje y botones personalizables.
-             * @param {string} message - El mensaje a mostrar.
-             * @param {Array<Object>} buttons - Un array de objetos de botón, ej: [{text: 'OK', class: 'btn-primary', action: () => {...}}]
-             */
+            // --- FUNCIONES DEL MODAL (se mantiene para otros mensajes) ---
             function showModal(message, buttons) {
                 modalMessage.textContent = message;
-                modalButtons.innerHTML = ''; // Limpiar botones anteriores
-
+                modalButtons.innerHTML = '';
                 buttons.forEach(btnInfo => {
                     const button = document.createElement('button');
                     button.textContent = btnInfo.text;
@@ -581,60 +575,37 @@
                     };
                     modalButtons.appendChild(button);
                 });
-
                 modal.classList.add('active');
             }
-
-            /**
-             * Oculta el modal.
-             */
             function hideModal() {
                 modal.classList.remove('active');
             }
 
-
             // --- FUNCIONES PRINCIPALES ---
-
-            /**
-             * Genera un nombre único para las imágenes basado en timestamp y número aleatorio
-             */
             function generateUniqueImageName() {
                 const timestamp = Date.now();
                 const random = Math.floor(Math.random() * 10000);
                 return `formula_${timestamp}_${random}`;
             }
 
-            /**
-             * Actualiza la previsualización renderizando el código LaTeX del input.
-             */
             function updatePreview() {
                 const latexCode = latexInput.value.trim();
-                
                 if (latexCode === "") {
-                    preview.innerHTML = ""; // Limpia la previsualización si no hay código
+                    preview.innerHTML = "";
                     return;
                 }
-                
-                // Envuelve el código en delimitadores de display math ('$$') para MathJax
                 preview.innerHTML = `$$${latexCode}$$`;
-                // Pide a MathJax que renderice el nuevo contenido y espera a que termine
                 MathJax.typesetPromise([preview]).catch(err => {
-                    console.error('Error en MathJax al renderizar:', err)
-                    // Opcional: mostrar error en la preview
+                    console.error('Error en MathJax al renderizar:', err);
                     preview.innerHTML = `<span style="color:red;">Error en la sintaxis de LaTeX</span>`;
                 });
             }
 
-            /**
-             * Inicializa los botones de la barra de herramientas, renderizando sus propios símbolos LaTeX.
-             */
             function initializeToolbar() {
                 const buttons = toolbar.querySelectorAll('.toolbar-btn');
                 buttons.forEach(btn => {
                     const template = btn.dataset.latex;
                     let renderableLatex = template;
-
-                    // Para plantillas complejas, usamos un ejemplo para la visualización en el botón
                     switch (template) {
                         case '\\frac{}{}': renderableLatex = '\\frac{a}{b}'; break;
                         case '^{}': renderableLatex = 'x^{a}'; break;
@@ -643,36 +614,24 @@
                         case '\\sqrt[]{}': renderableLatex = '\\sqrt[n]{x}'; break;
                         case '\\vec{}': renderableLatex = '\\vec{v}'; break;
                     }
-                    
-                    // Usa delimitadores de inline math ('\\(' y '\\)') para los botones
                     btn.innerHTML = `\\(${renderableLatex}\\)`;
                 });
-                // Renderiza todos los botones de la barra de herramientas a la vez
                 MathJax.typesetPromise(Array.from(buttons)).catch(err => console.error("Error inicializando toolbar con MathJax:", err));
             }
             
-            /**
-             * Inserta una plantilla de LaTeX en la posición actual del cursor.
-             * @param {string} textToInsert - El código LaTeX a insertar.
-             */
             function insertAtCursor(textToInsert) {
                 const startPos = latexInput.selectionStart;
                 const endPos = latexInput.selectionEnd;
                 const currentValue = latexInput.value;
-                
                 latexInput.value = currentValue.substring(0, startPos) + textToInsert + currentValue.substring(endPos);
-                
-                // Intenta colocar el cursor en una posición lógica dentro de la plantilla
                 let cursorPos = textToInsert.indexOf('{}');
                 if (cursorPos !== -1) {
                     latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
                 } else if ((cursorPos = textToInsert.indexOf('[]')) !== -1) {
                      latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
-                }
-                else {
+                } else {
                     latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
                 }
-                
                 latexInput.focus();
                 updatePreview();
             }
@@ -682,49 +641,37 @@
              * @param {function} callback - Función que se ejecuta con el canvas como argumento.
              */
             function generateImage(callback) {
-                // Asegurar que MathJax ha terminado completamente el renderizado
-                MathJax.typesetPromise([preview]).then(() => {
-                    // Esperar un poco después del renderizado para que todo se asiente
-                    setTimeout(() => {
-                        html2canvas(preview, { 
-                            backgroundColor: '#ffffff',
-                            logging: false,
-                            scale: 3, // Aumenta la escala para mayor resolución
-                            useCORS: true,
-                            allowTaint: true
-                        }).then(callback).catch(err => {
-                            console.error("Error al generar la imagen con html2canvas:", err);
-                            showModal("Error al generar la imagen. Por favor, intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
-                        });
-                    }, 300);
-                }).catch(err => {
-                    console.error("Error en MathJax antes de generar imagen:", err);
-                    showModal("Error al renderizar la fórmula. Revisa la sintaxis e intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
-                });
+                // La preview ya se ha renderizado a través de updatePreview.
+                // Solo esperamos un poco para asegurar que el renderizado ha finalizado
+                // antes de que html2canvas lo capture.
+                setTimeout(() => {
+                    html2canvas(preview, { 
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        scale: 3,
+                        useCORS: true,
+                        allowTaint: true
+                    }).then(callback).catch(err => {
+                        console.error("Error al generar la imagen con html2canvas:", err);
+                        showModal("Error al generar la imagen. Por favor, intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
+                    });
+                }, 300);
             }
 
-            /**
-             * Gestiona la descarga de la previsualización como una imagen PNG.
-             */
             function handleDownload() {
                 generateImage(canvas => {
                     const link = document.createElement('a');
-                    const uniqueName = generateUniqueImageName();
-                    link.download = `${uniqueName}.png`;
+                    link.download = `${generateUniqueImageName()}.png`;
                     link.href = canvas.toDataURL('image/png');
                     link.click();
                 });
             }
 
-            /**
-             * Gestiona la copia de la previsualización como imagen al portapapeles.
-             */
             function handleCopyImage() {
                 if (!navigator.clipboard || !navigator.clipboard.write) {
                     showModal("La función de copiar imagen no es compatible con tu navegador. Utiliza 'Descargar PNG'.", [{text: 'OK', class: 'btn-primary'}]);
                     return;
                 }
-
                 generateImage(canvas => {
                     canvas.toBlob(blob => {
                          try {
@@ -735,7 +682,7 @@
                                 setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
                             }).catch(err => {
                                 console.error("Error al copiar la imagen: ", err);
-                                showModal("No se pudo copiar la imagen. Es posible que tu navegador no lo permita por seguridad. Intenta descargarla.", [{text: 'OK', class: 'btn-primary'}]);
+                                showModal("No se pudo copiar la imagen. Es posible que tu navegador no lo permita por seguridad.", [{text: 'OK', class: 'btn-primary'}]);
                             });
                         } catch (error) {
                              console.error("Error creando ClipboardItem: ", error);
@@ -745,44 +692,30 @@
                 });
             }
             
-            /**
-             * Genera una matriz personalizada con las dimensiones especificadas
-             * @param {string} matrixType - Tipo de matriz (pmatrix, bmatrix, vmatrix, Vmatrix)
-             */
             function generateCustomMatrix(matrixType) {
                 const rows = parseInt(document.getElementById('matrix-rows').value) || 2;
                 const cols = parseInt(document.getElementById('matrix-cols').value) || 2;
                 const fillType = document.getElementById('matrix-fill').value;
-                
                 if (rows < 1 || rows > 10 || cols < 1 || cols > 10) {
                     showModal('Las dimensiones de la matriz deben estar entre 1 y 10.', [{text: 'Entendido', class: 'btn-primary'}]);
                     return;
                 }
-                
                 let matrixContent = '';
                 const alphabet = 'abcdefghijklmnopqrstuvwxyz';
                 let counter = 1;
-                
                 for (let i = 0; i < rows; i++) {
                     let rowContent = [];
                     for (let j = 0; j < cols; j++) {
                         let cellContent = '';
-                        
                         switch (fillType) {
-                            case 'subscripts':
-                                cellContent = `a_{${i+1}${j+1}}`;
-                                break;
+                            case 'subscripts': cellContent = `a_{${i+1}${j+1}}`; break;
                             case 'zeros': cellContent = '0'; break;
                             case 'ones': cellContent = '1'; break;
                             case 'variables':
                                 const varIndex = (i * cols + j) % alphabet.length;
                                 cellContent = alphabet[varIndex];
                                 break;
-                            case 'numbers':
-                                cellContent = counter.toString();
-                                counter++;
-                                break;
-                                
+                            case 'numbers': cellContent = `${counter++}`; break;
                             case 'empty': cellContent = '{}'; break;
                             default: cellContent = '';
                         }
@@ -793,30 +726,19 @@
                         matrixContent += ' \\\\ ';
                     }
                 }
-                
                 const latexCode = `\\begin{${matrixType}}${matrixContent}\\end{${matrixType}}`;
                 insertAtCursor(latexCode);
             }
 
-            /**
-             * Cambia la pestaña activa en la barra de herramientas.
-             */
             function handleTabSwitch(event) {
                 if (!event.target.matches('.tab-btn')) return;
-
-                // Oculta todas las pestañas y quita la clase activa
                 tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                 toolbar.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                
-                // Muestra la pestaña seleccionada
                 event.target.classList.add('active');
                 const tabId = event.target.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.add('active');
             }
             
-            /**
-             * Añade el pie de página con los enlaces solicitados.
-             */
             function addFooter() {
                 const footer = document.getElementById('page-footer');
                 footer.innerHTML = `
@@ -824,12 +746,14 @@
                         <a href="https://labia.tiddlyhost.com" target="_blank" rel="noopener noreferrer">Laboratorio de aplicaciones educativas</a> | 
                         <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Aplicación hecha por Juan José de Haro</a>
                     </p>
-                    <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
+                    <p style="margin-bottom: 10px;">
+                        <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
+                    </p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.1</p>
                 `;
             }
 
             // --- ASIGNACIÓN DE EVENTOS ---
-
             latexInput.addEventListener('input', updatePreview);
 
             toolbar.addEventListener('click', (event) => {
@@ -851,45 +775,49 @@
                 });
             });
 
+            // Lógica del botón de borrado no invasivo
+            let isConfirmingClear = false;
+            let clearConfirmTimeout;
             clearButton.addEventListener('click', () => {
                 if (!latexInput.value) return;
-                showModal('¿Estás seguro de que quieres borrar todo el código?', [
-                    {
-                        text: 'Confirmar', 
-                        class: 'btn-danger', 
-                        action: () => {
-                            latexInput.value = '';
-                            latexInput.focus();
-                            updatePreview();
-                        }
-                    },
-                    {
-                        text: 'Cancelar',
-                        class: 'btn-secondary',
-                        action: null
-                    }
-                ]);
+
+                if (isConfirmingClear) {
+                    clearTimeout(clearConfirmTimeout);
+                    latexInput.value = '';
+                    latexInput.focus();
+                    updatePreview();
+                    
+                    isConfirmingClear = false;
+                    clearButton.textContent = 'Borrar código';
+                    clearButton.classList.remove('btn-danger');
+                    clearButton.classList.add('btn-secondary');
+                } else {
+                    isConfirmingClear = true;
+                    clearButton.textContent = 'Confirmar borrado';
+                    clearButton.classList.remove('btn-secondary');
+                    clearButton.classList.add('btn-danger');
+
+                    clearConfirmTimeout = setTimeout(() => {
+                        isConfirmingClear = false;
+                        clearButton.textContent = 'Borrar código';
+                        clearButton.classList.remove('btn-danger');
+                        clearButton.classList.add('btn-secondary');
+                    }, 4000);
+                }
             });
 
             downloadButton.addEventListener('click', handleDownload);
             copyImageButton.addEventListener('click', handleCopyImage);
-            
             tabsContainer.addEventListener('click', handleTabSwitch);
-
-            // Cerrar modal al hacer clic en el overlay
             modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    hideModal();
-                }
+                if (e.target === modal) hideModal();
             });
             
             // --- INICIALIZACIÓN ---
-            
             initializeToolbar();
             updatePreview();
             addFooter();
             
-            // Hacer la función generateCustomMatrix disponible globalmente para el `onclick`
             window.generateCustomMatrix = generateCustomMatrix;
         }
     </script>
