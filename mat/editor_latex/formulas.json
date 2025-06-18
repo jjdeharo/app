@@ -1022,6 +1022,42 @@
           "title": "Gótico"
         }
       ]
+    },
+    {
+      "nombre": "Combinatoria",
+      "id": "combinatoria",
+      "grid_template_columns": "repeat(auto-fit, minmax(160px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\binom{n}{k}",
+          "title": "Coeficiente binomial"
+        },
+        {
+          "type": "button",
+          "latex": "P(n) = n!",
+          "display": "P(n) = n!",
+          "title": "Permutaciones de n elementos"
+        },
+        {
+          "type": "button",
+          "latex": "P(n, r) = \\frac{n!}{(n - r)!}",
+          "display": "P(n, r) = \\frac{n!}{(n - r)!}",
+          "title": "Variaciones sin repetición"
+        },
+        {
+          "type": "button",
+          "latex": "C(n, r) = \\binom{n}{r} = \\frac{n!}{r!(n - r)!}",
+          "display": "C(n, r) = \\binom{n}{r} = \\frac{n!}{r!(n - r)!}",
+          "title": "Combinaciones sin repetición"
+        },
+        {
+          "type": "button",
+          "latex": "C'(n, r) = \\binom{n + r - 1}{r}",
+          "display": "C'(n, r) = \\binom{n + r - 1}{r}",
+          "title": "Combinaciones con repetición"
+        }
+      ]
     }
   ]
 }
