@@ -38,7 +38,7 @@
         {
           "type": "button",
           "latex": "\\overline{}",
-          "display": "\\overline{3}",
+          "display": "2.\\overline{367}",
           "title": "Periódico (barra)"
         }
       ]
@@ -792,12 +792,6 @@
         },
         {
           "type": "button",
-          "latex": "Mo = \\text{valor con mayor frecuencia}",
-          "display": "Mo = \\text{valor con mayor frecuencia}",
-          "title": "Moda"
-        },
-        {
-          "type": "button",
           "latex": "\\sigma^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n}",
           "display": "\\sigma^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n}",
           "title": "Varianza"
@@ -807,12 +801,6 @@
           "latex": "\\sigma = \\sqrt{\\frac{\\sum (x_i - \\bar{x})^2}{n}}",
           "display": "\\sigma = \\sqrt{\\frac{\\sum (x_i - \\bar{x})^2}{n}}",
           "title": "Desviación típica"
-        },
-        {
-          "type": "button",
-          "latex": "P(A) = \\frac{\\text{casos favorables}}{\\text{casos posibles}}",
-          "display": "P(A) = \\frac{\\text{casos favorables}}{\\text{casos posibles}}",
-          "title": "Probabilidad clásica"
         },
         {
           "type": "button",
