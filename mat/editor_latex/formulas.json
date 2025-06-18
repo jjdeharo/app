@@ -29,7 +29,8 @@
           "display": "2.\\overline{367}",
           "title": "Periódico (barra)"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Delimitadores",
@@ -84,7 +85,8 @@
           "display": "\\lceil\\,\\rceil",
           "title": "Techo"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Operadores y relaciones",
@@ -201,7 +203,8 @@
           "latex": "\\infty",
           "title": "Infinito"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Funciones",
@@ -272,7 +275,8 @@
           "display": "\\sqrt[n]{x}",
           "title": "Raíz n-ésima"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Cálculo",
@@ -329,7 +333,8 @@
           "latex": "\\nabla",
           "title": "Nabla/gradiente"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Conjuntos",
@@ -366,7 +371,8 @@
           "latex": "\\mathbb{C}",
           "title": "Complejos"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Lógica",
@@ -418,7 +424,8 @@
           "latex": "\\nexists",
           "title": "No existe"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Flechas",
@@ -500,7 +507,8 @@
           "display": "\\xrightarrow[\\text{abajo}]{\\text{arriba}}",
           "title": "Flecha con texto arriba y abajo"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Acentos",
@@ -543,7 +551,8 @@
           "display": "\\ddot{a}",
           "title": "Doble punto"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Matrices",
@@ -573,7 +582,8 @@
         {
           "type": "custom_matrix"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Sistemas",
@@ -590,32 +600,8 @@
           "latex": "\\left\\{ \\begin{array}{l} x + y + z = 1 \\\\ 2x - y + z = 0 \\\\ x + 2y - z = 3 \\end{array} \\right.",
           "title": "Sistema 3 ecuaciones con array"
         }
-      ]
-    },
-    {
-      "nombre": "Agrupación visual",
-      "id": "agrupacion",
-      "grid_template_columns": "repeat(auto-fit, minmax(100px, 1fr))",
-      "elementos": [
-        {
-          "type": "button",
-          "latex": "\\boxed{}",
-          "display": "\\boxed{x+y}",
-          "title": "Caja"
-        },
-        {
-          "type": "button",
-          "latex": "\\overbrace{}^{\\text{}}",
-          "display": "\\overbrace{a+b+c}^{\\text{grupo}}",
-          "title": "Llave superior"
-        },
-        {
-          "type": "button",
-          "latex": "\\underbrace{}_{\\text{}}",
-          "display": "\\underbrace{a+b+c}_{\\text{grupo}}",
-          "title": "Llave inferior"
-        }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Estadística y probabilidad",
@@ -664,7 +650,8 @@
           "display": "\\begin{array}{c}\nP(A \\mid B) = \\frac{ \\\\\nP(B \\mid A) \\cdot P(A) }{ P(B) }\n\\end{array}\n",
           "title": "Teorema de Bayes"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Geometría",
@@ -731,7 +718,8 @@
           "display": "A = 4 \\pi r^2",
           "title": "Área de la esfera"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Álgebra",
@@ -792,7 +780,8 @@
           "display": "\\sqrt[n]{a^m} = a^{\\frac{m}{n}}",
           "title": "Raíz en forma de potencia"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Combinatoria",
@@ -828,7 +817,34 @@
           "display": "C'(n, r) = \\binom{n + r - 1}{r}",
           "title": "Combinaciones con repetición"
         }
-      ]
+      ],
+      "isCollapsed": true
+    },
+    {
+      "nombre": "Agrupación visual",
+      "id": "agrupacion",
+      "grid_template_columns": "repeat(auto-fit, minmax(100px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\boxed{}",
+          "display": "\\boxed{x+y}",
+          "title": "Caja"
+        },
+        {
+          "type": "button",
+          "latex": "\\overbrace{}^{\\text{}}",
+          "display": "\\overbrace{a+b+c}^{\\text{grupo}}",
+          "title": "Llave superior"
+        },
+        {
+          "type": "button",
+          "latex": "\\underbrace{}_{\\text{}}",
+          "display": "\\underbrace{a+b+c}_{\\text{grupo}}",
+          "title": "Llave inferior"
+        }
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Formato de texto",
@@ -895,7 +911,8 @@
           "display": "\\mathfrak{abc}",
           "title": "Gótico"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Griego",
@@ -1047,7 +1064,8 @@
           "latex": "\\Omega",
           "title": "Omega mayúscula"
         }
-      ]
+      ],
+      "isCollapsed": true
     },
     {
       "nombre": "Anotaciones",
@@ -1092,7 +1110,8 @@
           "title": "Insertar texto",
           "display": ""
         }
-      ]
+      ],
+      "isCollapsed": true
     }
   ]
 }
