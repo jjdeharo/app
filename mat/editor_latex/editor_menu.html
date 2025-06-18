@@ -11,6 +11,9 @@
     <!-- KaTeX para renderizar LaTeX -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVJGpUpIAERzgpcKU0qmn1gaDqlBAWO+Vnk9wSjMRXv8SARccMD" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzYCcm2IawAzXpSNEEUvLoginVKKlEHYJs7" crossorigin="anonymous"></script>
+
+    <!-- SortableJS para Drag and Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <style>
         /* Estilos personalizados para mejorar la apariencia */
@@ -34,24 +37,30 @@
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
         /* Estilo para el scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        
         /* Clase para resaltar elementos */
         .highlight {
             transition: background-color 0.3s ease-in-out;
             background-color: #fefcbf !important; /* Amarillo claro */
             border-color: #facc15; /* Amarillo más oscuro */
+        }
+        
+        /* Estilos para Drag and Drop */
+        .drag-handle {
+            cursor: grab;
+            padding: 0 8px;
+            color: #9ca3af;
+        }
+        .drag-handle:hover {
+            color: #1f2937;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #c7d2fe;
         }
     </style>
 </head>
@@ -60,24 +69,23 @@
     <!-- Cabecera de la aplicación -->
     <header class="bg-white shadow-md p-4 flex flex-wrap justify-between items-center sticky top-0 z-20">
         <h1 class="text-2xl font-bold text-gray-700">Editor de Fórmulas LaTeX</h1>
-        <div class="flex items-center space-x-2 mt-2 md:mt-0">
+        <div class="flex items-center space-x-2 mt-2 md:mt-0 flex-wrap">
             <label for="file-upload" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">
                 Cargar JSON
             </label>
             <input id="file-upload" type="file" class="hidden" accept=".json">
+            <button id="paste-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition">Pegar</button>
             <button id="add-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition">Añadir Categoría</button>
+            <button id="copy-btn" class="bg-teal-500 text-white px-4 py-2 rounded-lg shadow hover:bg-teal-600 transition">Copiar JSON</button>
             <button id="export-btn" class="bg-purple-500 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-600 transition">Exportar JSON</button>
         </div>
     </header>
 
-    <!-- Contenedor principal con dos columnas: Editor y Vista Previa -->
+    <!-- Contenedor principal -->
     <main class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-        <!-- Columna del Editor -->
         <div id="editor-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-160px)]">
             <p class="text-gray-500 text-center">Carga un archivo JSON o empieza a añadir categorías.</p>
         </div>
-
-        <!-- Columna de la Vista Previa -->
         <div id="preview-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-160px)]">
             <p class="text-gray-500 text-center">Aquí aparecerá la vista previa de los botones.</p>
         </div>
@@ -85,114 +93,114 @@
     
     <!-- Pie de página -->
     <footer class="text-center py-4 bg-gray-100 text-gray-600 text-sm">
-        <p>
-            <a href="https://labia.tiddlyhost.com" target="_blank" class="hover:text-blue-600">Laboratorio de aplicaciones educativas</a>
-            - 
-            <a href="https://bilateria.org" target="_blank" class="hover:text-blue-600">Aplicación hecha por Juan José de Haro</a>
-        </p>
-        <p class="mt-1">
-            <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" class="hover:text-blue-600">Licencia Creative Commons BY-SA</a>
-        </p>
+        <p><a href="https://labia.tiddlyhost.com" target="_blank" class="hover:text-blue-600">Laboratorio de aplicaciones educativas</a> - <a href="https://bilateria.org" target="_blank" class="hover:text-blue-600">Aplicación hecha por Juan José de Haro</a></p>
+        <p class="mt-1"><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" class="hover:text-blue-600">Licencia Creative Commons BY-SA</a></p>
     </footer>
 
-    <!-- Modal para editar/añadir elementos (inicialmente oculto) -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center hidden">
-        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
-            <h2 id="modal-title" class="text-2xl font-bold mb-4"></h2>
-            <form id="modal-form"></form>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
-                <button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Guardar</button>
-            </div>
-        </div>
+    <!-- Modales -->
+    <div id="modal-container">
+        <!-- Modal de Edición -->
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md"><h2 id="modal-title" class="text-2xl font-bold mb-4"></h2><form id="modal-form"></form><div class="mt-6 flex justify-end space-x-3"><button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Guardar</button></div></div></div>
+        <!-- Modal de Confirmación -->
+        <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-sm"><h2 id="confirm-title" class="text-xl font-bold mb-4"></h2><p id="confirm-message"></p><div class="mt-6 flex justify-end space-x-3"><button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="confirm-delete" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Eliminar</button></div></div></div>
+        <!-- Modal de Pegado -->
+        <div id="paste-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><h2 class="text-2xl font-bold mb-4">Pegar contenido JSON</h2><div class="space-y-4"><textarea id="paste-textarea" rows="8" class="w-full border-gray-300 rounded-md font-mono text-sm" placeholder="Pega aquí el código JSON..."></textarea><div><label class="block text-sm font-medium text-gray-700">Tipo de contenido a pegar:</label><select id="paste-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full">JSON Completo</option><option value="category">Categoría</option><option value="element">Elemento</option></select></div><div id="paste-category-selector-div" class="hidden"><label class="block text-sm font-medium text-gray-700">Añadir elemento a la categoría:</label><select id="paste-category-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div></div><div class="mt-6 flex justify-end space-x-3"><button id="paste-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="paste-add" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Añadir Contenido</button></div></div></div>
     </div>
-    
-    <!-- Modal de confirmación para borrados -->
-    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center hidden">
-        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-sm">
-            <h2 id="confirm-title" class="text-xl font-bold mb-4">Confirmar eliminación</h2>
-            <p id="confirm-message">¿Estás seguro de que quieres eliminar este elemento?</p>
-            <div class="mt-6 flex justify-end space-x-3">
-                <button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
-                <button id="confirm-delete" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Eliminar</button>
-            </div>
-        </div>
-    </div>
-
 
     <script type="module">
-        // JSON inicial extraído del archivo proporcionado
-        const initialJson = {
-          "categorias": [
-            { "nombre": "Básico", "id": "basico", "grid_template_columns": "repeat(auto-fit, minmax(80px, 1fr))", "elementos": [
-                { "type": "button", "latex": "\\frac{}{}", "display": "\\frac{a}{b}", "title": "Fracción" }, { "type": "button", "latex": "^{}", "display": "x^{a}", "title": "Superíndice" }, { "type": "button", "latex": "_{}", "display": "x_{a}", "title": "Subíndice" }, { "type": "button", "latex": "\\sqrt{}", "display": "\\sqrt{x}", "title": "Raíz cuadrada" }, { "type": "button", "latex": "\\sqrt[]{}", "display": "\\sqrt[n]{x}", "title": "Raíz n-ésima" }, { "type": "button", "latex": "\\overline{}", "display": "\\overline{3}", "title": "Periódico (barra)" }
-            ]},
-            { "nombre": "Delimitadores", "id": "delimitadores", "grid_template_columns": "repeat(auto-fit, minmax(80px, 1fr))", "elementos": [
-                { "type": "button", "latex": "\\left(\\right)", "display": "(\\,)", "title": "Paréntesis" }, { "type": "button", "latex": "\\left[\\right]", "display": "[\\,]", "title": "Corchetes" }, { "type": "button", "latex": "\\left\\{\\right\\}", "display": "{\\,}", "title": "Llaves" }, { "type": "button", "latex": "\\left|\\right|", "display": "|\\,|", "title": "Valor absoluto" }, { "type": "button", "latex": "\\left\\|\\right\\|", "display": "‖\\,‖", "title": "Norma" }, { "type": "button", "latex": "\\left\\langle\\right\\rangle", "display": "\\langle\\,\\rangle", "title": "Ángulo" }, { "type": "button", "latex": "\\lfloor\\rfloor", "display": "\\lfloor\\,\\rfloor", "title": "Parte entera" }, { "type": "button", "latex": "\\lceil\\rceil", "display": "\\lceil\\,\\rceil", "title": "Techo" }
-            ]},
-            { "nombre": "Griego", "id": "griego", "grid_template_columns": "repeat(auto-fit, minmax(50px, 1fr))", "elementos": [
-                { "type": "button", "latex": "\\alpha", "title": "Alpha" }, { "type": "button", "latex": "\\beta", "title": "Beta" }, { "type": "button", "latex": "\\gamma", "title": "Gamma" }, { "type": "button", "latex": "\\delta", "title": "Delta" }, { "type": "button", "latex": "\\epsilon", "title": "Epsilon" }, { "type": "button", "latex": "\\zeta", "title": "Zeta" }, { "type": "button", "latex": "\\eta", "title": "Eta" }, { "type": "button", "latex": "\\theta", "title": "Theta" }, { "type": "button", "latex": "\\iota", "title": "Iota" }, { "type": "button", "latex": "\\kappa", "title": "Kappa" }, { "type": "button", "latex": "\\lambda", "title": "Lambda" }, { "type": "button", "latex": "\\mu", "title": "Mu" }
-            ]},
-             { "nombre": "Matrices", "id": "matrices", "grid_template_columns": "repeat(auto-fit, minmax(140px, 1fr))", "elementos": [
-                { "type": "button", "latex": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}", "title": "Matriz 2x2" }, { "type": "button", "latex": "\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}", "title": "Matriz 2x2 corchetes" }, { "type": "button", "latex": "\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}", "title": "Determinante 2x2" }, { "type": "custom_matrix" }
-            ]}
-          ]
+        const initialJson = { "categorias": [] };
+        let data = JSON.parse(JSON.stringify(initialJson));
+
+        // --- DOM Elements ---
+        const ui = {
+            editorContainer: document.getElementById('editor-container'),
+            previewContainer: document.getElementById('preview-container'),
+            fileUpload: document.getElementById('file-upload'),
+            exportBtn: document.getElementById('export-btn'),
+            addCategoryBtn: document.getElementById('add-category-btn'),
+            copyBtn: document.getElementById('copy-btn'),
+            pasteBtn: document.getElementById('paste-btn'),
+            // Modals
+            modal: document.getElementById('modal'),
+            modalTitle: document.getElementById('modal-title'),
+            modalForm: document.getElementById('modal-form'),
+            modalCancel: document.getElementById('modal-cancel'),
+            modalSave: document.getElementById('modal-save'),
+            confirmModal: document.getElementById('confirm-modal'),
+            confirmTitle: document.getElementById('confirm-title'),
+            confirmMessage: document.getElementById('confirm-message'),
+            confirmCancel: document.getElementById('confirm-cancel'),
+            confirmDelete: document.getElementById('confirm-delete'),
+            pasteModal: document.getElementById('paste-modal'),
+            pasteTextArea: document.getElementById('paste-textarea'),
+            pasteType: document.getElementById('paste-type'),
+            pasteCategorySelectorDiv: document.getElementById('paste-category-selector-div'),
+            pasteCategorySelector: document.getElementById('paste-category-selector'),
+            pasteCancel: document.getElementById('paste-cancel'),
+            pasteAdd: document.getElementById('paste-add'),
         };
 
-        let data = JSON.parse(JSON.stringify(initialJson));
-        const editorContainer = document.getElementById('editor-container');
-        const previewContainer = document.getElementById('preview-container');
-        const fileUpload = document.getElementById('file-upload');
-        const exportBtn = document.getElementById('export-btn');
-        const addCategoryBtn = document.getElementById('add-category-btn');
-        const modal = document.getElementById('modal');
-        const modalTitle = document.getElementById('modal-title');
-        const modalForm = document.getElementById('modal-form');
-        const modalCancel = document.getElementById('modal-cancel');
-        const modalSave = document.getElementById('modal-save');
-        const confirmModal = document.getElementById('confirm-modal');
-        const confirmTitle = document.getElementById('confirm-title');
-        const confirmMessage = document.getElementById('confirm-message');
-        const confirmCancel = document.getElementById('confirm-cancel');
-        const confirmDelete = document.getElementById('confirm-delete');
-
+        // --- Render Functions ---
         function render() {
             renderEditor();
             renderPreview();
+            initDragAndDrop();
         }
 
         function renderEditor() {
-            editorContainer.innerHTML = '';
+            ui.editorContainer.innerHTML = '';
             if (data.categorias.length === 0) {
-                 editorContainer.innerHTML = '<p class="text-gray-500 text-center">No hay categorías. ¡Añade una!</p>';
-                 return;
+                ui.editorContainer.innerHTML = '<p class="text-gray-500 text-center">Carga un archivo JSON o empieza a añadir categorías.</p>';
+                return;
             }
             data.categorias.forEach((cat, catIndex) => {
                 const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50';
-                categoryDiv.innerHTML = `<div class="flex justify-between items-center mb-3 pb-2 border-b"><h3 class="text-xl font-semibold text-gray-700">${cat.nombre}</h3><div class="space-x-2"><button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button><button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button><button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button></div></div>`;
+                categoryDiv.className = 'category-item mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50';
+                categoryDiv.dataset.id = catIndex;
+                categoryDiv.innerHTML = `
+                    <div class="flex justify-between items-center mb-3 pb-2 border-b">
+                        <div class="flex items-center">
+                            <span class="drag-handle cat-drag-handle">&#9776;</span>
+                            <h3 class="text-xl font-semibold text-gray-700">${cat.nombre}</h3>
+                        </div>
+                        <div class="space-x-2">
+                            <button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button>
+                            <button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button>
+                            <button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button>
+                        </div>
+                    </div>`;
                 const elementsList = document.createElement('div');
-                elementsList.className = 'space-y-2';
+                elementsList.className = 'elements-list space-y-2';
+                elementsList.dataset.catIndex = catIndex;
                 cat.elementos.forEach((el, elIndex) => {
                     const elDiv = document.createElement('div');
+                    elDiv.className = 'editor-item flex justify-between items-center p-2 rounded-md bg-white border border-gray-200 transition-colors duration-300';
                     elDiv.dataset.editorId = `${catIndex}-${elIndex}`;
-                    elDiv.dataset.catIndex = catIndex;
-                    elDiv.dataset.elIndex = elIndex;
-                    elDiv.className = 'editor-item flex justify-between items-center p-2 rounded-md bg-white border border-gray-200 transition-colors duration-300 cursor-pointer';
-                    elDiv.innerHTML = `<div class="truncate"><strong class="text-sm font-medium">${el.title || el.type || 'Elemento'}</strong><p class="text-xs text-gray-500 truncate font-mono">${el.latex || ''}</p></div><div class="flex-shrink-0 space-x-2"><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="edit-el-btn text-blue-500 hover:text-blue-700" title="Editar elemento">&#9998;</button><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="delete-el-btn text-red-500 hover:text-red-700" title="Eliminar elemento">&#10006;</button></div>`;
+                    elDiv.innerHTML = `
+                        <div class="flex items-center truncate">
+                             <span class="drag-handle el-drag-handle">&#9776;</span>
+                             <div class="truncate">
+                                 <strong class="text-sm font-medium">${el.title || el.type || 'Elemento'}</strong>
+                                 <p class="text-xs text-gray-500 truncate font-mono">${el.latex || ''}</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 space-x-2">
+                           <button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="edit-el-btn text-blue-500 hover:text-blue-700" title="Editar elemento">&#9998;</button>
+                           <button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="delete-el-btn text-red-500 hover:text-red-700" title="Eliminar elemento">&#10006;</button>
+                        </div>`;
                     elementsList.appendChild(elDiv);
                 });
                 categoryDiv.appendChild(elementsList);
-                editorContainer.appendChild(categoryDiv);
+                ui.editorContainer.appendChild(categoryDiv);
             });
             addEditorEventListeners();
         }
 
         function renderPreview() {
-            previewContainer.innerHTML = '';
+            ui.previewContainer.innerHTML = '';
             if (data.categorias.length === 0) {
-                 previewContainer.innerHTML = '<p class="text-gray-500 text-center">La vista previa aparecerá aquí.</p>';
-                 return;
+                ui.previewContainer.innerHTML = '<p class="text-gray-500 text-center">Aquí aparecerá la vista previa.</p>';
+                return;
             }
             data.categorias.forEach((cat, catIndex) => {
                 const categoryDiv = document.createElement('div');
@@ -219,10 +227,39 @@
                     gridDiv.appendChild(button);
                 });
                 categoryDiv.appendChild(gridDiv);
-                previewContainer.appendChild(categoryDiv);
+                ui.previewContainer.appendChild(categoryDiv);
+            });
+        }
+        
+        // --- Drag and Drop ---
+        function initDragAndDrop() {
+            new Sortable(ui.editorContainer, {
+                animation: 150,
+                handle: '.cat-drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    const [item] = data.categorias.splice(evt.oldIndex, 1);
+                    data.categorias.splice(evt.newIndex, 0, item);
+                    render();
+                }
+            });
+
+            document.querySelectorAll('.elements-list').forEach(list => {
+                const catIndex = list.dataset.catIndex;
+                new Sortable(list, {
+                    animation: 150,
+                    handle: '.el-drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: (evt) => {
+                        const [item] = data.categorias[catIndex].elementos.splice(evt.oldIndex, 1);
+                        data.categorias[catIndex].elementos.splice(evt.newIndex, 0, item);
+                        render();
+                    }
+                });
             });
         }
 
+        // --- Event Listeners ---
         function addEditorEventListeners() {
             document.querySelectorAll('.edit-cat-btn').forEach(b => b.addEventListener('click', handleEditCategory));
             document.querySelectorAll('.delete-cat-btn').forEach(b => b.addEventListener('click', handleDeleteCategory));
@@ -232,6 +269,7 @@
             document.querySelectorAll('.editor-item').forEach(item => item.addEventListener('click', handleEditorClick));
         }
 
+        // Navigation and Highlight
         function highlightElements(editorItem, previewItem) {
             document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
             if(editorItem) editorItem.classList.add('highlight');
@@ -243,12 +281,14 @@
         }
 
         function handleEditorClick(e) {
-            if (e.target.closest('button')) return;
-            const { catIndex, elIndex } = e.currentTarget.dataset;
+            if (e.target.closest('button, .drag-handle')) return;
+            const editorItem = e.currentTarget.closest('.editor-item');
+            const { editorId } = editorItem.dataset;
+            const [catIndex, elIndex] = editorId.split('-');
             const previewItem = document.querySelector(`.preview-item[data-cat-index="${catIndex}"][data-el-index="${elIndex}"]`);
             if (previewItem) {
                 previewItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                highlightElements(e.currentTarget, previewItem);
+                highlightElements(editorItem, previewItem);
             }
         }
         
@@ -266,37 +306,34 @@
             handleEditElement({ currentTarget: { dataset: { catIndex, elIndex } } });
         }
 
+        // CRUD Operations
         function handleEditCategory(e) {
-            const catIndex = e.currentTarget.dataset.catIndex;
+            const { catIndex } = e.currentTarget.dataset;
             showCategoryModal('Editar Categoría', data.categorias[catIndex], (formData) => {
                 data.categorias[catIndex] = {...data.categorias[catIndex], ...formData};
                 render();
             });
         }
-
         function handleDeleteCategory(e) {
-            const catIndex = e.currentTarget.dataset.catIndex;
+            const { catIndex } = e.currentTarget.dataset;
             showConfirmModal(`Eliminar "${data.categorias[catIndex].nombre}"`, `¿Seguro que quieres eliminar la categoría y todos sus elementos?`, () => {
                 data.categorias.splice(catIndex, 1);
                 render();
             });
         }
-
-        addCategoryBtn.addEventListener('click', () => {
+        ui.addCategoryBtn.addEventListener('click', () => {
              showCategoryModal('Añadir Nueva Categoría', {}, (formData) => {
                 data.categorias.push({ nombre: formData.nombre, id: formData.nombre.toLowerCase().replace(/\s+/g, '-'), grid_template_columns: "repeat(auto-fit, minmax(80px, 1fr))", elementos: [], ...formData });
                 render();
             });
         });
-
         function handleAddElement(e) {
-            const catIndex = e.currentTarget.dataset.catIndex;
+            const { catIndex } = e.currentTarget.dataset;
             showElementModal('Añadir Elemento', {}, (formData) => {
                 data.categorias[catIndex].elementos.push({ type: "button", ...formData });
                 render();
             });
         }
-        
         function handleEditElement(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
             showElementModal('Editar Elemento', data.categorias[catIndex].elementos[elIndex], (formData) => {
@@ -304,7 +341,6 @@
                 render();
             });
         }
-
         function handleDeleteElement(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
             const el = data.categorias[catIndex].elementos[elIndex];
@@ -314,24 +350,55 @@
             });
         }
         
-        fileUpload.addEventListener('change', (e) => {
+        // --- File & Clipboard Operations ---
+        ui.fileUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = (event) => {
                 try {
                     const loadedData = JSON.parse(event.target.result);
-                    if (loadedData.categorias) {
+                    if (loadedData.categorias && Array.isArray(loadedData.categorias)) {
                         data = loadedData;
                         render();
-                    } else { alert("El archivo JSON no tiene el formato esperado."); }
-                } catch (error) { alert("Error al procesar el archivo JSON."); }
+                    } else { alert("El archivo JSON no tiene el formato esperado (clave 'categorias' no encontrada o no es un array)."); }
+                } catch (error) { alert("Error al procesar el archivo JSON. Verifique el formato."); }
             };
             reader.readAsText(file);
             e.target.value = '';
         });
+        
+        function handleCopyJson() {
+            const jsonString = JSON.stringify(data, null, 2);
+            if (!jsonString || data.categorias.length === 0) {
+                alert("No hay nada que copiar. Carga un archivo o añade datos primero.");
+                return;
+            }
+            const textArea = document.createElement('textarea');
+            textArea.value = jsonString;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-9999px';
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                const originalText = ui.copyBtn.innerHTML;
+                ui.copyBtn.innerHTML = '¡Copiado!';
+                ui.copyBtn.classList.replace('bg-teal-500', 'bg-green-600');
+                setTimeout(() => {
+                    ui.copyBtn.innerHTML = originalText;
+                    ui.copyBtn.classList.replace('bg-green-600', 'bg-teal-500');
+                }, 2000);
+            } catch (err) { console.error('Error al copiar el JSON: ', err); }
+            document.body.removeChild(textArea);
+        }
+        ui.copyBtn.addEventListener('click', handleCopyJson);
 
-        exportBtn.addEventListener('click', () => {
+        ui.exportBtn.addEventListener('click', () => {
+            if (data.categorias.length === 0) {
+                alert("No hay nada que exportar. Carga un archivo o añade datos primero.");
+                return;
+            }
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
             a.download = 'formulas_editado.json';
@@ -339,45 +406,94 @@
             URL.revokeObjectURL(a.href);
         });
 
+        // --- Paste Logic ---
+        ui.pasteBtn.addEventListener('click', () => {
+            ui.pasteTextArea.value = '';
+            ui.pasteCategorySelector.innerHTML = '';
+            data.categorias.forEach((cat, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = cat.nombre;
+                ui.pasteCategorySelector.appendChild(option);
+            });
+            ui.pasteType.value = 'full';
+            ui.pasteCategorySelectorDiv.classList.add('hidden');
+            ui.pasteModal.classList.remove('hidden');
+        });
+        ui.pasteType.addEventListener('change', (e) => {
+            ui.pasteCategorySelectorDiv.classList.toggle('hidden', e.target.value !== 'element');
+        });
+        ui.pasteCancel.addEventListener('click', () => ui.pasteModal.classList.add('hidden'));
+        ui.pasteAdd.addEventListener('click', () => {
+            const jsonText = ui.pasteTextArea.value;
+            if (!jsonText) { alert("El área de texto está vacía."); return; }
+            try {
+                const pastedData = JSON.parse(jsonText);
+                const type = ui.pasteType.value;
+                switch(type) {
+                    case 'full':
+                        if (pastedData.categorias && Array.isArray(pastedData.categorias)) {
+                            data = pastedData;
+                        } else { throw new Error("El JSON completo debe tener una clave 'categorias' que sea un array."); }
+                        break;
+                    case 'category':
+                        if (pastedData.nombre && pastedData.elementos && Array.isArray(pastedData.elementos)) {
+                            data.categorias.push(pastedData);
+                        } else { throw new Error("El JSON de categoría debe tener las claves 'nombre' y 'elementos' (array)."); }
+                        break;
+                    case 'element':
+                        const catIndex = ui.pasteCategorySelector.value;
+                        if (catIndex === '' || !data.categorias[catIndex]) { alert("Selecciona una categoría válida para añadir el elemento."); return; }
+                        if (pastedData.type && pastedData.latex) {
+                           data.categorias[catIndex].elementos.push(pastedData);
+                        } else { throw new Error("El JSON de elemento debe tener al menos las claves 'type' y 'latex'."); }
+                        break;
+                }
+                ui.pasteModal.classList.add('hidden');
+                render();
+            } catch (error) {
+                alert("Error al procesar el JSON: " + error.message);
+            }
+        });
+
+        // --- Modals Generic ---
         let onSaveCallback = null;
         function showCategoryModal(title, categoryData = {}, onSave) {
-            modalTitle.textContent = title;
-            modalForm.innerHTML = `<div class="space-y-4"><div><label for="cat-nombre" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="cat-nombre" value="${categoryData.nombre || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="cat-grid" class="block text-sm font-medium text-gray-700">CSS Grid Template Columns</label><input type="text" id="cat-grid" value="${categoryData.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))'}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div></div>`;
+            ui.modalTitle.textContent = title;
+            ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="cat-nombre" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="cat-nombre" value="${categoryData.nombre || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="cat-grid" class="block text-sm font-medium text-gray-700">CSS Grid Template Columns</label><input type="text" id="cat-grid" value="${categoryData.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))'}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div></div>`;
             onSaveCallback = () => {
                 const formData = { nombre: document.getElementById('cat-nombre').value, grid_template_columns: document.getElementById('cat-grid').value };
                 if (!formData.nombre) { alert('El nombre es obligatorio.'); return; }
                 onSave(formData);
                 hideModal();
             };
-            modal.classList.remove('hidden');
+            ui.modal.classList.remove('hidden');
         }
-
         function showElementModal(title, elementData = {}, onSave) {
-            modalTitle.textContent = title;
-            modalForm.innerHTML = `<div class="space-y-4"><div><label for="el-title" class="block text-sm font-medium text-gray-700">Título (tooltip)</label><input type="text" id="el-title" value="${elementData.title || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="el-latex" class="block text-sm font-medium text-gray-700">Código LaTeX (insertar)</label><textarea id="el-latex" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono" required>${elementData.latex || ''}</textarea></div><div><label for="el-display" class="block text-sm font-medium text-gray-700">Código LaTeX (visualizar, opcional)</label><textarea id="el-display" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono">${elementData.display || ''}</textarea><p class="text-xs text-gray-500 mt-1">Si se deja en blanco, se usa el de insertar.</p></div></div>`;
+            ui.modalTitle.textContent = title;
+            ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="el-title" class="block text-sm font-medium text-gray-700">Título (tooltip)</label><input type="text" id="el-title" value="${elementData.title || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="el-latex" class="block text-sm font-medium text-gray-700">Código LaTeX (insertar)</label><textarea id="el-latex" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono" required>${elementData.latex || ''}</textarea></div><div><label for="el-display" class="block text-sm font-medium text-gray-700">Código LaTeX (visualizar, opcional)</label><textarea id="el-display" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono">${elementData.display || ''}</textarea><p class="text-xs text-gray-500 mt-1">Si se deja en blanco, se usa el de insertar.</p></div></div>`;
             onSaveCallback = () => {
                 const formData = { title: document.getElementById('el-title').value, latex: document.getElementById('el-latex').value, display: document.getElementById('el-display').value };
                 if (!formData.title || !formData.latex) { alert('El título y el código LaTeX son obligatorios.'); return; }
                 onSave(formData);
                 hideModal();
             };
-            modal.classList.remove('hidden');
+            ui.modal.classList.remove('hidden');
         }
-
-        function hideModal() { modal.classList.add('hidden'); onSaveCallback = null; }
-        modalSave.addEventListener('click', () => { if (onSaveCallback) onSaveCallback(); });
-        modalCancel.addEventListener('click', hideModal);
+        function hideModal() { ui.modal.classList.add('hidden'); onSaveCallback = null; }
+        ui.modalSave.addEventListener('click', () => { if (onSaveCallback) onSaveCallback(); });
+        ui.modalCancel.addEventListener('click', hideModal);
         
         let onDeleteCallback = null;
         function showConfirmModal(title, message, onDelete) {
-            confirmTitle.textContent = title; confirmMessage.textContent = message; onDeleteCallback = onDelete; confirmModal.classList.remove('hidden');
+            ui.confirmTitle.textContent = title; ui.confirmMessage.textContent = message; onDeleteCallback = onDelete; ui.confirmModal.classList.remove('hidden');
         }
-        function hideConfirmModal() { confirmModal.classList.add('hidden'); onDeleteCallback = null; }
-        confirmDelete.addEventListener('click', () => { if(onDeleteCallback) onDeleteCallback(); hideConfirmModal(); });
-        confirmCancel.addEventListener('click', hideConfirmModal);
+        function hideConfirmModal() { ui.confirmModal.classList.add('hidden'); onDeleteCallback = null; }
+        ui.confirmDelete.addEventListener('click', () => { if(onDeleteCallback) onDeleteCallback(); hideConfirmModal(); });
+        ui.confirmCancel.addEventListener('click', hideConfirmModal);
 
+        // --- Initial Render ---
         render();
     </script>
-
 </body>
 </html>
