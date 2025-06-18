@@ -15,7 +15,7 @@
                 packages: {'[+]': ['cases', 'mathtools']}
             },
             svg: {
-                fontCache: 'local' // CORRECCIÓN: Usar caché local para que los SVG sean autocontenidos.
+                fontCache: 'local' // Usar caché local para que los SVG sean autocontenidos.
             },
             startup: {
                 // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización.
@@ -336,6 +336,7 @@
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s;
+            padding: 20px;
         }
 
         .modal-overlay.active {
@@ -348,11 +349,14 @@
             padding: 30px;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            width: 90%;
-            max-width: 80vw;
+            /* CORRECCIÓN: Ajustar el tamaño del modal al contenido */
+            display: inline-block;
+            max-width: 90vw;
+            max-height: 90vh;
             text-align: center;
             transform: scale(0.9);
             transition: transform 0.3s;
+            overflow: auto;
         }
         
         .modal-overlay.active .modal-content {
@@ -363,6 +367,11 @@
             margin: 0 0 20px 0;
             font-size: 1.1rem;
             line-height: 1.5;
+        }
+        
+        #modal-message img {
+            display: block;
+            margin: 0 auto;
         }
 
         .modal-buttons {
@@ -398,6 +407,7 @@
             .header h1 { font-size: 2rem; }
             .tab-btn { padding: 12px 15px; font-size: 14px; }
             .container { padding: 10px; }
+            .modal-content { padding: 20px; }
         }
     </style>
 </head>
@@ -590,6 +600,7 @@
                     const imgElement = document.createElement('img');
                     imgElement.src = canvas.toDataURL('image/png');
                     imgElement.style.maxWidth = '100%';
+                    imgElement.style.maxHeight = '80vh';
                     imgElement.style.borderRadius = '8px';
                     imgElement.style.userSelect = 'none';
 
@@ -669,7 +680,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.9</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.2.0</p>
                 `;
             }
 
@@ -818,5 +829,3 @@
     </script>
 </body>
 </html>
-```
-He actualizado la versión a la 1.9 para reflejar el cambio. ¡Muchas gracias de nuevo por tu ayuda para depurar la aplicaci
