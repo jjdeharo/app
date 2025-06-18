@@ -109,11 +109,14 @@
              * Gestiona la descarga de la previsualización como una imagen PNG.
              */
             function handleDownload() {
-                // Pequeño retardo para asegurar que el renderizado de MathJax ha finalizado
+                // Esperar más tiempo para asegurar que el renderizado de MathJax ha finalizado
                 setTimeout(() => {
                     html2canvas(preview, { 
                         backgroundColor: null, // Fondo transparente
-                        logging: false
+                        logging: false,
+                        scale: 2, // Mejor calidad
+                        useCORS: true,
+                        allowTaint: true
                     }).then(canvas => {
                         const link = document.createElement('a');
                         const uniqueName = generateUniqueImageName();
@@ -123,18 +126,21 @@
                     }).catch(err => {
                         console.error("Error al generar la imagen:", err);
                     });
-                }, 100);
+                }, 300);
             }
 
             /**
              * Gestiona la copia de la previsualización como imagen al portapapeles.
              */
             function handleCopyImage() {
-                // Pequeño retardo para asegurar que el renderizado de MathJax ha finalizado
+                // Esperar más tiempo para asegurar que el renderizado de MathJax ha finalizado
                 setTimeout(() => {
                     html2canvas(preview, {
                         backgroundColor: null, // Fondo transparente
-                        logging: false
+                        logging: false,
+                        scale: 2, // Mejor calidad
+                        useCORS: true,
+                        allowTaint: true
                     }).then(canvas => {
                         // Convierte el canvas a un Blob con nombre único
                         canvas.toBlob(blob => {
@@ -178,7 +184,7 @@
                     }).catch(err => {
                         console.error("Error al generar la imagen con html2canvas:", err);
                     });
-                }, 100);
+                }, 300); // Aumentamos el tiempo de espera
             }
             
             /**
