@@ -722,18 +722,8 @@
       "elementos": [
         {
           "type": "button",
-          "latex": "\\begin{cases} a_1x+b_1y=c_1 \\\\ a_2x+b_2y=c_2 \\end{cases}",
-          "title": "Sistema 2 ecuaciones"
-        },
-        {
-          "type": "button",
           "latex": "\\left\\{ \\begin{array}{l} x + y = 1 \\\\ x - y = 0 \\end{array} \\right.",
           "title": "Sistema con array"
-        },
-        {
-          "type": "button",
-          "latex": "\\begin{cases} a_1x+b_1y+c_1z=d_1 \\\\ a_2x+b_2y+c_2z=d_2 \\\\ a_3x+b_3y+c_3z=d_3 \\end{cases}",
-          "title": "Sistema 3 ecuaciones"
         },
         {
           "type": "button",
