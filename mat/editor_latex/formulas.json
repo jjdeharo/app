@@ -37,9 +37,9 @@
         },
         {
           "type": "button",
-          "latex": "\\vec{}",
-          "display": "\\vec{v}",
-          "title": "Vector"
+          "latex": "\\overline{}",
+          "display": "\\overline{3}",
+          "title": "Periódico (barra)"
         }
       ]
     },
@@ -469,6 +469,12 @@
           "type": "button",
           "latex": "\\mapsto",
           "title": "Mapsto"
+        },
+                {
+          "type": "button",
+          "latex": "\\vec{}",
+          "display": "\\vec{v}",
+          "title": "Vector"
         },
         {
           "type": "button",
