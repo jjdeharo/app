@@ -73,10 +73,11 @@
             <input type="url" id="json-url-input" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="URL del JSON...">
             <button id="load-url-btn" class="bg-indigo-500 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-600 transition flex-shrink-0">Cargar URL</button>
         </div>
-        <div class="mt-2">
+        <div class="flex items-center space-x-2">
             <select id="category-navigator" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
                 <option value="">Ir a categoría...</option>
             </select>
+            <button id="toggle-all-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-300 transition flex-shrink-0">Plegar/Desplegar</button>
         </div>
     </header>
 
@@ -121,6 +122,7 @@
             jsonUrlInput: document.getElementById('json-url-input'),
             loadUrlBtn: document.getElementById('load-url-btn'),
             categoryNavigator: document.getElementById('category-navigator'),
+            toggleAllBtn: document.getElementById('toggle-all-btn'),
             modal: document.getElementById('modal'),
             modalTitle: document.getElementById('modal-title'),
             modalForm: document.getElementById('modal-form'),
@@ -177,7 +179,7 @@
                     </div>`;
                 
                 const elementsList = document.createElement('div');
-                elementsList.className = 'elements-list space-y-2 pl-8'; // Added padding
+                elementsList.className = 'elements-list space-y-2 pl-8';
                 if (isCollapsed) {
                     elementsList.classList.add('hidden');
                 }
@@ -245,7 +247,6 @@
                     .catch((err) => console.log('MathJax error: ' + err.message))
                     .finally(() => {
                         ui.previewContainer.classList.remove('mathjax-processing');
-                        // Auto-scale logic
                         document.querySelectorAll('.preview-item').forEach(button => {
                             const mathContainer = button.querySelector('mjx-container');
                             if (mathContainer) {
@@ -325,8 +326,27 @@
         
         function handlePreviewClick(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
-            const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
-            if (editorItem) { editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' }); highlightElements(editorItem, e.currentTarget); }
+            const category = data.categorias[catIndex];
+
+            // Expand if collapsed, then render and highlight
+            if (category.isCollapsed) {
+                category.isCollapsed = false;
+                render();
+                 // We need to wait a tick for the DOM to update after render()
+                setTimeout(() => {
+                    const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
+                     if (editorItem) {
+                        editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        highlightElements(editorItem, e.currentTarget);
+                    }
+                }, 0);
+            } else {
+                 const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
+                 if (editorItem) {
+                    editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    highlightElements(editorItem, e.currentTarget);
+                }
+            }
         }
 
         function handlePreviewDblClick(e) {
@@ -403,6 +423,14 @@
                 setTimeout(() => previewCategoryDiv.classList.remove('highlight'), 1500);
             }
             e.target.value = ""; // Reset dropdown
+        });
+
+        ui.toggleAllBtn.addEventListener('click', () => {
+            if (!data.categorias || data.categorias.length === 0) return;
+            // Si alguna está sin colapsar, las colapsamos todas. Si no, las desplegamos.
+            const shouldCollapse = data.categorias.some(cat => !cat.isCollapsed);
+            data.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
+            render();
         });
 
         // --- File & Clipboard Operations ---
