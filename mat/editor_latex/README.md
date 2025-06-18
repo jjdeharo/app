@@ -1,4 +1,4 @@
-# Editor LaTeX para docentes
+# Editor LaTeX online
 
 ## ¿Qué es esto?
 
