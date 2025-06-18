@@ -63,7 +63,7 @@
         {
           "type": "button",
           "latex": "\\left\\{\\right\\}",
-          "display": "{\\,}",
+          "display": "",
           "title": "Llaves"
         },
         {
