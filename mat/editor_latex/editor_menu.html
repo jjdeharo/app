@@ -45,10 +45,13 @@
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
         .highlight { transition: background-color 0.3s ease-in-out; background-color: #fefcbf !important; border-color: #facc15; }
-        .drag-handle { cursor: grab; padding: 0 8px; color: #9ca3af; }
+        .drag-handle, .toggle-collapse-btn { cursor: pointer; }
+        .drag-handle { padding: 0 8px; color: #9ca3af; }
         .drag-handle:hover { color: #1f2937; }
         .sortable-ghost { opacity: 0.4; background-color: #c7d2fe; }
         .preview-container.mathjax-processing { visibility: hidden; }
+        .toggle-collapse-btn { transition: transform 0.2s ease-in-out; }
+        .collapsed .toggle-collapse-btn { transform: rotate(-90deg); }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -152,13 +155,34 @@
                 return;
             }
             data.categorias.forEach((cat, catIndex) => {
+                const isCollapsed = cat.isCollapsed || false;
                 const categoryDiv = document.createElement('div');
-                categoryDiv.className = 'category-item mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50';
+                categoryDiv.className = `category-item mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50 ${isCollapsed ? 'collapsed' : ''}`;
                 categoryDiv.dataset.catId = catIndex;
-                categoryDiv.innerHTML = `<div class="flex justify-between items-center mb-3 pb-2 border-b"><div class="flex items-center"><span class="drag-handle cat-drag-handle">&#9776;</span><h3 class="text-xl font-semibold text-gray-700">${cat.nombre}</h3></div><div class="space-x-2"><button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button><button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button><button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button></div></div>`;
+                
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-3 pb-2 border-b';
+                header.innerHTML = `
+                    <div class="flex items-center">
+                        <span class="drag-handle cat-drag-handle">&#9776;</span>
+                        <span class="toggle-collapse-btn text-gray-500 hover:text-gray-800" data-cat-index="${catIndex}">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </span>
+                        <h3 class="text-xl font-semibold text-gray-700 ml-1">${cat.nombre}</h3>
+                    </div>
+                    <div class="space-x-2">
+                        <button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button>
+                        <button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button>
+                        <button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button>
+                    </div>`;
+                
                 const elementsList = document.createElement('div');
-                elementsList.className = 'elements-list space-y-2';
+                elementsList.className = 'elements-list space-y-2 pl-8'; // Added padding
+                if (isCollapsed) {
+                    elementsList.classList.add('hidden');
+                }
                 elementsList.dataset.catIndex = catIndex;
+
                 if(cat.elementos) {
                     cat.elementos.forEach((el, elIndex) => {
                         const elDiv = document.createElement('div');
@@ -168,6 +192,7 @@
                         elementsList.appendChild(elDiv);
                     });
                 }
+                categoryDiv.appendChild(header);
                 categoryDiv.appendChild(elementsList);
                 ui.editorContainer.appendChild(categoryDiv);
             });
@@ -265,12 +290,20 @@
         
         // --- Event Listeners & Handlers ---
         function addEditorEventListeners() {
+            document.querySelectorAll('.toggle-collapse-btn').forEach(b => b.addEventListener('click', handleToggleCollapse));
             document.querySelectorAll('.edit-cat-btn').forEach(b => b.addEventListener('click', handleEditCategory));
             document.querySelectorAll('.delete-cat-btn').forEach(b => b.addEventListener('click', handleDeleteCategory));
             document.querySelectorAll('.add-el-btn').forEach(b => b.addEventListener('click', handleAddElement));
             document.querySelectorAll('.edit-el-btn').forEach(b => b.addEventListener('click', handleEditElement));
             document.querySelectorAll('.delete-el-btn').forEach(b => b.addEventListener('click', handleDeleteElement));
             document.querySelectorAll('.editor-item').forEach(item => item.addEventListener('click', handleEditorClick));
+        }
+        
+        function handleToggleCollapse(e) {
+            const catIndex = e.currentTarget.dataset.catIndex;
+            const category = data.categorias[catIndex];
+            category.isCollapsed = !category.isCollapsed;
+            render();
         }
 
         function highlightElements(editorItem, previewItem) {
@@ -281,8 +314,9 @@
         }
 
         function handleEditorClick(e) {
-            if (e.target.closest('button, .drag-handle')) return;
+            if (e.target.closest('button, .drag-handle, .toggle-collapse-btn')) return;
             const editorItem = e.currentTarget.closest('.editor-item');
+            if (!editorItem) return;
             const { editorId } = editorItem.dataset;
             const [catIndex, elIndex] = editorId.split('-');
             const previewItem = document.querySelector(`.preview-item[data-cat-index="${catIndex}"][data-el-index="${elIndex}"]`);
@@ -303,7 +337,7 @@
         // CRUD Handlers
         function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', data.categorias[catIndex], (formData) => { data.categorias[catIndex] = {...data.categorias[catIndex], ...formData}; render(); }); }
         function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { data.categorias.splice(catIndex, 1); render(); }); }
-        ui.addCategoryBtn.addEventListener('click', () => { showCategoryModal('Añadir Nueva Categoría', {}, (formData) => { data.categorias.push({ nombre: formData.nombre, id: formData.nombre.toLowerCase().replace(/\s+/g, '-'), grid_template_columns: "repeat(auto-fit, minmax(80px, 1fr))", elementos: [], ...formData }); render(); }); });
+        ui.addCategoryBtn.addEventListener('click', () => { showCategoryModal('Añadir Nueva Categoría', {}, (formData) => { data.categorias.push({ nombre: formData.nombre, id: formData.nombre.toLowerCase().replace(/\s+/g, '-'), grid_template_columns: "repeat(auto-fit, minmax(80px, 1fr))", elementos: [], isCollapsed: false, ...formData }); render(); }); });
         function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { data.categorias[catIndex].elementos.push({ type: "button", ...formData }); render(); }); }
         function handleEditElement(e) { 
             const { catIndex, elIndex } = e.currentTarget.dataset;
