@@ -480,7 +480,7 @@
           "latex": "\\mapsto",
           "title": "Mapsto"
         },
-                {
+        {
           "type": "button",
           "latex": "\\vec{}",
           "display": "\\vec{v}",
@@ -749,29 +749,90 @@
       ]
     },
     {
-  "nombre": "Agrupación visual",
-  "id": "agrupacion",
-  "grid_template_columns": "repeat(auto-fit, minmax(100px, 1fr))",
-  "elementos": [
-    {
-      "type": "button",
-      "latex": "\\boxed{}",
-      "display": "\\boxed{x+y}",
-      "title": "Caja"
+      "nombre": "Agrupación visual",
+      "id": "agrupacion",
+      "grid_template_columns": "repeat(auto-fit, minmax(100px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\boxed{}",
+          "display": "\\boxed{x+y}",
+          "title": "Caja"
+        },
+        {
+          "type": "button",
+          "latex": "\\overbrace{}^{\\text{}}",
+          "display": "\\overbrace{a+b+c}^{\\text{grupo}}",
+          "title": "Llave superior"
+        },
+        {
+          "type": "button",
+          "latex": "\\underbrace{}_{\\text{}}",
+          "display": "\\underbrace{a+b+c}_{\\text{grupo}}",
+          "title": "Llave inferior"
+        }
+      ]
     },
     {
-      "type": "button",
-      "latex": "\\overbrace{}^{\\text{}}",
-      "display": "\\overbrace{a+b+c}^{\\text{grupo}}",
-      "title": "Llave superior"
-    },
-    {
-      "type": "button",
-      "latex": "\\underbrace{}_{\\text{}}",
-      "display": "\\underbrace{a+b+c}_{\\text{grupo}}",
-      "title": "Llave inferior"
-    }
-  ]
+      "nombre": "Estadística y probabilidad",
+      "id": "estadistica",
+      "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\bar{x} = \\frac{\\sum x_i}{n}",
+          "display": "\\bar{x} = \\frac{\\sum x_i}{n}",
+          "title": "Media aritmética"
+        },
+        {
+          "type": "button",
+          "latex": "Me = \\frac{n+1}{2}",
+          "display": "Me = \\frac{n+1}{2}",
+          "title": "Mediana (posición)"
+        },
+        {
+          "type": "button",
+          "latex": "Mo = \\text{valor con mayor frecuencia}",
+          "display": "Mo = \\text{valor con mayor frecuencia}",
+          "title": "Moda"
+        },
+        {
+          "type": "button",
+          "latex": "\\sigma^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n}",
+          "display": "\\sigma^2 = \\frac{\\sum (x_i - \\bar{x})^2}{n}",
+          "title": "Varianza"
+        },
+        {
+          "type": "button",
+          "latex": "\\sigma = \\sqrt{\\frac{\\sum (x_i - \\bar{x})^2}{n}}",
+          "display": "\\sigma = \\sqrt{\\frac{\\sum (x_i - \\bar{x})^2}{n}}",
+          "title": "Desviación típica"
+        },
+        {
+          "type": "button",
+          "latex": "P(A) = \\frac{\\text{casos favorables}}{\\text{casos posibles}}",
+          "display": "P(A) = \\frac{\\text{casos favorables}}{\\text{casos posibles}}",
+          "title": "Probabilidad clásica"
+        },
+        {
+          "type": "button",
+          "latex": "P(A \\cap B) = P(A) \\cdot P(B)",
+          "display": "P(A \\cap B) = P(A) \\cdot P(B)",
+          "title": "Prob. eventos independientes"
+        },
+        {
+          "type": "button",
+          "latex": "P(A \\cup B) = P(A) + P(B) - P(A \\cap B)",
+          "display": "P(A \\cup B) = P(A) + P(B) - P(A \\cap B)",
+          "title": "Prob. unión de eventos"
+        },
+        {
+          "type": "button",
+          "latex": "P(A|B) = \\frac{P(B|A)\\,P(A)}{P(B)}",
+          "display": "P(A|B) = \\frac{P(B|A)\\,P(A)}{P(B)}",
+          "title": "Teorema de Bayes"
+        }
+      ]
     }
   ]
 }
