@@ -207,21 +207,6 @@
           "type": "button",
           "latex": "\\infty",
           "title": "Infinito"
-        },
-        {
-          "type": "button",
-          "latex": "\\forall",
-          "title": "Para todo"
-        },
-        {
-          "type": "button",
-          "latex": "\\exists",
-          "title": "Existe"
-        },
-        {
-          "type": "button",
-          "latex": "\\binom{n}{k}",
-          "title": "Binomio"
         }
       ]
     },
