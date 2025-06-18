@@ -16,79 +16,45 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <style>
-        /* Estilos personalizados para mejorar la apariencia */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .katex-display {
-            margin: 0;
-        }
-        .preview-button {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 50px;
-            font-size: 1.2rem;
-            transition: all 0.2s ease-in-out;
-            cursor: pointer;
-        }
-        .preview-button:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        /* Estilo para el scrollbar */
+        body { font-family: 'Inter', sans-serif; }
+        .katex-display { margin: 0; }
+        .preview-button { display: flex; justify-content: center; align-items: center; height: 50px; font-size: 1.2rem; transition: all 0.2s ease-in-out; cursor: pointer; }
+        .preview-button:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
-        
-        /* Clase para resaltar elementos */
-        .highlight {
-            transition: background-color 0.3s ease-in-out;
-            background-color: #fefcbf !important; /* Amarillo claro */
-            border-color: #facc15; /* Amarillo más oscuro */
-        }
-        
-        /* Estilos para Drag and Drop */
-        .drag-handle {
-            cursor: grab;
-            padding: 0 8px;
-            color: #9ca3af;
-        }
-        .drag-handle:hover {
-            color: #1f2937;
-        }
-        .sortable-ghost {
-            opacity: 0.4;
-            background-color: #c7d2fe;
-        }
+        .highlight { transition: background-color 0.3s ease-in-out; background-color: #fefcbf !important; border-color: #facc15; }
+        .drag-handle { cursor: grab; padding: 0 8px; color: #9ca3af; }
+        .drag-handle:hover { color: #1f2937; }
+        .sortable-ghost { opacity: 0.4; background-color: #c7d2fe; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
     <!-- Cabecera de la aplicación -->
-    <header class="bg-white shadow-md p-4 flex flex-wrap justify-between items-center sticky top-0 z-20">
-        <h1 class="text-2xl font-bold text-gray-700">Editor de Fórmulas LaTeX</h1>
-        <div class="flex items-center space-x-2 mt-2 md:mt-0 flex-wrap">
-            <label for="file-upload" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">
-                Cargar JSON
-            </label>
-            <input id="file-upload" type="file" class="hidden" accept=".json">
-            <button id="paste-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition">Pegar</button>
-            <button id="add-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition">Añadir Categoría</button>
-            <button id="copy-btn" class="bg-teal-500 text-white px-4 py-2 rounded-lg shadow hover:bg-teal-600 transition">Copiar JSON</button>
-            <button id="export-btn" class="bg-purple-500 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-600 transition">Exportar JSON</button>
+    <header class="bg-white shadow-md p-4 sticky top-0 z-20 space-y-3">
+        <div class="flex flex-wrap justify-between items-center gap-y-2">
+            <h1 class="text-2xl font-bold text-gray-700">Editor de Fórmulas LaTeX</h1>
+            <div class="flex items-center space-x-2 flex-wrap">
+                <label for="file-upload" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">Cargar Fichero</label>
+                <input id="file-upload" type="file" class="hidden" accept=".json">
+                <button id="paste-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition">Pegar</button>
+                <button id="add-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition">Añadir Categoría</button>
+                <button id="copy-btn" class="bg-teal-500 text-white px-4 py-2 rounded-lg shadow hover:bg-teal-600 transition">Copiar JSON</button>
+                <button id="export-btn" class="bg-purple-500 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-600 transition">Exportar JSON</button>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <input type="url" id="json-url-input" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" placeholder="URL del JSON...">
+            <button id="load-url-btn" class="bg-indigo-500 text-white px-4 py-2 rounded-lg shadow hover:bg-indigo-600 transition flex-shrink-0">Cargar URL</button>
         </div>
     </header>
 
     <!-- Contenedor principal -->
     <main class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
-        <div id="editor-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-160px)]">
-            <p class="text-gray-500 text-center">Carga un archivo JSON o empieza a añadir categorías.</p>
-        </div>
-        <div id="preview-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-160px)]">
-            <p class="text-gray-500 text-center">Aquí aparecerá la vista previa de los botones.</p>
-        </div>
+        <div id="editor-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-210px)]"></div>
+        <div id="preview-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-210px)]"></div>
     </main>
     
     <!-- Pie de página -->
@@ -111,6 +77,9 @@
         const initialJson = { "categorias": [] };
         let data = JSON.parse(JSON.stringify(initialJson));
 
+        const DEFAULT_URL = 'https://raw.githubusercontent.com/jjdeharo/app/refs/heads/main/mat/editor_latex/formulas.json';
+        const URL_STORAGE_KEY = 'latex-editor-custom-url';
+        
         // --- DOM Elements ---
         const ui = {
             editorContainer: document.getElementById('editor-container'),
@@ -120,7 +89,8 @@
             addCategoryBtn: document.getElementById('add-category-btn'),
             copyBtn: document.getElementById('copy-btn'),
             pasteBtn: document.getElementById('paste-btn'),
-            // Modals
+            jsonUrlInput: document.getElementById('json-url-input'),
+            loadUrlBtn: document.getElementById('load-url-btn'),
             modal: document.getElementById('modal'),
             modalTitle: document.getElementById('modal-title'),
             modalForm: document.getElementById('modal-form'),
@@ -149,47 +119,27 @@
 
         function renderEditor() {
             ui.editorContainer.innerHTML = '';
-            if (data.categorias.length === 0) {
-                ui.editorContainer.innerHTML = '<p class="text-gray-500 text-center">Carga un archivo JSON o empieza a añadir categorías.</p>';
+            if (!data.categorias || data.categorias.length === 0) {
+                ui.editorContainer.innerHTML = '<p class="text-gray-500 text-center">Carga un archivo o URL, o empieza a añadir categorías.</p>';
                 return;
             }
             data.categorias.forEach((cat, catIndex) => {
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'category-item mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50';
                 categoryDiv.dataset.id = catIndex;
-                categoryDiv.innerHTML = `
-                    <div class="flex justify-between items-center mb-3 pb-2 border-b">
-                        <div class="flex items-center">
-                            <span class="drag-handle cat-drag-handle">&#9776;</span>
-                            <h3 class="text-xl font-semibold text-gray-700">${cat.nombre}</h3>
-                        </div>
-                        <div class="space-x-2">
-                            <button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button>
-                            <button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button>
-                            <button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button>
-                        </div>
-                    </div>`;
+                categoryDiv.innerHTML = `<div class="flex justify-between items-center mb-3 pb-2 border-b"><div class="flex items-center"><span class="drag-handle cat-drag-handle">&#9776;</span><h3 class="text-xl font-semibold text-gray-700">${cat.nombre}</h3></div><div class="space-x-2"><button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button><button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button><button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button></div></div>`;
                 const elementsList = document.createElement('div');
                 elementsList.className = 'elements-list space-y-2';
                 elementsList.dataset.catIndex = catIndex;
-                cat.elementos.forEach((el, elIndex) => {
-                    const elDiv = document.createElement('div');
-                    elDiv.className = 'editor-item flex justify-between items-center p-2 rounded-md bg-white border border-gray-200 transition-colors duration-300';
-                    elDiv.dataset.editorId = `${catIndex}-${elIndex}`;
-                    elDiv.innerHTML = `
-                        <div class="flex items-center truncate">
-                             <span class="drag-handle el-drag-handle">&#9776;</span>
-                             <div class="truncate">
-                                 <strong class="text-sm font-medium">${el.title || el.type || 'Elemento'}</strong>
-                                 <p class="text-xs text-gray-500 truncate font-mono">${el.latex || ''}</p>
-                            </div>
-                        </div>
-                        <div class="flex-shrink-0 space-x-2">
-                           <button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="edit-el-btn text-blue-500 hover:text-blue-700" title="Editar elemento">&#9998;</button>
-                           <button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="delete-el-btn text-red-500 hover:text-red-700" title="Eliminar elemento">&#10006;</button>
-                        </div>`;
-                    elementsList.appendChild(elDiv);
-                });
+                if(cat.elementos) {
+                    cat.elementos.forEach((el, elIndex) => {
+                        const elDiv = document.createElement('div');
+                        elDiv.className = 'editor-item flex justify-between items-center p-2 rounded-md bg-white border border-gray-200 transition-colors duration-300';
+                        elDiv.dataset.editorId = `${catIndex}-${elIndex}`;
+                        elDiv.innerHTML = `<div class="flex items-center truncate"><span class="drag-handle el-drag-handle">&#9776;</span><div class="truncate"><strong class="text-sm font-medium">${el.title || el.type || 'Elemento'}</strong><p class="text-xs text-gray-500 truncate font-mono">${el.latex || ''}</p></div></div><div class="flex-shrink-0 space-x-2"><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="edit-el-btn text-blue-500 hover:text-blue-700" title="Editar elemento">&#9998;</button><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="delete-el-btn text-red-500 hover:text-red-700" title="Eliminar elemento">&#10006;</button></div>`;
+                        elementsList.appendChild(elDiv);
+                    });
+                }
                 categoryDiv.appendChild(elementsList);
                 ui.editorContainer.appendChild(categoryDiv);
             });
@@ -198,7 +148,7 @@
 
         function renderPreview() {
             ui.previewContainer.innerHTML = '';
-            if (data.categorias.length === 0) {
+            if (!data.categorias || data.categorias.length === 0) {
                 ui.previewContainer.innerHTML = '<p class="text-gray-500 text-center">Aquí aparecerá la vista previa.</p>';
                 return;
             }
@@ -209,23 +159,25 @@
                 const gridDiv = document.createElement('div');
                 gridDiv.className = 'grid gap-2';
                 gridDiv.style.gridTemplateColumns = cat.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))';
-                cat.elementos.forEach((el, elIndex) => {
-                    if (el.type === 'custom_matrix') return;
-                    const button = document.createElement('button');
-                    button.className = 'preview-item preview-button bg-white border border-gray-300 rounded-md p-2 shadow-sm';
-                    button.title = el.title || '';
-                    button.dataset.catIndex = catIndex;
-                    button.dataset.elIndex = elIndex;
-                    try {
-                        button.innerHTML = katex.renderToString(el.display || el.latex, { throwOnError: true, displayMode: false });
-                    } catch (e) {
-                        button.textContent = el.latex;
-                        button.classList.add('text-red-500', 'font-mono', 'text-xs');
-                    }
-                    button.addEventListener('click', handlePreviewClick);
-                    button.addEventListener('dblclick', handlePreviewDblClick);
-                    gridDiv.appendChild(button);
-                });
+                if(cat.elementos){
+                    cat.elementos.forEach((el, elIndex) => {
+                        if (el.type === 'custom_matrix') return;
+                        const button = document.createElement('button');
+                        button.className = 'preview-item preview-button bg-white border border-gray-300 rounded-md p-2 shadow-sm';
+                        button.title = el.title || '';
+                        button.dataset.catIndex = catIndex;
+                        button.dataset.elIndex = elIndex;
+                        try {
+                            button.innerHTML = katex.renderToString(el.display || el.latex, { throwOnError: true, displayMode: false });
+                        } catch (e) {
+                            button.textContent = el.latex;
+                            button.classList.add('text-red-500', 'font-mono', 'text-xs');
+                        }
+                        button.addEventListener('click', handlePreviewClick);
+                        button.addEventListener('dblclick', handlePreviewDblClick);
+                        gridDiv.appendChild(button);
+                    });
+                }
                 categoryDiv.appendChild(gridDiv);
                 ui.previewContainer.appendChild(categoryDiv);
             });
@@ -233,33 +185,14 @@
         
         // --- Drag and Drop ---
         function initDragAndDrop() {
-            new Sortable(ui.editorContainer, {
-                animation: 150,
-                handle: '.cat-drag-handle',
-                ghostClass: 'sortable-ghost',
-                onEnd: (evt) => {
-                    const [item] = data.categorias.splice(evt.oldIndex, 1);
-                    data.categorias.splice(evt.newIndex, 0, item);
-                    render();
-                }
-            });
-
+            new Sortable(ui.editorContainer, { animation: 150, handle: '.cat-drag-handle', ghostClass: 'sortable-ghost', onEnd: (evt) => { const [item] = data.categorias.splice(evt.oldIndex, 1); data.categorias.splice(evt.newIndex, 0, item); render(); } });
             document.querySelectorAll('.elements-list').forEach(list => {
                 const catIndex = list.dataset.catIndex;
-                new Sortable(list, {
-                    animation: 150,
-                    handle: '.el-drag-handle',
-                    ghostClass: 'sortable-ghost',
-                    onEnd: (evt) => {
-                        const [item] = data.categorias[catIndex].elementos.splice(evt.oldIndex, 1);
-                        data.categorias[catIndex].elementos.splice(evt.newIndex, 0, item);
-                        render();
-                    }
-                });
+                new Sortable(list, { animation: 150, handle: '.el-drag-handle', ghostClass: 'sortable-ghost', onEnd: (evt) => { const [item] = data.categorias[catIndex].elementos.splice(evt.oldIndex, 1); data.categorias[catIndex].elementos.splice(evt.newIndex, 0, item); render(); } });
             });
         }
-
-        // --- Event Listeners ---
+        
+        // --- Event Listeners & Handlers ---
         function addEditorEventListeners() {
             document.querySelectorAll('.edit-cat-btn').forEach(b => b.addEventListener('click', handleEditCategory));
             document.querySelectorAll('.delete-cat-btn').forEach(b => b.addEventListener('click', handleDeleteCategory));
@@ -269,15 +202,11 @@
             document.querySelectorAll('.editor-item').forEach(item => item.addEventListener('click', handleEditorClick));
         }
 
-        // Navigation and Highlight
         function highlightElements(editorItem, previewItem) {
             document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
             if(editorItem) editorItem.classList.add('highlight');
             if(previewItem) previewItem.classList.add('highlight');
-            setTimeout(() => {
-                if(editorItem) editorItem.classList.remove('highlight');
-                if(previewItem) previewItem.classList.remove('highlight');
-            }, 1500);
+            setTimeout(() => { if(editorItem) editorItem.classList.remove('highlight'); if(previewItem) previewItem.classList.remove('highlight'); }, 1500);
         }
 
         function handleEditorClick(e) {
@@ -286,70 +215,66 @@
             const { editorId } = editorItem.dataset;
             const [catIndex, elIndex] = editorId.split('-');
             const previewItem = document.querySelector(`.preview-item[data-cat-index="${catIndex}"][data-el-index="${elIndex}"]`);
-            if (previewItem) {
-                previewItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                highlightElements(editorItem, previewItem);
-            }
+            if (previewItem) { previewItem.scrollIntoView({ behavior: 'smooth', block: 'center' }); highlightElements(editorItem, previewItem); }
         }
         
         function handlePreviewClick(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
             const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
-            if (editorItem) {
-                editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                highlightElements(editorItem, e.currentTarget);
-            }
+            if (editorItem) { editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' }); highlightElements(editorItem, e.currentTarget); }
         }
 
         function handlePreviewDblClick(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
             handleEditElement({ currentTarget: { dataset: { catIndex, elIndex } } });
         }
+        
+        // CRUD Handlers
+        function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', data.categorias[catIndex], (formData) => { data.categorias[catIndex] = {...data.categorias[catIndex], ...formData}; render(); }); }
+        function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { data.categorias.splice(catIndex, 1); render(); }); }
+        ui.addCategoryBtn.addEventListener('click', () => { showCategoryModal('Añadir Nueva Categoría', {}, (formData) => { data.categorias.push({ nombre: formData.nombre, id: formData.nombre.toLowerCase().replace(/\s+/g, '-'), grid_template_columns: "repeat(auto-fit, minmax(80px, 1fr))", elementos: [], ...formData }); render(); }); });
+        function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { data.categorias[catIndex].elementos.push({ type: "button", ...formData }); render(); }); }
+        function handleEditElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; showElementModal('Editar Elemento', data.categorias[catIndex].elementos[elIndex], (formData) => { data.categorias[catIndex].elementos[elIndex] = {...data.categorias[catIndex].elementos[elIndex], ...formData}; render(); }); }
+        function handleDeleteElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; const el = data.categorias[catIndex].elementos[elIndex]; showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro?`, () => { data.categorias[catIndex].elementos.splice(elIndex, 1); render(); }); }
+        
+        // --- URL Loading ---
+        async function loadJsonFromUrl(url) {
+            const loadingHtml = '<p class="text-gray-500 text-center animate-pulse">Cargando desde URL...</p>';
+            ui.editorContainer.innerHTML = loadingHtml;
+            ui.previewContainer.innerHTML = loadingHtml;
+            
+            // Usamos un proxy CORS para evitar problemas de bloqueo de peticiones
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
 
-        // CRUD Operations
-        function handleEditCategory(e) {
-            const { catIndex } = e.currentTarget.dataset;
-            showCategoryModal('Editar Categoría', data.categorias[catIndex], (formData) => {
-                data.categorias[catIndex] = {...data.categorias[catIndex], ...formData};
-                render();
-            });
-        }
-        function handleDeleteCategory(e) {
-            const { catIndex } = e.currentTarget.dataset;
-            showConfirmModal(`Eliminar "${data.categorias[catIndex].nombre}"`, `¿Seguro que quieres eliminar la categoría y todos sus elementos?`, () => {
-                data.categorias.splice(catIndex, 1);
-                render();
-            });
-        }
-        ui.addCategoryBtn.addEventListener('click', () => {
-             showCategoryModal('Añadir Nueva Categoría', {}, (formData) => {
-                data.categorias.push({ nombre: formData.nombre, id: formData.nombre.toLowerCase().replace(/\s+/g, '-'), grid_template_columns: "repeat(auto-fit, minmax(80px, 1fr))", elementos: [], ...formData });
-                render();
-            });
-        });
-        function handleAddElement(e) {
-            const { catIndex } = e.currentTarget.dataset;
-            showElementModal('Añadir Elemento', {}, (formData) => {
-                data.categorias[catIndex].elementos.push({ type: "button", ...formData });
-                render();
-            });
-        }
-        function handleEditElement(e) {
-            const { catIndex, elIndex } = e.currentTarget.dataset;
-            showElementModal('Editar Elemento', data.categorias[catIndex].elementos[elIndex], (formData) => {
-                data.categorias[catIndex].elementos[elIndex] = {...data.categorias[catIndex].elementos[elIndex], ...formData};
-                render();
-            });
-        }
-        function handleDeleteElement(e) {
-            const { catIndex, elIndex } = e.currentTarget.dataset;
-            const el = data.categorias[catIndex].elementos[elIndex];
-            showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro que quieres eliminar este elemento?`, () => {
-                data.categorias[catIndex].elementos.splice(elIndex, 1);
-                render();
-            });
+            try {
+                const response = await fetch(proxyUrl);
+                if (!response.ok) throw new Error(`Error de red: ${response.status} ${response.statusText}`);
+                const jsonData = await response.json();
+                if (jsonData.categorias && Array.isArray(jsonData.categorias)) {
+                    data = jsonData;
+                    localStorage.setItem(URL_STORAGE_KEY, url); // Guardar URL exitosa
+                    ui.jsonUrlInput.value = url;
+                } else {
+                    throw new Error("El JSON no tiene el formato esperado (falta la clave 'categorias').");
+                }
+            } catch (error) {
+                const errorHtml = `<p class="text-red-500 text-center"><b>Error al cargar:</b><br>${error.message}</p>`;
+                ui.editorContainer.innerHTML = errorHtml;
+                ui.previewContainer.innerHTML = errorHtml;
+                data = JSON.parse(JSON.stringify(initialJson)); // Reset data on error
+            }
+            render();
         }
         
+        ui.loadUrlBtn.addEventListener('click', () => {
+            const url = ui.jsonUrlInput.value.trim();
+            if(url) {
+                loadJsonFromUrl(url);
+            } else {
+                alert("Por favor, introduce una URL.");
+            }
+        });
+
         // --- File & Clipboard Operations ---
         ui.fileUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
@@ -358,47 +283,27 @@
             reader.onload = (event) => {
                 try {
                     const loadedData = JSON.parse(event.target.result);
-                    if (loadedData.categorias && Array.isArray(loadedData.categorias)) {
-                        data = loadedData;
-                        render();
-                    } else { alert("El archivo JSON no tiene el formato esperado (clave 'categorias' no encontrada o no es un array)."); }
-                } catch (error) { alert("Error al procesar el archivo JSON. Verifique el formato."); }
+                    if (loadedData.categorias && Array.isArray(loadedData.categorias)) { data = loadedData; render(); } 
+                    else { alert("El archivo JSON no tiene el formato esperado."); }
+                } catch (error) { alert("Error al procesar el archivo JSON."); }
             };
             reader.readAsText(file);
             e.target.value = '';
         });
         
-        function handleCopyJson() {
+        ui.copyBtn.addEventListener('click', () => {
+            if (data.categorias.length === 0) { alert("No hay nada que copiar."); return; }
             const jsonString = JSON.stringify(data, null, 2);
-            if (!jsonString || data.categorias.length === 0) {
-                alert("No hay nada que copiar. Carga un archivo o añade datos primero.");
-                return;
-            }
-            const textArea = document.createElement('textarea');
-            textArea.value = jsonString;
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-9999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                const originalText = ui.copyBtn.innerHTML;
-                ui.copyBtn.innerHTML = '¡Copiado!';
+            navigator.clipboard.writeText(jsonString).then(() => {
+                const originalText = ui.copyBtn.textContent;
+                ui.copyBtn.textContent = '¡Copiado!';
                 ui.copyBtn.classList.replace('bg-teal-500', 'bg-green-600');
-                setTimeout(() => {
-                    ui.copyBtn.innerHTML = originalText;
-                    ui.copyBtn.classList.replace('bg-green-600', 'bg-teal-500');
-                }, 2000);
-            } catch (err) { console.error('Error al copiar el JSON: ', err); }
-            document.body.removeChild(textArea);
-        }
-        ui.copyBtn.addEventListener('click', handleCopyJson);
+                setTimeout(() => { ui.copyBtn.textContent = originalText; ui.copyBtn.classList.replace('bg-green-600', 'bg-teal-500'); }, 2000);
+            }).catch(err => console.error('Error al copiar: ', err));
+        });
 
         ui.exportBtn.addEventListener('click', () => {
-            if (data.categorias.length === 0) {
-                alert("No hay nada que exportar. Carga un archivo o añade datos primero.");
-                return;
-            }
+            if (data.categorias.length === 0) { alert("No hay nada que exportar."); return; }
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
             a.download = 'formulas_editado.json';
@@ -410,19 +315,12 @@
         ui.pasteBtn.addEventListener('click', () => {
             ui.pasteTextArea.value = '';
             ui.pasteCategorySelector.innerHTML = '';
-            data.categorias.forEach((cat, index) => {
-                const option = document.createElement('option');
-                option.value = index;
-                option.textContent = cat.nombre;
-                ui.pasteCategorySelector.appendChild(option);
-            });
+            data.categorias.forEach((cat, index) => { const option = document.createElement('option'); option.value = index; option.textContent = cat.nombre; ui.pasteCategorySelector.appendChild(option); });
             ui.pasteType.value = 'full';
             ui.pasteCategorySelectorDiv.classList.add('hidden');
             ui.pasteModal.classList.remove('hidden');
         });
-        ui.pasteType.addEventListener('change', (e) => {
-            ui.pasteCategorySelectorDiv.classList.toggle('hidden', e.target.value !== 'element');
-        });
+        ui.pasteType.addEventListener('change', (e) => { ui.pasteCategorySelectorDiv.classList.toggle('hidden', e.target.value !== 'element'); });
         ui.pasteCancel.addEventListener('click', () => ui.pasteModal.classList.add('hidden'));
         ui.pasteAdd.addEventListener('click', () => {
             const jsonText = ui.pasteTextArea.value;
@@ -430,70 +328,37 @@
             try {
                 const pastedData = JSON.parse(jsonText);
                 const type = ui.pasteType.value;
-                switch(type) {
-                    case 'full':
-                        if (pastedData.categorias && Array.isArray(pastedData.categorias)) {
-                            data = pastedData;
-                        } else { throw new Error("El JSON completo debe tener una clave 'categorias' que sea un array."); }
-                        break;
-                    case 'category':
-                        if (pastedData.nombre && pastedData.elementos && Array.isArray(pastedData.elementos)) {
-                            data.categorias.push(pastedData);
-                        } else { throw new Error("El JSON de categoría debe tener las claves 'nombre' y 'elementos' (array)."); }
-                        break;
-                    case 'element':
-                        const catIndex = ui.pasteCategorySelector.value;
-                        if (catIndex === '' || !data.categorias[catIndex]) { alert("Selecciona una categoría válida para añadir el elemento."); return; }
-                        if (pastedData.type && pastedData.latex) {
-                           data.categorias[catIndex].elementos.push(pastedData);
-                        } else { throw new Error("El JSON de elemento debe tener al menos las claves 'type' y 'latex'."); }
-                        break;
-                }
+                if (type === 'full') { if (pastedData.categorias && Array.isArray(pastedData.categorias)) { data = pastedData; } else { throw new Error("JSON completo inválido."); } }
+                else if (type === 'category') { if (pastedData.nombre && pastedData.elementos) { data.categorias.push(pastedData); } else { throw new Error("JSON de categoría inválido."); } }
+                else if (type === 'element') { const catIndex = ui.pasteCategorySelector.value; if (catIndex === '') { alert("Selecciona una categoría."); return; } if (pastedData.type && pastedData.latex) { data.categorias[catIndex].elementos.push(pastedData); } else { throw new Error("JSON de elemento inválido."); } }
                 ui.pasteModal.classList.add('hidden');
                 render();
-            } catch (error) {
-                alert("Error al procesar el JSON: " + error.message);
-            }
+            } catch (error) { alert("Error al procesar el JSON: " + error.message); }
         });
 
-        // --- Modals Generic ---
+        // --- Modals Generic Handlers ---
         let onSaveCallback = null;
-        function showCategoryModal(title, categoryData = {}, onSave) {
-            ui.modalTitle.textContent = title;
-            ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="cat-nombre" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="cat-nombre" value="${categoryData.nombre || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="cat-grid" class="block text-sm font-medium text-gray-700">CSS Grid Template Columns</label><input type="text" id="cat-grid" value="${categoryData.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))'}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div></div>`;
-            onSaveCallback = () => {
-                const formData = { nombre: document.getElementById('cat-nombre').value, grid_template_columns: document.getElementById('cat-grid').value };
-                if (!formData.nombre) { alert('El nombre es obligatorio.'); return; }
-                onSave(formData);
-                hideModal();
-            };
-            ui.modal.classList.remove('hidden');
-        }
-        function showElementModal(title, elementData = {}, onSave) {
-            ui.modalTitle.textContent = title;
-            ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="el-title" class="block text-sm font-medium text-gray-700">Título (tooltip)</label><input type="text" id="el-title" value="${elementData.title || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="el-latex" class="block text-sm font-medium text-gray-700">Código LaTeX (insertar)</label><textarea id="el-latex" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono" required>${elementData.latex || ''}</textarea></div><div><label for="el-display" class="block text-sm font-medium text-gray-700">Código LaTeX (visualizar, opcional)</label><textarea id="el-display" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono">${elementData.display || ''}</textarea><p class="text-xs text-gray-500 mt-1">Si se deja en blanco, se usa el de insertar.</p></div></div>`;
-            onSaveCallback = () => {
-                const formData = { title: document.getElementById('el-title').value, latex: document.getElementById('el-latex').value, display: document.getElementById('el-display').value };
-                if (!formData.title || !formData.latex) { alert('El título y el código LaTeX son obligatorios.'); return; }
-                onSave(formData);
-                hideModal();
-            };
-            ui.modal.classList.remove('hidden');
-        }
+        function showCategoryModal(title, categoryData = {}, onSave) { ui.modalTitle.textContent = title; ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="cat-nombre" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="cat-nombre" value="${categoryData.nombre || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required></div><div><label for="cat-grid" class="block text-sm font-medium text-gray-700">CSS Grid Template</label><input type="text" id="cat-grid" value="${categoryData.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))'}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required></div></div>`; onSaveCallback = () => { const formData = { nombre: document.getElementById('cat-nombre').value, grid_template_columns: document.getElementById('cat-grid').value }; if (!formData.nombre) { alert('El nombre es obligatorio.'); return; } onSave(formData); hideModal(); }; ui.modal.classList.remove('hidden'); }
+        function showElementModal(title, elementData = {}, onSave) { ui.modalTitle.textContent = title; ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="el-title" class="block text-sm font-medium">Título</label><input type="text" id="el-title" value="${elementData.title || ''}" class="mt-1 block w-full px-3 py-2 border rounded-md" required></div><div><label for="el-latex" class="block text-sm font-medium">LaTeX (insertar)</label><textarea id="el-latex" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-md font-mono" required>${elementData.latex || ''}</textarea></div><div><label for="el-display" class="block text-sm font-medium">LaTeX (visualizar)</label><textarea id="el-display" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-md font-mono">${elementData.display || ''}</textarea><p class="text-xs text-gray-500 mt-1">Opcional. Si se deja en blanco, se usa el de insertar.</p></div></div>`; onSaveCallback = () => { const formData = { title: document.getElementById('el-title').value, latex: document.getElementById('el-latex').value, display: document.getElementById('el-display').value }; if (!formData.title || !formData.latex) { alert('Título y LaTeX son obligatorios.'); return; } onSave(formData); hideModal(); }; ui.modal.classList.remove('hidden'); }
         function hideModal() { ui.modal.classList.add('hidden'); onSaveCallback = null; }
         ui.modalSave.addEventListener('click', () => { if (onSaveCallback) onSaveCallback(); });
         ui.modalCancel.addEventListener('click', hideModal);
         
         let onDeleteCallback = null;
-        function showConfirmModal(title, message, onDelete) {
-            ui.confirmTitle.textContent = title; ui.confirmMessage.textContent = message; onDeleteCallback = onDelete; ui.confirmModal.classList.remove('hidden');
-        }
+        function showConfirmModal(title, message, onDelete) { ui.confirmTitle.textContent = title; ui.confirmMessage.textContent = message; onDeleteCallback = onDelete; ui.confirmModal.classList.remove('hidden'); }
         function hideConfirmModal() { ui.confirmModal.classList.add('hidden'); onDeleteCallback = null; }
         ui.confirmDelete.addEventListener('click', () => { if(onDeleteCallback) onDeleteCallback(); hideConfirmModal(); });
         ui.confirmCancel.addEventListener('click', hideConfirmModal);
 
-        // --- Initial Render ---
-        render();
+        // --- Initial Load ---
+        function init() {
+            const savedUrl = localStorage.getItem(URL_STORAGE_KEY);
+            const initialUrl = savedUrl || DEFAULT_URL;
+            ui.jsonUrlInput.value = initialUrl;
+            loadJsonFromUrl(initialUrl);
+        }
+
+        init();
     </script>
 </body>
 </html>
