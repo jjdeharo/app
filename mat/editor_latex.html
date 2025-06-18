@@ -338,7 +338,7 @@
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             width: 90%;
-            max-width: 450px;
+            max-width: 80vw; /* El modal puede ser más ancho para ver mejor la imagen */
             text-align: center;
             transform: scale(0.9);
             transition: transform 0.3s;
@@ -517,8 +517,7 @@
                     <div id="preview"></div>
                 </div>
                 <div class="panel-actions">
-                    <button id="copy-image-button" class="btn btn-secondary">Copiar como imagen</button>
-                    <button id="download-png-button" class="btn btn-success">Descargar PNG</button>
+                    <button id="view-image-button" class="btn btn-success">Visualizar imagen</button>
                 </div>
                  <div id="copy-image-feedback" class="copy-feedback"></div>
             </div>
@@ -532,7 +531,7 @@
     <!-- Estructura del Modal -->
     <div id="modal" class="modal-overlay">
         <div class="modal-content">
-            <p id="modal-message"></p>
+            <div id="modal-message"></div>
             <div id="modal-buttons" class="modal-buttons">
                 <!-- Botones se insertarán aquí dinámicamente -->
             </div>
@@ -547,8 +546,7 @@
             const preview = document.getElementById('preview');
             const copyButton = document.getElementById('copy-button');
             const clearButton = document.getElementById('clear-button');
-            const copyImageButton = document.getElementById('copy-image-button');
-            const downloadButton = document.getElementById('download-png-button');
+            const viewImageButton = document.getElementById('view-image-button');
             const copyCodeFeedback = document.getElementById('copy-code-feedback');
             const copyImageFeedback = document.getElementById('copy-image-feedback');
             const toolbar = document.getElementById('toolbar');
@@ -557,9 +555,10 @@
             const modalMessage = document.getElementById('modal-message');
             const modalButtons = document.getElementById('modal-buttons');
 
-            // --- FUNCIONES DEL MODAL (se mantiene para otros mensajes) ---
+            // --- FUNCIONES DEL MODAL ---
             function showModal(message, buttons) {
-                modalMessage.textContent = message;
+                // Para mensajes de texto simples
+                modalMessage.innerHTML = `<p>${message}</p>`;
                 modalButtons.innerHTML = '';
                 buttons.forEach(btnInfo => {
                     const button = document.createElement('button');
@@ -691,37 +690,35 @@
                 img.src = url;
             }
 
-            function handleDownload() {
+            function handleViewImage() {
                 generateImage(canvas => {
-                    const link = document.createElement('a');
-                    link.download = `${generateUniqueImageName()}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
-                });
-            }
+                    // Limpiar contenido previo del modal
+                    modalMessage.innerHTML = '';
+                    modalButtons.innerHTML = '';
+                    
+                    // Crear la imagen para mostrar en el modal
+                    const imgElement = document.createElement('img');
+                    imgElement.src = canvas.toDataURL('image/png');
+                    imgElement.style.maxWidth = '100%';
+                    imgElement.style.borderRadius = '8px';
+                    imgElement.style.userSelect = 'none'; // Evitar seleccionar la imagen como texto
 
-            function handleCopyImage() {
-                if (!navigator.clipboard || !navigator.clipboard.write) {
-                    showModal("La función de copiar imagen no es compatible con tu navegador. Utiliza 'Descargar PNG'.", [{text: 'OK', class: 'btn-primary'}]);
-                    return;
-                }
-                generateImage(canvas => {
-                    canvas.toBlob(blob => {
-                         try {
-                            const item = new ClipboardItem({ 'image/png': blob });
-                            navigator.clipboard.write([item]).then(() => {
-                                copyImageFeedback.textContent = '¡Imagen copiada!';
-                                copyImageFeedback.style.opacity = '1';
-                                setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
-                            }).catch(err => {
-                                console.error("Error al copiar la imagen: ", err);
-                                showModal("No se pudo copiar la imagen. Es posible que tu navegador no lo permita por seguridad.", [{text: 'OK', class: 'btn-primary'}]);
-                            });
-                        } catch (error) {
-                             console.error("Error creando ClipboardItem: ", error);
-                             showModal("No se pudo procesar la imagen para copiar. Intenta descargarla.", [{text: 'OK', class: 'btn-primary'}]);
-                        }
-                    }, 'image/png');
+                    const instruction = document.createElement('p');
+                    instruction.textContent = 'Haz clic derecho sobre la imagen para guardarla o copiarla.';
+                    instruction.style.marginTop = '15px';
+                    instruction.style.fontSize = '0.9em';
+                    instruction.style.color = 'var(--dark-gray)';
+
+                    modalMessage.appendChild(imgElement);
+                    modalMessage.appendChild(instruction);
+                    
+                    const closeButton = document.createElement('button');
+                    closeButton.textContent = 'Cerrar';
+                    closeButton.className = 'btn btn-secondary';
+                    closeButton.onclick = hideModal;
+                    modalButtons.appendChild(closeButton);
+
+                    modal.classList.add('active');
                 });
             }
             
@@ -782,7 +779,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.5</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.6</p>
                 `;
             }
 
@@ -839,8 +836,7 @@
                 }
             });
 
-            downloadButton.addEventListener('click', handleDownload);
-            copyImageButton.addEventListener('click', handleCopyImage);
+            viewImageButton.addEventListener('click', handleViewImage);
             tabsContainer.addEventListener('click', handleTabSwitch);
             modal.addEventListener('click', (e) => {
                 if (e.target === modal) hideModal();
