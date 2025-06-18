@@ -747,6 +747,31 @@
           "title": "Sistema 3 ecuaciones con array"
         }
       ]
+    },
+    {
+  "nombre": "Agrupación visual",
+  "id": "agrupacion",
+  "grid_template_columns": "repeat(auto-fit, minmax(100px, 1fr))",
+  "elementos": [
+    {
+      "type": "button",
+      "latex": "\\boxed{}",
+      "display": "\\boxed{x+y}",
+      "title": "Caja"
+    },
+    {
+      "type": "button",
+      "latex": "\\overbrace{}^{\\text{}}",
+      "display": "\\overbrace{a+b+c}^{\\text{grupo}}",
+      "title": "Llave superior"
+    },
+    {
+      "type": "button",
+      "latex": "\\underbrace{}_{\\text{}}",
+      "display": "\\underbrace{a+b+c}_{\\text{grupo}}",
+      "title": "Llave inferior"
+    }
+  ]
     }
   ]
 }
