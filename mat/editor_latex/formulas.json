@@ -811,13 +811,13 @@
         {
           "type": "button",
           "latex": "P(A \\cup B) = P(A) + P(B) - P(A \\cap B)",
-          "display": "P(A \\cup B) = P(A) + P(B) - P(A \\cap B)",
+          "display": "\\begin{array}{c}\nP(A \\cup B) = P(A) + P(B) \\\\\n- P(A \\cap B)\n\\end{array}",
           "title": "Prob. unión de eventos"
         },
         {
           "type": "button",
           "latex": "P(A|B) = \\frac{P(B|A)\\,P(A)}{P(B)}",
-          "display": "P(A|B) = \\frac{P(B|A)\\,P(A)}{P(B)}",
+          "display": "\\begin{array}{c}\nP(A \\mid B) = \\frac{ \\\\\nP(B \\mid A) \\cdot P(A) }{ P(B) }\n\\end{array}\n",
           "title": "Teorema de Bayes"
         }
       ]
