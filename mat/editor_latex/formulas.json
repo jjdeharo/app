@@ -955,6 +955,73 @@
           "title": "Raíz en forma de potencia"
         }
       ]
+    },
+    {
+      "nombre": "Formato de texto",
+      "id": "formato",
+      "grid_template_columns": "repeat(auto-fit, minmax(120px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\textbf{}",
+          "display": "\\textbf{negrita}",
+          "title": "Negrita"
+        },
+        {
+          "type": "button",
+          "latex": "\\textit{}",
+          "display": "\\textit{cursiva}",
+          "title": "Cursiva"
+        },
+        {
+          "type": "button",
+          "latex": "\\texttt{}",
+          "display": "\\texttt{monoespaciado}",
+          "title": "Monoespaciado"
+        },
+        {
+          "type": "button",
+          "latex": "\\text{}",
+          "display": "\\text{texto plano}",
+          "title": "Texto plano"
+        },
+        {
+          "type": "button",
+          "latex": "\\mathrm{}",
+          "display": "\\mathrm{recto}",
+          "title": "Recto (math roman)"
+        },
+        {
+          "type": "button",
+          "latex": "\\mathit{}",
+          "display": "\\mathit{cursiva}",
+          "title": "Cursiva matemática"
+        },
+        {
+          "type": "button",
+          "latex": "\\mathbf{}",
+          "display": "\\mathbf{negrita}",
+          "title": "Negrita matemática"
+        },
+        {
+          "type": "button",
+          "latex": "\\mathcal{}",
+          "display": "\\mathcal{ABC}",
+          "title": "Caligráfico"
+        },
+        {
+          "type": "button",
+          "latex": "\\mathbb{}",
+          "display": "\\mathbb{R}",
+          "title": "Blackboard bold"
+        },
+        {
+          "type": "button",
+          "latex": "\\mathfrak{}",
+          "display": "\\mathfrak{abc}",
+          "title": "Gótico"
+        }
+      ]
     }
   ]
 }
