@@ -637,25 +637,45 @@
             }
 
             /**
-             * Genera una imagen del preview y la pasa a un callback.
+             * Genera una imagen del preview y la pasa a un callback, usando un clon para evitar conflictos.
              * @param {function} callback - Función que se ejecuta con el canvas como argumento.
              */
             function generateImage(callback) {
-                // La preview ya se ha renderizado a través de updatePreview.
-                // Solo esperamos un poco para asegurar que el renderizado ha finalizado
-                // antes de que html2canvas lo capture.
+                // 1. Clonar el nodo de la previsualización que ya está renderizado por MathJax
+                const originalPreview = document.getElementById('preview');
+                const clone = originalPreview.cloneNode(true);
+
+                // 2. Crear un contenedor temporal para el clon, que será capturado.
+                const tempContainer = document.createElement('div');
+                // Se posiciona fuera de la pantalla para que no sea visible por el usuario.
+                tempContainer.style.position = 'absolute';
+                tempContainer.style.left = '-9999px';
+                tempContainer.style.top = '0px';
+                // Se le da un fondo blanco y padding para que la imagen se vea bien.
+                tempContainer.style.background = 'white'; 
+                tempContainer.style.padding = '20px'; 
+                
+                tempContainer.appendChild(clone);
+                document.body.appendChild(tempContainer);
+
+                // 3. Esperar un momento para asegurar que el clon está en el DOM antes de capturarlo.
                 setTimeout(() => {
-                    html2canvas(preview, { 
-                        backgroundColor: '#ffffff',
+                    html2canvas(tempContainer, { 
+                        backgroundColor: '#ffffff', // Asegurar fondo blanco en la captura
                         logging: false,
-                        scale: 3,
+                        scale: 3, // Mayor resolución
                         useCORS: true,
                         allowTaint: true
-                    }).then(callback).catch(err => {
+                    }).then(canvas => {
+                        // 4. Limpiar el clon del DOM y ejecutar el callback con la imagen.
+                        document.body.removeChild(tempContainer);
+                        callback(canvas);
+                    }).catch(err => {
                         console.error("Error al generar la imagen con html2canvas:", err);
                         showModal("Error al generar la imagen. Por favor, intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
+                        document.body.removeChild(tempContainer); // Limpiar también en caso de error
                     });
-                }, 300);
+                }, 100); // 100ms de espera son suficientes para el renderizado del clon.
             }
 
             function handleDownload() {
@@ -749,7 +769,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.1</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.2</p>
                 `;
             }
 
