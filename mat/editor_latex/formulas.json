@@ -415,8 +415,18 @@
         },
         {
           "type": "button",
+          "latex": "\\not\\forall",
+          "title": "No para todo"
+        },
+        {
+          "type": "button",
           "latex": "\\exists",
           "title": "Existe"
+        },
+        {
+          "type": "button",
+          "latex": "\\nexists",
+          "title": "No existe"
         }
       ]
     },
