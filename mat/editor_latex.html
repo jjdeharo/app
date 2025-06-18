@@ -7,368 +7,38 @@
     <!-- Librería para convertir HTML a Canvas (para la descarga de imágenes) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
+    <!-- Configuración de MathJax -->
     <script>
-        // Función principal que se ejecuta cuando MathJax está listo
-        function initializeLatexEditor() {
-            // Obtener referencias a los elementos del DOM
-            const latexInput = document.getElementById('latex-input');
-            const preview = document.getElementById('preview');
-            const copyButton = document.getElementById('copy-button');
-            const clearButton = document.getElementById('clear-button');
-            const copyImageButton = document.getElementById('copy-image-button');
-            const downloadButton = document.getElementById('download-png-button');
-            const copyCodeFeedback = document.getElementById('copy-code-feedback');
-            const copyImageFeedback = document.getElementById('copy-image-feedback');
-            const toolbar = document.getElementById('toolbar');
-            const tabsContainer = document.getElementById('tabs-container');
-
-            // --- FUNCIONES PRINCIPALES ---
-
-            /**
-             * Genera un nombre único para las imágenes basado en timestamp y número aleatorio
-             */
-            function generateUniqueImageName() {
-                const timestamp = Date.now();
-                const random = Math.floor(Math.random() * 10000);
-                return `formula_${timestamp}_${random}`;
-            }
-
-            /**
-             * Actualiza la previsualización renderizando el código LaTeX del input.
-             */
-            function updatePreview() {
-                const latexCode = latexInput.value.trim();
-                
-                if (latexCode === "") {
-                    preview.innerHTML = ""; // Limpia la previsualización si no hay código
-                    return;
-                }
-                
-                // Envuelve el código en delimitadores de display math para MathJax
-                preview.innerHTML = `$$${latexCode}$$`;
-                // Pide a MathJax que renderice el nuevo contenido
-                MathJax.typesetPromise([preview]).catch(err => console.log('Error en MathJax:', err));
-            }
-
-            /**
-             * Inicializa los botones de la barra de herramientas, renderizando sus propios símbolos LaTeX.
-             */
-            function initializeToolbar() {
-                const buttons = toolbar.querySelectorAll('.toolbar-btn');
-                buttons.forEach(btn => {
-                    const template = btn.dataset.latex;
-                    let renderableLatex = template;
-
-                    // Para plantillas complejas, usamos un ejemplo para la visualización en el botón
-                    switch (template) {
-                        case '\\frac{}{}': renderableLatex = '\\frac{a}{b}'; break;
-                        case '^{}': renderableLatex = 'x^{a}'; break;
-                        case '_{}': renderableLatex = 'x_{a}'; break;
-                        case '\\sqrt{}': renderableLatex = '\\sqrt{x}'; break;
-                        case '\\sqrt[]{}': renderableLatex = '\\sqrt[n]{x}'; break;
-                        case '\\vec{}': renderableLatex = '\\vec{v}'; break;
-                    }
-                    
-                    btn.innerHTML = `\\(${renderableLatex}\\)`;
-                });
-                // Renderiza todos los botones de la barra de herramientas a la vez
-                MathJax.typesetPromise(Array.from(buttons)).catch(err => console.log(err));
-            }
-            
-            /**
-             * Inserta una plantilla de LaTeX en la posición actual del cursor.
-             * @param {string} textToInsert - El código LaTeX a insertar.
-             */
-            function insertAtCursor(textToInsert) {
-                const startPos = latexInput.selectionStart;
-                const endPos = latexInput.selectionEnd;
-                const currentValue = latexInput.value;
-                
-                latexInput.value = currentValue.substring(0, startPos) + textToInsert + currentValue.substring(endPos);
-                
-                // Intenta colocar el cursor en una posición lógica dentro de la plantilla
-                const cursorPos = textToInsert.indexOf('{}');
-                if (cursorPos !== -1) {
-                    latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
-                } else if (textToInsert.includes('\\begin{')) {
-                     const examplePos = textToInsert.indexOf(' a ')
-                     if (examplePos !== -1) {
-                        latexInput.selectionStart = latexInput.selectionEnd = startPos + examplePos + 1;
-                     } else {
-                        latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
-                     }
-                } else {
-                    latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
-                }
-                
-                latexInput.focus();
-                updatePreview();
-            }
-
-            /**
-             * Gestiona la descarga de la previsualización como una imagen PNG.
-             */
-            function handleDownload() {
-                // Esperar más tiempo para asegurar que el renderizado de MathJax ha finalizado
-                setTimeout(() => {
-                    html2canvas(preview, { 
-                        backgroundColor: null, // Fondo transparente
-                        logging: false,
-                        scale: 2, // Mejor calidad
-                        useCORS: true,
-                        allowTaint: true
-                    }).then(canvas => {
-                        const link = document.createElement('a');
-                        const uniqueName = generateUniqueImageName();
-                        link.download = `${uniqueName}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                    }).catch(err => {
-                        console.error("Error al generar la imagen:", err);
-                    });
-                }, 300);
-            }
-
-            /**
-             * Gestiona la copia de la previsualización como imagen al portapapeles.
-             */
-            function handleCopyImage() {
-                // Esperar más tiempo para asegurar que el renderizado de MathJax ha finalizado
-                setTimeout(() => {
-                    html2canvas(preview, {
-                        backgroundColor: null, // Fondo transparente
-                        logging: false,
-                        scale: 2, // Mejor calidad
-                        useCORS: true,
-                        allowTaint: true
-                    }).then(canvas => {
-                        // Convierte el canvas a un Blob con nombre único
-                        canvas.toBlob(blob => {
-                            if (navigator.clipboard && navigator.clipboard.write) {
-                                // Genera un nombre único para la imagen
-                                const uniqueName = generateUniqueImageName();
-                                
-                                // Crea un nuevo File object con el nombre único
-                                const file = new File([blob], `${uniqueName}.png`, { 
-                                    type: 'image/png',
-                                    lastModified: Date.now()
-                                });
-                                
-                                // Usa la API del portapapeles para escribir la imagen con nombre único
-                                const item = new ClipboardItem({ 
-                                    'image/png': file
-                                });
-                                
-                                navigator.clipboard.write([item]).then(() => {
-                                    // Muestra feedback al usuario
-                                    copyImageFeedback.textContent = '¡Imagen copiada!';
-                                    copyImageFeedback.style.opacity = '1';
-                                    setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
-                                }).catch(err => {
-                                    console.error("Error al copiar la imagen: ", err);
-                                    // Fallback: intenta con el método original
-                                    const originalItem = new ClipboardItem({ 'image/png': blob });
-                                    navigator.clipboard.write([originalItem]).then(() => {
-                                        copyImageFeedback.textContent = '¡Imagen copiada!';
-                                        copyImageFeedback.style.opacity = '1';
-                                        setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
-                                    }).catch(fallbackErr => {
-                                        console.error("Error en fallback: ", fallbackErr);
-                                        alert("No se pudo copiar la imagen. Es posible que tu navegador no lo permita por seguridad.");
-                                    });
-                                });
-                            } else {
-                                alert("La función de copiar imagen no es compatible con tu navegador.");
-                            }
-                        }, 'image/png');
-                    }).catch(err => {
-                        console.error("Error al generar la imagen con html2canvas:", err);
-                    });
-                }, 300); // Aumentamos el tiempo de espera
-            }
-            
-            /**
-             * Genera una matriz personalizada con las dimensiones especificadas
-             * @param {string} matrixType - Tipo de matriz (pmatrix, bmatrix, vmatrix, Vmatrix)
-             */
-            function generateCustomMatrix(matrixType) {
-                const rows = parseInt(document.getElementById('matrix-rows').value) || 2;
-                const cols = parseInt(document.getElementById('matrix-cols').value) || 2;
-                const fillType = document.getElementById('matrix-fill').value;
-                
-                // Validar dimensiones
-                if (rows < 1 || rows > 10 || cols < 1 || cols > 10) {
-                    alert('Las dimensiones deben estar entre 1 y 10');
-                    return;
-                }
-                
-                let matrixContent = '';
-                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-                let counter = 1;
-                
-                for (let i = 0; i < rows; i++) {
-                    let rowContent = '';
-                    for (let j = 0; j < cols; j++) {
-                        let cellContent = '';
-                        
-                        switch (fillType) {
-                            case 'subscripts':
-                                // Comportamiento original con subíndices
-                                const baseVar = alphabet[j % alphabet.length];
-                                const subscript = Math.floor(j / alphabet.length) + i + 1;
-                                cellContent = `${baseVar}_{${subscript}}`;
-                                break;
-                                
-                            case 'zeros':
-                                cellContent = '0';
-                                break;
-                                
-                            case 'ones':
-                                cellContent = '1';
-                                break;
-                                
-                            case 'variables':
-                                // Variables simples: a, b, c, d, e, f...
-                                const varIndex = (i * cols + j) % alphabet.length;
-                                cellContent = alphabet[varIndex];
-                                break;
-                                
-                            case 'numbers':
-                                // Números secuenciales: 1, 2, 3, 4...
-                                cellContent = counter.toString();
-                                counter++;
-                                break;
-                                
-                            case 'empty':
-                                cellContent = '';
-                                break;
-                                
-                            default:
-                                cellContent = '';
-                        }
-                        
-                        rowContent += cellContent;
-                        
-                        if (j < cols - 1) {
-                            rowContent += ' & ';
-                        }
-                    }
-                    
-                    matrixContent += rowContent;
-                    if (i < rows - 1) {
-                        matrixContent += ' \\\\ ';
-                    }
-                }
-                
-                const latexCode = `\\begin{${matrixType}} ${matrixContent} \\end{${matrixType}}`;
-                insertAtCursor(latexCode);
-            }
-            function handleTabSwitch(event) {
-                if (!event.target.matches('.tab-btn')) return;
-
-                // Oculta todas las pestañas y quita la clase activa
-                tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                toolbar.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                
-                // Muestra la pestaña seleccionada
-                event.target.classList.add('active');
-                const tabId = event.target.dataset.tab;
-                document.getElementById(`tab-${tabId}`).classList.add('active');
-            }
-            
-            /**
-             * Añade el pie de página con los enlaces solicitados.
-             */
-            function addFooter() {
-                const footer = document.getElementById('page-footer');
-                footer.innerHTML = `
-                    <p style="margin-bottom: 10px;">
-                        <a href="https://labia.tiddlyhost.com" target="_blank">Laboratorio de aplicaciones educativas</a> | 
-                        <a href="https://bilateria.org" target="_blank">Aplicación hecha por Juan José de Haro</a>
-                    </p>
-                    <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank">Licencia Creative Commons BY-SA</a>
-                `;
-            }
-
-            // --- ASIGNACIÓN DE EVENTOS ---
-
-            // Actualiza la preview cada vez que se escribe en el textarea
-            latexInput.addEventListener('input', updatePreview);
-
-            // Inserta la plantilla LaTeX al hacer clic en un botón de la barra de herramientas
-            toolbar.addEventListener('click', (event) => {
-                const button = event.target.closest('.toolbar-btn');
-                if (button && button.dataset.latex) {
-                    insertAtCursor(button.dataset.latex);
-                }
-            });
-
-            // Copia el código LaTeX al portapapeles
-            copyButton.addEventListener('click', () => {
-                if (!latexInput.value) return;
-                navigator.clipboard.writeText(latexInput.value).then(() => {
-                    copyCodeFeedback.textContent = '¡Código copiado!';
-                    copyCodeFeedback.style.opacity = '1';
-                    setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
-                }).catch(err => {
-                    console.error('No se pudo copiar el texto: ', err);
-                });
-            });
-
-            // Borra el código LaTeX del textarea
-            clearButton.addEventListener('click', () => {
-                if (latexInput.value && confirm('¿Estás seguro de que quieres borrar todo el código?')) {
-                    latexInput.value = '';
-                    latexInput.focus();
-                    updatePreview();
-                }
-            });
-
-            // Asigna los manejadores de eventos a los botones de descarga y copia de imagen
-            downloadButton.addEventListener('click', handleDownload);
-            copyImageButton.addEventListener('click', handleCopyImage);
-            
-            // Asigna el manejador de eventos para el cambio de pestañas
-            tabsContainer.addEventListener('click', handleTabSwitch);
-
-            // --- INICIALIZACIÓN ---
-            
-            initializeToolbar();
-            updatePreview();
-            addFooter();
-            
-            // Hacer la función generateCustomMatrix disponible globalmente
-            window.generateCustomMatrix = generateCustomMatrix;
-        }
-
-        // Configuración de MathJax
         window.MathJax = {
             tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                inlineMath: [['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
                 processEscapes: true,
-                 packages: {'[+]': ['cases', 'mathtools']}
+                packages: {'[+]': ['cases', 'mathtools']}
             },
-            svg: {
-                fontCache: 'global'
+            chtml: {
+                fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/output/chtml/fonts/woff-v2'
             },
             startup: {
-                // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización
+                // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización.
                 ready: () => {
                     MathJax.startup.defaultReady();
+                    // Esta función está definida en un script al final del <body>,
+                    // por lo que el DOM estará completamente cargado cuando se llame.
                     initializeLatexEditor();
                 }
             }
         };
     </script>
     <!-- Carga el script de MathJax -->
-    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
 
     <style>
         :root {
             --primary-color: #007bff;
             --primary-dark: #0056b3;
             --secondary-color: #6c757d;
+            --danger-color: #dc3545;
             --success-color: #28a745;
             --light-gray: #f8f9fa;
             --medium-gray: #e9ecef;
@@ -460,7 +130,7 @@
 
         .tab-content {
             display: none;
-            grid-gap: 10px;
+            gap: 10px;
         }
 
         .tab-content.active {
@@ -590,6 +260,11 @@
             background: linear-gradient(45deg, var(--secondary-color), #495057);
             color: white;
         }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, var(--danger-color), #a71d2a);
+            color: white;
+        }
 
         .btn-success {
             background: linear-gradient(45deg, var(--success-color), #1e7e34);
@@ -636,6 +311,56 @@
         #matrix-fill:focus {
             outline: none;
             border-color: var(--primary-color);
+        }
+
+        /* --- Estilos del Modal --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: scale(1);
+        }
+
+        #modal-message {
+            margin: 0 0 20px 0;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
         }
 
         .footer {
@@ -751,7 +476,7 @@
                             </div>
                             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
                                 <label>Rellenar con:
-                                    <select id="matrix-fill" style="margin-left: 5px; padding: 3px 6px; border: 1px solid #e9ecef; border-radius: 4px;">
+                                    <select id="matrix-fill" style="margin-left: 5px;">
                                         <option value="subscripts">Subíndices (a₁, b₁...)</option>
                                         <option value="zeros">Ceros (0)</option>
                                         <option value="ones">Unos (1)</option>
@@ -784,8 +509,8 @@
                 <h2>Código LaTeX</h2>
                 <textarea id="latex-input" placeholder="Escribe aquí tu código... \frac{a}{b}" spellcheck="false"></textarea>
                 <div class="panel-actions">
-                     <button id="copy-button" class="btn btn-primary">Copiar código LaTeX</button>
-                     <button id="clear-button" class="btn btn-secondary">Borrar código</button>
+                      <button id="copy-button" class="btn btn-primary">Copiar código LaTeX</button>
+                      <button id="clear-button" class="btn btn-secondary">Borrar código</button>
                 </div>
                 <div id="copy-code-feedback" class="copy-feedback"></div>
             </div>
@@ -806,5 +531,367 @@
     <footer id="page-footer" class="footer">
         <!-- El pie de página se añade aquí con JavaScript -->
     </footer>
+
+    <!-- Estructura del Modal -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-content">
+            <p id="modal-message"></p>
+            <div id="modal-buttons" class="modal-buttons">
+                <!-- Botones se insertarán aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función principal que se ejecuta cuando el DOM está listo y MathJax está preparado.
+        function initializeLatexEditor() {
+            // Obtener referencias a los elementos del DOM
+            const latexInput = document.getElementById('latex-input');
+            const preview = document.getElementById('preview');
+            const copyButton = document.getElementById('copy-button');
+            const clearButton = document.getElementById('clear-button');
+            const copyImageButton = document.getElementById('copy-image-button');
+            const downloadButton = document.getElementById('download-png-button');
+            const copyCodeFeedback = document.getElementById('copy-code-feedback');
+            const copyImageFeedback = document.getElementById('copy-image-feedback');
+            const toolbar = document.getElementById('toolbar');
+            const tabsContainer = document.getElementById('tabs-container');
+            const modal = document.getElementById('modal');
+            const modalMessage = document.getElementById('modal-message');
+            const modalButtons = document.getElementById('modal-buttons');
+
+            // --- FUNCIONES DEL MODAL ---
+            
+            /**
+             * Muestra un modal con un mensaje y botones personalizables.
+             * @param {string} message - El mensaje a mostrar.
+             * @param {Array<Object>} buttons - Un array de objetos de botón, ej: [{text: 'OK', class: 'btn-primary', action: () => {...}}]
+             */
+            function showModal(message, buttons) {
+                modalMessage.textContent = message;
+                modalButtons.innerHTML = ''; // Limpiar botones anteriores
+
+                buttons.forEach(btnInfo => {
+                    const button = document.createElement('button');
+                    button.textContent = btnInfo.text;
+                    button.className = `btn ${btnInfo.class}`;
+                    button.onclick = () => {
+                        if(btnInfo.action) btnInfo.action();
+                        hideModal();
+                    };
+                    modalButtons.appendChild(button);
+                });
+
+                modal.classList.add('active');
+            }
+
+            /**
+             * Oculta el modal.
+             */
+            function hideModal() {
+                modal.classList.remove('active');
+            }
+
+
+            // --- FUNCIONES PRINCIPALES ---
+
+            /**
+             * Genera un nombre único para las imágenes basado en timestamp y número aleatorio
+             */
+            function generateUniqueImageName() {
+                const timestamp = Date.now();
+                const random = Math.floor(Math.random() * 10000);
+                return `formula_${timestamp}_${random}`;
+            }
+
+            /**
+             * Actualiza la previsualización renderizando el código LaTeX del input.
+             */
+            function updatePreview() {
+                const latexCode = latexInput.value.trim();
+                
+                if (latexCode === "") {
+                    preview.innerHTML = ""; // Limpia la previsualización si no hay código
+                    return;
+                }
+                
+                // Envuelve el código en delimitadores de display math ('$$') para MathJax
+                preview.innerHTML = `$$${latexCode}$$`;
+                // Pide a MathJax que renderice el nuevo contenido y espera a que termine
+                MathJax.typesetPromise([preview]).catch(err => {
+                    console.error('Error en MathJax al renderizar:', err)
+                    // Opcional: mostrar error en la preview
+                    preview.innerHTML = `<span style="color:red;">Error en la sintaxis de LaTeX</span>`;
+                });
+            }
+
+            /**
+             * Inicializa los botones de la barra de herramientas, renderizando sus propios símbolos LaTeX.
+             */
+            function initializeToolbar() {
+                const buttons = toolbar.querySelectorAll('.toolbar-btn');
+                buttons.forEach(btn => {
+                    const template = btn.dataset.latex;
+                    let renderableLatex = template;
+
+                    // Para plantillas complejas, usamos un ejemplo para la visualización en el botón
+                    switch (template) {
+                        case '\\frac{}{}': renderableLatex = '\\frac{a}{b}'; break;
+                        case '^{}': renderableLatex = 'x^{a}'; break;
+                        case '_{}': renderableLatex = 'x_{a}'; break;
+                        case '\\sqrt{}': renderableLatex = '\\sqrt{x}'; break;
+                        case '\\sqrt[]{}': renderableLatex = '\\sqrt[n]{x}'; break;
+                        case '\\vec{}': renderableLatex = '\\vec{v}'; break;
+                    }
+                    
+                    // Usa delimitadores de inline math ('\\(' y '\\)') para los botones
+                    btn.innerHTML = `\\(${renderableLatex}\\)`;
+                });
+                // Renderiza todos los botones de la barra de herramientas a la vez
+                MathJax.typesetPromise(Array.from(buttons)).catch(err => console.error("Error inicializando toolbar con MathJax:", err));
+            }
+            
+            /**
+             * Inserta una plantilla de LaTeX en la posición actual del cursor.
+             * @param {string} textToInsert - El código LaTeX a insertar.
+             */
+            function insertAtCursor(textToInsert) {
+                const startPos = latexInput.selectionStart;
+                const endPos = latexInput.selectionEnd;
+                const currentValue = latexInput.value;
+                
+                latexInput.value = currentValue.substring(0, startPos) + textToInsert + currentValue.substring(endPos);
+                
+                // Intenta colocar el cursor en una posición lógica dentro de la plantilla
+                let cursorPos = textToInsert.indexOf('{}');
+                if (cursorPos !== -1) {
+                    latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
+                } else if ((cursorPos = textToInsert.indexOf('[]')) !== -1) {
+                     latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
+                }
+                else {
+                    latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
+                }
+                
+                latexInput.focus();
+                updatePreview();
+            }
+
+            /**
+             * Genera una imagen del preview y la pasa a un callback.
+             * @param {function} callback - Función que se ejecuta con el canvas como argumento.
+             */
+            function generateImage(callback) {
+                // Asegurar que MathJax ha terminado completamente el renderizado
+                MathJax.typesetPromise([preview]).then(() => {
+                    // Esperar un poco después del renderizado para que todo se asiente
+                    setTimeout(() => {
+                        html2canvas(preview, { 
+                            backgroundColor: '#ffffff',
+                            logging: false,
+                            scale: 3, // Aumenta la escala para mayor resolución
+                            useCORS: true,
+                            allowTaint: true
+                        }).then(callback).catch(err => {
+                            console.error("Error al generar la imagen con html2canvas:", err);
+                            showModal("Error al generar la imagen. Por favor, intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
+                        });
+                    }, 300);
+                }).catch(err => {
+                    console.error("Error en MathJax antes de generar imagen:", err);
+                    showModal("Error al renderizar la fórmula. Revisa la sintaxis e intenta de nuevo.", [{text: 'OK', class: 'btn-primary'}]);
+                });
+            }
+
+            /**
+             * Gestiona la descarga de la previsualización como una imagen PNG.
+             */
+            function handleDownload() {
+                generateImage(canvas => {
+                    const link = document.createElement('a');
+                    const uniqueName = generateUniqueImageName();
+                    link.download = `${uniqueName}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+            }
+
+            /**
+             * Gestiona la copia de la previsualización como imagen al portapapeles.
+             */
+            function handleCopyImage() {
+                if (!navigator.clipboard || !navigator.clipboard.write) {
+                    showModal("La función de copiar imagen no es compatible con tu navegador. Utiliza 'Descargar PNG'.", [{text: 'OK', class: 'btn-primary'}]);
+                    return;
+                }
+
+                generateImage(canvas => {
+                    canvas.toBlob(blob => {
+                         try {
+                            const item = new ClipboardItem({ 'image/png': blob });
+                            navigator.clipboard.write([item]).then(() => {
+                                copyImageFeedback.textContent = '¡Imagen copiada!';
+                                copyImageFeedback.style.opacity = '1';
+                                setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
+                            }).catch(err => {
+                                console.error("Error al copiar la imagen: ", err);
+                                showModal("No se pudo copiar la imagen. Es posible que tu navegador no lo permita por seguridad. Intenta descargarla.", [{text: 'OK', class: 'btn-primary'}]);
+                            });
+                        } catch (error) {
+                             console.error("Error creando ClipboardItem: ", error);
+                             showModal("No se pudo procesar la imagen para copiar. Intenta descargarla.", [{text: 'OK', class: 'btn-primary'}]);
+                        }
+                    }, 'image/png');
+                });
+            }
+            
+            /**
+             * Genera una matriz personalizada con las dimensiones especificadas
+             * @param {string} matrixType - Tipo de matriz (pmatrix, bmatrix, vmatrix, Vmatrix)
+             */
+            function generateCustomMatrix(matrixType) {
+                const rows = parseInt(document.getElementById('matrix-rows').value) || 2;
+                const cols = parseInt(document.getElementById('matrix-cols').value) || 2;
+                const fillType = document.getElementById('matrix-fill').value;
+                
+                if (rows < 1 || rows > 10 || cols < 1 || cols > 10) {
+                    showModal('Las dimensiones de la matriz deben estar entre 1 y 10.', [{text: 'Entendido', class: 'btn-primary'}]);
+                    return;
+                }
+                
+                let matrixContent = '';
+                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+                let counter = 1;
+                
+                for (let i = 0; i < rows; i++) {
+                    let rowContent = [];
+                    for (let j = 0; j < cols; j++) {
+                        let cellContent = '';
+                        
+                        switch (fillType) {
+                            case 'subscripts':
+                                cellContent = `a_{${i+1}${j+1}}`;
+                                break;
+                            case 'zeros': cellContent = '0'; break;
+                            case 'ones': cellContent = '1'; break;
+                            case 'variables':
+                                const varIndex = (i * cols + j) % alphabet.length;
+                                cellContent = alphabet[varIndex];
+                                break;
+                            case 'numbers':
+                                cellContent = counter.toString();
+                                counter++;
+                                break;
+                                
+                            case 'empty': cellContent = '{}'; break;
+                            default: cellContent = '';
+                        }
+                        rowContent.push(cellContent);
+                    }
+                    matrixContent += rowContent.join(' & ');
+                    if (i < rows - 1) {
+                        matrixContent += ' \\\\ ';
+                    }
+                }
+                
+                const latexCode = `\\begin{${matrixType}}${matrixContent}\\end{${matrixType}}`;
+                insertAtCursor(latexCode);
+            }
+
+            /**
+             * Cambia la pestaña activa en la barra de herramientas.
+             */
+            function handleTabSwitch(event) {
+                if (!event.target.matches('.tab-btn')) return;
+
+                // Oculta todas las pestañas y quita la clase activa
+                tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+                toolbar.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                
+                // Muestra la pestaña seleccionada
+                event.target.classList.add('active');
+                const tabId = event.target.dataset.tab;
+                document.getElementById(`tab-${tabId}`).classList.add('active');
+            }
+            
+            /**
+             * Añade el pie de página con los enlaces solicitados.
+             */
+            function addFooter() {
+                const footer = document.getElementById('page-footer');
+                footer.innerHTML = `
+                    <p style="margin-bottom: 10px;">
+                        <a href="https://labia.tiddlyhost.com" target="_blank" rel="noopener noreferrer">Laboratorio de aplicaciones educativas</a> | 
+                        <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Aplicación hecha por Juan José de Haro</a>
+                    </p>
+                    <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
+                `;
+            }
+
+            // --- ASIGNACIÓN DE EVENTOS ---
+
+            latexInput.addEventListener('input', updatePreview);
+
+            toolbar.addEventListener('click', (event) => {
+                const button = event.target.closest('.toolbar-btn');
+                if (button && button.dataset.latex) {
+                    insertAtCursor(button.dataset.latex);
+                }
+            });
+
+            copyButton.addEventListener('click', () => {
+                if (!latexInput.value) return;
+                navigator.clipboard.writeText(latexInput.value).then(() => {
+                    copyCodeFeedback.textContent = '¡Código copiado!';
+                    copyCodeFeedback.style.opacity = '1';
+                    setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
+                }).catch(err => {
+                    console.error('No se pudo copiar el texto: ', err);
+                    showModal('No se pudo copiar el código al portapapeles.', [{text: 'OK', class: 'btn-primary'}]);
+                });
+            });
+
+            clearButton.addEventListener('click', () => {
+                if (!latexInput.value) return;
+                showModal('¿Estás seguro de que quieres borrar todo el código?', [
+                    {
+                        text: 'Confirmar', 
+                        class: 'btn-danger', 
+                        action: () => {
+                            latexInput.value = '';
+                            latexInput.focus();
+                            updatePreview();
+                        }
+                    },
+                    {
+                        text: 'Cancelar',
+                        class: 'btn-secondary',
+                        action: null
+                    }
+                ]);
+            });
+
+            downloadButton.addEventListener('click', handleDownload);
+            copyImageButton.addEventListener('click', handleCopyImage);
+            
+            tabsContainer.addEventListener('click', handleTabSwitch);
+
+            // Cerrar modal al hacer clic en el overlay
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    hideModal();
+                }
+            });
+            
+            // --- INICIALIZACIÓN ---
+            
+            initializeToolbar();
+            updatePreview();
+            addFooter();
+            
+            // Hacer la función generateCustomMatrix disponible globalmente para el `onclick`
+            window.generateCustomMatrix = generateCustomMatrix;
+        }
+    </script>
 </body>
 </html>
