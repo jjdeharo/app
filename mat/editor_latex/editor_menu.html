@@ -8,19 +8,39 @@
     <!-- Tailwind CSS para un diseño moderno y responsivo -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- KaTeX para renderizar LaTeX -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVJGpUpIAERzgpcKU0qmn1gaDqlBAWO+Vnk9wSjMRXv8SARccMD" crossorigin="anonymous">
-    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzYCcm2IawAzXpSNEEUvLoginVKKlEHYJs7" crossorigin="anonymous"></script>
+    <!-- MathJax para renderizar LaTeX -->
+    <script>
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <!-- SortableJS para Drag and Drop -->
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .katex-display { margin: 0; }
-        .preview-button { display: flex; justify-content: center; align-items: center; height: 50px; font-size: 1.2rem; transition: all 0.2s ease-in-out; cursor: pointer; }
+        .preview-button { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 50px;
+            padding: 0.5rem;
+            font-size: 1.2rem; 
+            transition: all 0.2s ease-in-out; 
+            cursor: pointer; 
+            width: 100%;
+            overflow: hidden; /* Cambiado para evitar desbordamiento visual */
+        }
         .preview-button:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: #f1f1f1; }
         ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
@@ -28,6 +48,7 @@
         .drag-handle { cursor: grab; padding: 0 8px; color: #9ca3af; }
         .drag-handle:hover { color: #1f2937; }
         .sortable-ghost { opacity: 0.4; background-color: #c7d2fe; }
+        .preview-container.mathjax-processing { visibility: hidden; }
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800">
@@ -163,16 +184,19 @@
                     cat.elementos.forEach((el, elIndex) => {
                         if (el.type === 'custom_matrix') return;
                         const button = document.createElement('button');
-                        button.className = 'preview-item preview-button bg-white border border-gray-300 rounded-md p-2 shadow-sm';
+                        button.className = 'preview-item preview-button bg-white border border-gray-300 rounded-md shadow-sm';
                         button.title = el.title || '';
                         button.dataset.catIndex = catIndex;
                         button.dataset.elIndex = elIndex;
-                        try {
-                            button.innerHTML = katex.renderToString(el.display || el.latex, { throwOnError: true, displayMode: false });
-                        } catch (e) {
-                            button.textContent = el.latex;
-                            button.classList.add('text-red-500', 'font-mono', 'text-xs');
-                        }
+                        
+                        const contentWrapper = document.createElement('div');
+                        contentWrapper.className = 'math-content-wrapper';
+                        contentWrapper.style.textAlign = 'center';
+                        
+                        const latexToRender = el.display || el.latex;
+                        contentWrapper.textContent = `\\(${latexToRender}\\)`;
+                        
+                        button.appendChild(contentWrapper);
                         button.addEventListener('click', handlePreviewClick);
                         button.addEventListener('dblclick', handlePreviewDblClick);
                         gridDiv.appendChild(button);
@@ -181,6 +205,30 @@
                 categoryDiv.appendChild(gridDiv);
                 ui.previewContainer.appendChild(categoryDiv);
             });
+            
+            if (typeof MathJax !== "undefined" && MathJax.typesetPromise) {
+                ui.previewContainer.classList.add('mathjax-processing');
+                MathJax.typesetPromise([ui.previewContainer])
+                    .catch((err) => console.log('MathJax error: ' + err.message))
+                    .finally(() => {
+                        ui.previewContainer.classList.remove('mathjax-processing');
+                        // Auto-scale logic
+                        document.querySelectorAll('.preview-item').forEach(button => {
+                            const mathContainer = button.querySelector('mjx-container');
+                            if (mathContainer) {
+                                const buttonWidth = button.clientWidth - 16; // Subtract padding (p-2 is .5rem -> 8px * 2)
+                                const mathWidth = mathContainer.scrollWidth;
+                                
+                                mathContainer.style.transform = 'scale(1)'; // Reset scale first
+                                if (mathWidth > buttonWidth) {
+                                    const scale = buttonWidth / mathWidth;
+                                    mathContainer.style.transform = `scale(${scale})`;
+                                    mathContainer.style.transformOrigin = 'center left';
+                                }
+                            }
+                        });
+                    });
+            }
         }
         
         // --- Drag and Drop ---
@@ -243,8 +291,8 @@
             ui.editorContainer.innerHTML = loadingHtml;
             ui.previewContainer.innerHTML = loadingHtml;
             
-            // Usamos un proxy CORS para evitar problemas de bloqueo de peticiones
-            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+            // Using a different CORS proxy
+            const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
 
             try {
                 const response = await fetch(proxyUrl);
@@ -252,7 +300,7 @@
                 const jsonData = await response.json();
                 if (jsonData.categorias && Array.isArray(jsonData.categorias)) {
                     data = jsonData;
-                    localStorage.setItem(URL_STORAGE_KEY, url); // Guardar URL exitosa
+                    localStorage.setItem(URL_STORAGE_KEY, url);
                     ui.jsonUrlInput.value = url;
                 } else {
                     throw new Error("El JSON no tiene el formato esperado (falta la clave 'categorias').");
@@ -261,7 +309,7 @@
                 const errorHtml = `<p class="text-red-500 text-center"><b>Error al cargar:</b><br>${error.message}</p>`;
                 ui.editorContainer.innerHTML = errorHtml;
                 ui.previewContainer.innerHTML = errorHtml;
-                data = JSON.parse(JSON.stringify(initialJson)); // Reset data on error
+                data = JSON.parse(JSON.stringify(initialJson));
             }
             render();
         }
