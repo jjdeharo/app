@@ -1076,13 +1076,13 @@
         },
         {
           "type": "button",
-          "latex": "\\overset{a}{b}",
+          "latex": " \\overset{}{} \n",
           "title": "Texto encima",
           "display": "a \\overset{?}{=} b\n"
         },
         {
           "type": "button",
-          "latex": "\\underset{a}{b}",
+          "latex": "\\underset{}{}",
           "title": "Texto debajo",
           "display": "x \\underset{\\text{t=0}}{\\longrightarrow} 0\n"
         },
