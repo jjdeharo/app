@@ -15,7 +15,7 @@
                 packages: {'[+]': ['cases', 'mathtools']}
             },
             svg: {
-                fontCache: 'global'
+                fontCache: 'local' // CORRECCIÓN: Usar caché local para que los SVG sean autocontenidos.
             },
             startup: {
                 // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización.
@@ -669,7 +669,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.8</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.9</p>
                 `;
             }
 
@@ -818,3 +818,5 @@
     </script>
 </body>
 </html>
+```
+He actualizado la versión a la 1.9 para reflejar el cambio. ¡Muchas gracias de nuevo por tu ayuda para depurar la aplicaci
