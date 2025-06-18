@@ -240,6 +240,35 @@
             text-align: center;
         }
 
+        .copy-options-container {
+            margin-top: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .copy-options-container label {
+            font-size: 0.9rem;
+            color: var(--dark-gray);
+            font-weight: 500;
+        }
+        
+        #delimiter-selector {
+            font-family: inherit;
+            padding: 5px 8px;
+            border-radius: 8px;
+            border: 2px solid var(--medium-gray);
+            background-color: white;
+            transition: border-color 0.2s ease-in-out;
+        }
+
+        #delimiter-selector:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+        }
+        
         .panel-actions {
             margin-top: 15px;
             text-align: center;
@@ -349,7 +378,6 @@
             padding: 30px;
             border-radius: var(--border-radius);
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            /* CORRECCIÓN: Ajustar el tamaño del modal al contenido */
             display: inline-block;
             max-width: 90vw;
             max-height: 90vh;
@@ -433,6 +461,16 @@
             <div class="panel">
                 <h2>Código LaTeX</h2>
                 <textarea id="latex-input" placeholder="Escribe aquí tu código... \frac{a}{b}" spellcheck="false"></textarea>
+                <div class="copy-options-container">
+                    <label for="delimiter-selector">Copiar con delimitadores:</label>
+                    <select id="delimiter-selector" class="mathjax_ignore">
+                        <option value="none" selected>Sin delimitadores</option>
+                        <option value="parentheses">\(...\)</option>
+                        <option value="brackets">\[...\]</option>
+                        <option value="double_dollar">$$...$$</option>
+                        <option value="single_dollar">$...$</option>
+                    </select>
+                </div>
                 <div class="panel-actions">
                       <button id="copy-button" class="btn btn-primary">Copiar código LaTeX</button>
                       <button id="clear-button" class="btn btn-secondary">Borrar código</button>
@@ -482,7 +520,20 @@
             const modal = document.getElementById('modal');
             const modalMessage = document.getElementById('modal-message');
             const modalButtons = document.getElementById('modal-buttons');
+            const delimiterSelector = document.getElementById('delimiter-selector');
 
+            // --- FUNCIONES DE ALMACENAMIENTO LOCAL ---
+            function saveSettings() {
+                localStorage.setItem('latexDelimiter', delimiterSelector.value);
+            }
+
+            function loadSettings() {
+                const savedDelimiter = localStorage.getItem('latexDelimiter');
+                if (savedDelimiter) {
+                    delimiterSelector.value = savedDelimiter;
+                }
+            }
+            
             // --- FUNCIONES DEL MODAL ---
             function showModal(message, buttons) {
                 modalMessage.innerHTML = `<p>${message}</p>`;
@@ -680,7 +731,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.2.0</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.2.3</p>
                 `;
             }
 
@@ -763,6 +814,7 @@
 
             // --- ASIGNACIÓN DE EVENTOS ---
             latexInput.addEventListener('input', updatePreview);
+            delimiterSelector.addEventListener('change', saveSettings);
 
             toolbar.addEventListener('click', (event) => {
                 const button = event.target.closest('.toolbar-btn');
@@ -772,8 +824,30 @@
             });
 
             copyButton.addEventListener('click', () => {
-                if (!latexInput.value) return;
-                navigator.clipboard.writeText(latexInput.value).then(() => {
+                const rawLatex = latexInput.value.trim();
+                if (!rawLatex) return;
+
+                const delimiter = delimiterSelector.value;
+                let textToCopy;
+
+                switch (delimiter) {
+                    case 'parentheses':
+                        textToCopy = `\\(${rawLatex}\\)`;
+                        break;
+                    case 'brackets':
+                        textToCopy = `\\[${rawLatex}\\]`;
+                        break;
+                    case 'double_dollar':
+                        textToCopy = `$$${rawLatex}$$`;
+                        break;
+                    case 'single_dollar':
+                        textToCopy = `$${rawLatex}$`;
+                        break;
+                    default:
+                        textToCopy = rawLatex;
+                }
+
+                navigator.clipboard.writeText(textToCopy).then(() => {
                     copyCodeFeedback.textContent = '¡Código copiado!';
                     copyCodeFeedback.style.opacity = '1';
                     setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
@@ -820,6 +894,7 @@
             });
             
             // --- INICIALIZACIÓN ---
+            loadSettings();
             await buildToolbar();
             updatePreview();
             addFooter();
