@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor LaTeX online</title>
     
-    <!-- Configuración de MathJax -->
+    <!-- Configuración de MathJax para que use SVG -->
     <script>
         window.MathJax = {
             tex: {
@@ -14,22 +14,20 @@
                 processEscapes: true,
                 packages: {'[+]': ['cases', 'mathtools']}
             },
-            chtml: {
-                fontURL: 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/output/chtml/fonts/woff-v2'
+            svg: {
+                fontCache: 'global'
             },
             startup: {
                 // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización.
                 ready: () => {
                     MathJax.startup.defaultReady();
-                    // Esta función está definida en un script al final del <body>,
-                    // por lo que el DOM estará completamente cargado cuando se llame.
                     initializeLatexEditor();
                 }
             }
         };
     </script>
-    <!-- Carga el script de MathJax -->
-    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-chtml.min.js"></script>
+    <!-- Carga el script de MathJax (versión SVG) -->
+    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
 
     <style>
         :root {
@@ -784,7 +782,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.4</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.1.5</p>
                 `;
             }
 
