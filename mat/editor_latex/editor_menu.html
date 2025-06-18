@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editor Visual de Fórmulas LaTeX</title>
+    
+    <!-- Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- KaTeX para renderizar LaTeX -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" xintegrity="sha384-n8MVd4RsNIU0KOVJGpUpIAERzgpcKU0qmn1gaDqlBAWO+Vnk9wSjMRXv8SARccMD" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js" xintegrity="sha384-XjKyOOlGwcjNTAIQHIpgOno0Hl1YQqzYCcm2IawAzXpSNEEUvLoginVKKlEHYJs7" crossorigin="anonymous"></script>
+    
+    <style>
+        /* Estilos personalizados para mejorar la apariencia */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .katex-display {
+            margin: 0;
+        }
+        .preview-button {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 50px;
+            font-size: 1.2rem;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+        .preview-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        /* Estilo para el scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Clase para resaltar elementos */
+        .highlight {
+            transition: background-color 0.3s ease-in-out;
+            background-color: #fefcbf !important; /* Amarillo claro */
+            border-color: #facc15; /* Amarillo más oscuro */
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Cabecera de la aplicación -->
+    <header class="bg-white shadow-md p-4 flex flex-wrap justify-between items-center sticky top-0 z-20">
+        <h1 class="text-2xl font-bold text-gray-700">Editor de Fórmulas LaTeX</h1>
+        <div class="flex items-center space-x-2 mt-2 md:mt-0">
+            <label for="file-upload" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">
+                Cargar JSON
+            </label>
+            <input id="file-upload" type="file" class="hidden" accept=".json">
+            <button id="add-category-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg shadow hover:bg-green-600 transition">Añadir Categoría</button>
+            <button id="export-btn" class="bg-purple-500 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-600 transition">Exportar JSON</button>
+        </div>
+    </header>
+
+    <!-- Contenedor principal con dos columnas: Editor y Vista Previa -->
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        <!-- Columna del Editor -->
+        <div id="editor-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-160px)]">
+            <p class="text-gray-500 text-center">Carga un archivo JSON o empieza a añadir categorías.</p>
+        </div>
+
+        <!-- Columna de la Vista Previa -->
+        <div id="preview-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-160px)]">
+            <p class="text-gray-500 text-center">Aquí aparecerá la vista previa de los botones.</p>
+        </div>
+    </main>
+    
+    <!-- Pie de página -->
+    <footer class="text-center py-4 bg-gray-100 text-gray-600 text-sm">
+        <p>
+            <a href="https://labia.tiddlyhost.com" target="_blank" class="hover:text-blue-600">Laboratorio de aplicaciones educativas</a>
+            - 
+            <a href="https://bilateria.org" target="_blank" class="hover:text-blue-600">Aplicación hecha por Juan José de Haro</a>
+        </p>
+        <p class="mt-1">
+            <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" class="hover:text-blue-600">Licencia Creative Commons BY-SA</a>
+        </p>
+    </footer>
+
+    <!-- Modal para editar/añadir elementos (inicialmente oculto) -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md">
+            <h2 id="modal-title" class="text-2xl font-bold mb-4"></h2>
+            <form id="modal-form"></form>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
+                <button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Guardar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal de confirmación para borrados -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center hidden">
+        <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-sm">
+            <h2 id="confirm-title" class="text-xl font-bold mb-4">Confirmar eliminación</h2>
+            <p id="confirm-message">¿Estás seguro de que quieres eliminar este elemento?</p>
+            <div class="mt-6 flex justify-end space-x-3">
+                <button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button>
+                <button id="confirm-delete" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Eliminar</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script type="module">
+        // JSON inicial extraído del archivo proporcionado
+        const initialJson = {
+          "categorias": [
+            { "nombre": "Básico", "id": "basico", "grid_template_columns": "repeat(auto-fit, minmax(80px, 1fr))", "elementos": [
+                { "type": "button", "latex": "\\frac{}{}", "display": "\\frac{a}{b}", "title": "Fracción" }, { "type": "button", "latex": "^{}", "display": "x^{a}", "title": "Superíndice" }, { "type": "button", "latex": "_{}", "display": "x_{a}", "title": "Subíndice" }, { "type": "button", "latex": "\\sqrt{}", "display": "\\sqrt{x}", "title": "Raíz cuadrada" }, { "type": "button", "latex": "\\sqrt[]{}", "display": "\\sqrt[n]{x}", "title": "Raíz n-ésima" }, { "type": "button", "latex": "\\overline{}", "display": "\\overline{3}", "title": "Periódico (barra)" }
+            ]},
+            { "nombre": "Delimitadores", "id": "delimitadores", "grid_template_columns": "repeat(auto-fit, minmax(80px, 1fr))", "elementos": [
+                { "type": "button", "latex": "\\left(\\right)", "display": "(\\,)", "title": "Paréntesis" }, { "type": "button", "latex": "\\left[\\right]", "display": "[\\,]", "title": "Corchetes" }, { "type": "button", "latex": "\\left\\{\\right\\}", "display": "{\\,}", "title": "Llaves" }, { "type": "button", "latex": "\\left|\\right|", "display": "|\\,|", "title": "Valor absoluto" }, { "type": "button", "latex": "\\left\\|\\right\\|", "display": "‖\\,‖", "title": "Norma" }, { "type": "button", "latex": "\\left\\langle\\right\\rangle", "display": "\\langle\\,\\rangle", "title": "Ángulo" }, { "type": "button", "latex": "\\lfloor\\rfloor", "display": "\\lfloor\\,\\rfloor", "title": "Parte entera" }, { "type": "button", "latex": "\\lceil\\rceil", "display": "\\lceil\\,\\rceil", "title": "Techo" }
+            ]},
+            { "nombre": "Griego", "id": "griego", "grid_template_columns": "repeat(auto-fit, minmax(50px, 1fr))", "elementos": [
+                { "type": "button", "latex": "\\alpha", "title": "Alpha" }, { "type": "button", "latex": "\\beta", "title": "Beta" }, { "type": "button", "latex": "\\gamma", "title": "Gamma" }, { "type": "button", "latex": "\\delta", "title": "Delta" }, { "type": "button", "latex": "\\epsilon", "title": "Epsilon" }, { "type": "button", "latex": "\\zeta", "title": "Zeta" }, { "type": "button", "latex": "\\eta", "title": "Eta" }, { "type": "button", "latex": "\\theta", "title": "Theta" }, { "type": "button", "latex": "\\iota", "title": "Iota" }, { "type": "button", "latex": "\\kappa", "title": "Kappa" }, { "type": "button", "latex": "\\lambda", "title": "Lambda" }, { "type": "button", "latex": "\\mu", "title": "Mu" }
+            ]},
+             { "nombre": "Matrices", "id": "matrices", "grid_template_columns": "repeat(auto-fit, minmax(140px, 1fr))", "elementos": [
+                { "type": "button", "latex": "\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}", "title": "Matriz 2x2" }, { "type": "button", "latex": "\\begin{bmatrix} a & b \\\\ c & d \\end{bmatrix}", "title": "Matriz 2x2 corchetes" }, { "type": "button", "latex": "\\begin{vmatrix} a & b \\\\ c & d \\end{vmatrix}", "title": "Determinante 2x2" }, { "type": "custom_matrix" }
+            ]}
+          ]
+        };
+
+        let data = JSON.parse(JSON.stringify(initialJson));
+        const editorContainer = document.getElementById('editor-container');
+        const previewContainer = document.getElementById('preview-container');
+        const fileUpload = document.getElementById('file-upload');
+        const exportBtn = document.getElementById('export-btn');
+        const addCategoryBtn = document.getElementById('add-category-btn');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalForm = document.getElementById('modal-form');
+        const modalCancel = document.getElementById('modal-cancel');
+        const modalSave = document.getElementById('modal-save');
+        const confirmModal = document.getElementById('confirm-modal');
+        const confirmTitle = document.getElementById('confirm-title');
+        const confirmMessage = document.getElementById('confirm-message');
+        const confirmCancel = document.getElementById('confirm-cancel');
+        const confirmDelete = document.getElementById('confirm-delete');
+
+        function render() {
+            renderEditor();
+            renderPreview();
+        }
+
+        function renderEditor() {
+            editorContainer.innerHTML = '';
+            if (data.categorias.length === 0) {
+                 editorContainer.innerHTML = '<p class="text-gray-500 text-center">No hay categorías. ¡Añade una!</p>';
+                 return;
+            }
+            data.categorias.forEach((cat, catIndex) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50';
+                categoryDiv.innerHTML = `<div class="flex justify-between items-center mb-3 pb-2 border-b"><h3 class="text-xl font-semibold text-gray-700">${cat.nombre}</h3><div class="space-x-2"><button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button><button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button><button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button></div></div>`;
+                const elementsList = document.createElement('div');
+                elementsList.className = 'space-y-2';
+                cat.elementos.forEach((el, elIndex) => {
+                    const elDiv = document.createElement('div');
+                    elDiv.dataset.editorId = `${catIndex}-${elIndex}`;
+                    elDiv.dataset.catIndex = catIndex;
+                    elDiv.dataset.elIndex = elIndex;
+                    elDiv.className = 'editor-item flex justify-between items-center p-2 rounded-md bg-white border border-gray-200 transition-colors duration-300 cursor-pointer';
+                    elDiv.innerHTML = `<div class="truncate"><strong class="text-sm font-medium">${el.title || el.type || 'Elemento'}</strong><p class="text-xs text-gray-500 truncate font-mono">${el.latex || ''}</p></div><div class="flex-shrink-0 space-x-2"><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="edit-el-btn text-blue-500 hover:text-blue-700" title="Editar elemento">&#9998;</button><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="delete-el-btn text-red-500 hover:text-red-700" title="Eliminar elemento">&#10006;</button></div>`;
+                    elementsList.appendChild(elDiv);
+                });
+                categoryDiv.appendChild(elementsList);
+                editorContainer.appendChild(categoryDiv);
+            });
+            addEditorEventListeners();
+        }
+
+        function renderPreview() {
+            previewContainer.innerHTML = '';
+            if (data.categorias.length === 0) {
+                 previewContainer.innerHTML = '<p class="text-gray-500 text-center">La vista previa aparecerá aquí.</p>';
+                 return;
+            }
+            data.categorias.forEach((cat, catIndex) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'mb-6';
+                categoryDiv.innerHTML = `<h3 class="text-xl font-semibold text-gray-700 mb-3">${cat.nombre}</h3>`;
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid gap-2';
+                gridDiv.style.gridTemplateColumns = cat.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))';
+                cat.elementos.forEach((el, elIndex) => {
+                    if (el.type === 'custom_matrix') return;
+                    const button = document.createElement('button');
+                    button.className = 'preview-item preview-button bg-white border border-gray-300 rounded-md p-2 shadow-sm';
+                    button.title = el.title || '';
+                    button.dataset.catIndex = catIndex;
+                    button.dataset.elIndex = elIndex;
+                    try {
+                        button.innerHTML = katex.renderToString(el.display || el.latex, { throwOnError: true, displayMode: false });
+                    } catch (e) {
+                        button.textContent = el.latex;
+                        button.classList.add('text-red-500', 'font-mono', 'text-xs');
+                    }
+                    button.addEventListener('click', handlePreviewClick);
+                    button.addEventListener('dblclick', handlePreviewDblClick);
+                    gridDiv.appendChild(button);
+                });
+                categoryDiv.appendChild(gridDiv);
+                previewContainer.appendChild(categoryDiv);
+            });
+        }
+
+        function addEditorEventListeners() {
+            document.querySelectorAll('.edit-cat-btn').forEach(b => b.addEventListener('click', handleEditCategory));
+            document.querySelectorAll('.delete-cat-btn').forEach(b => b.addEventListener('click', handleDeleteCategory));
+            document.querySelectorAll('.add-el-btn').forEach(b => b.addEventListener('click', handleAddElement));
+            document.querySelectorAll('.edit-el-btn').forEach(b => b.addEventListener('click', handleEditElement));
+            document.querySelectorAll('.delete-el-btn').forEach(b => b.addEventListener('click', handleDeleteElement));
+            document.querySelectorAll('.editor-item').forEach(item => item.addEventListener('click', handleEditorClick));
+        }
+
+        function highlightElements(editorItem, previewItem) {
+            document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+            if(editorItem) editorItem.classList.add('highlight');
+            if(previewItem) previewItem.classList.add('highlight');
+            setTimeout(() => {
+                if(editorItem) editorItem.classList.remove('highlight');
+                if(previewItem) previewItem.classList.remove('highlight');
+            }, 1500);
+        }
+
+        function handleEditorClick(e) {
+            if (e.target.closest('button')) return;
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            const previewItem = document.querySelector(`.preview-item[data-cat-index="${catIndex}"][data-el-index="${elIndex}"]`);
+            if (previewItem) {
+                previewItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                highlightElements(e.currentTarget, previewItem);
+            }
+        }
+        
+        function handlePreviewClick(e) {
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
+            if (editorItem) {
+                editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                highlightElements(editorItem, e.currentTarget);
+            }
+        }
+
+        function handlePreviewDblClick(e) {
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            handleEditElement({ currentTarget: { dataset: { catIndex, elIndex } } });
+        }
+
+        function handleEditCategory(e) {
+            const catIndex = e.currentTarget.dataset.catIndex;
+            showCategoryModal('Editar Categoría', data.categorias[catIndex], (formData) => {
+                data.categorias[catIndex] = {...data.categorias[catIndex], ...formData};
+                render();
+            });
+        }
+
+        function handleDeleteCategory(e) {
+            const catIndex = e.currentTarget.dataset.catIndex;
+            showConfirmModal(`Eliminar "${data.categorias[catIndex].nombre}"`, `¿Seguro que quieres eliminar la categoría y todos sus elementos?`, () => {
+                data.categorias.splice(catIndex, 1);
+                render();
+            });
+        }
+
+        addCategoryBtn.addEventListener('click', () => {
+             showCategoryModal('Añadir Nueva Categoría', {}, (formData) => {
+                data.categorias.push({ nombre: formData.nombre, id: formData.nombre.toLowerCase().replace(/\s+/g, '-'), grid_template_columns: "repeat(auto-fit, minmax(80px, 1fr))", elementos: [], ...formData });
+                render();
+            });
+        });
+
+        function handleAddElement(e) {
+            const catIndex = e.currentTarget.dataset.catIndex;
+            showElementModal('Añadir Elemento', {}, (formData) => {
+                data.categorias[catIndex].elementos.push({ type: "button", ...formData });
+                render();
+            });
+        }
+        
+        function handleEditElement(e) {
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            showElementModal('Editar Elemento', data.categorias[catIndex].elementos[elIndex], (formData) => {
+                data.categorias[catIndex].elementos[elIndex] = {...data.categorias[catIndex].elementos[elIndex], ...formData};
+                render();
+            });
+        }
+
+        function handleDeleteElement(e) {
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            const el = data.categorias[catIndex].elementos[elIndex];
+            showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro que quieres eliminar este elemento?`, () => {
+                data.categorias[catIndex].elementos.splice(elIndex, 1);
+                render();
+            });
+        }
+        
+        fileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const loadedData = JSON.parse(event.target.result);
+                    if (loadedData.categorias) {
+                        data = loadedData;
+                        render();
+                    } else { alert("El archivo JSON no tiene el formato esperado."); }
+                } catch (error) { alert("Error al procesar el archivo JSON."); }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        });
+
+        exportBtn.addEventListener('click', () => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+            a.download = 'formulas_editado.json';
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        let onSaveCallback = null;
+        function showCategoryModal(title, categoryData = {}, onSave) {
+            modalTitle.textContent = title;
+            modalForm.innerHTML = `<div class="space-y-4"><div><label for="cat-nombre" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="cat-nombre" value="${categoryData.nombre || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="cat-grid" class="block text-sm font-medium text-gray-700">CSS Grid Template Columns</label><input type="text" id="cat-grid" value="${categoryData.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))'}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div></div>`;
+            onSaveCallback = () => {
+                const formData = { nombre: document.getElementById('cat-nombre').value, grid_template_columns: document.getElementById('cat-grid').value };
+                if (!formData.nombre) { alert('El nombre es obligatorio.'); return; }
+                onSave(formData);
+                hideModal();
+            };
+            modal.classList.remove('hidden');
+        }
+
+        function showElementModal(title, elementData = {}, onSave) {
+            modalTitle.textContent = title;
+            modalForm.innerHTML = `<div class="space-y-4"><div><label for="el-title" class="block text-sm font-medium text-gray-700">Título (tooltip)</label><input type="text" id="el-title" value="${elementData.title || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500" required></div><div><label for="el-latex" class="block text-sm font-medium text-gray-700">Código LaTeX (insertar)</label><textarea id="el-latex" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono" required>${elementData.latex || ''}</textarea></div><div><label for="el-display" class="block text-sm font-medium text-gray-700">Código LaTeX (visualizar, opcional)</label><textarea id="el-display" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 font-mono">${elementData.display || ''}</textarea><p class="text-xs text-gray-500 mt-1">Si se deja en blanco, se usa el de insertar.</p></div></div>`;
+            onSaveCallback = () => {
+                const formData = { title: document.getElementById('el-title').value, latex: document.getElementById('el-latex').value, display: document.getElementById('el-display').value };
+                if (!formData.title || !formData.latex) { alert('El título y el código LaTeX son obligatorios.'); return; }
+                onSave(formData);
+                hideModal();
+            };
+            modal.classList.remove('hidden');
+        }
+
+        function hideModal() { modal.classList.add('hidden'); onSaveCallback = null; }
+        modalSave.addEventListener('click', () => { if (onSaveCallback) onSaveCallback(); });
+        modalCancel.addEventListener('click', hideModal);
+        
+        let onDeleteCallback = null;
+        function showConfirmModal(title, message, onDelete) {
+            confirmTitle.textContent = title; confirmMessage.textContent = message; onDeleteCallback = onDelete; confirmModal.classList.remove('hidden');
+        }
+        function hideConfirmModal() { confirmModal.classList.add('hidden'); onDeleteCallback = null; }
+        confirmDelete.addEventListener('click', () => { if(onDeleteCallback) onDeleteCallback(); hideConfirmModal(); });
+        confirmCancel.addEventListener('click', hideConfirmModal);
+
+        render();
+    </script>
+
+</body>
+</html>
