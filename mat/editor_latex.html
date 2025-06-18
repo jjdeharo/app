@@ -4,37 +4,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor LaTeX online</title>
+    <!-- Librería para convertir HTML a Canvas (para la descarga de imágenes) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     
     <script>
+        // Función principal que se ejecuta cuando MathJax está listo
         function initializeLatexEditor() {
+            // Obtener referencias a los elementos del DOM
             const latexInput = document.getElementById('latex-input');
             const preview = document.getElementById('preview');
             const copyButton = document.getElementById('copy-button');
+            const clearButton = document.getElementById('clear-button');
             const copyImageButton = document.getElementById('copy-image-button');
             const downloadButton = document.getElementById('download-png-button');
-            const copyFeedback = document.getElementById('copy-feedback');
+            const copyCodeFeedback = document.getElementById('copy-code-feedback');
+            const copyImageFeedback = document.getElementById('copy-image-feedback');
             const toolbar = document.getElementById('toolbar');
             const tabsContainer = document.getElementById('tabs-container');
 
+            // --- FUNCIONES PRINCIPALES ---
+
+            /**
+             * Genera un nombre único para las imágenes basado en timestamp y número aleatorio
+             */
+            function generateUniqueImageName() {
+                const timestamp = Date.now();
+                const random = Math.floor(Math.random() * 10000);
+                return `formula_${timestamp}_${random}`;
+            }
+
+            /**
+             * Actualiza la previsualización renderizando el código LaTeX del input.
+             */
             function updatePreview() {
                 const latexCode = latexInput.value.trim();
                 
                 if (latexCode === "") {
-                    preview.innerHTML = "";
+                    preview.innerHTML = ""; // Limpia la previsualización si no hay código
                     return;
                 }
                 
+                // Envuelve el código en delimitadores de display math para MathJax
                 preview.innerHTML = `$$${latexCode}$$`;
-                MathJax.typesetPromise([preview]).catch(err => console.log(err));
+                // Pide a MathJax que renderice el nuevo contenido
+                MathJax.typesetPromise([preview]).catch(err => console.log('Error en MathJax:', err));
             }
 
+            /**
+             * Inicializa los botones de la barra de herramientas, renderizando sus propios símbolos LaTeX.
+             */
             function initializeToolbar() {
                 const buttons = toolbar.querySelectorAll('.toolbar-btn');
                 buttons.forEach(btn => {
                     const template = btn.dataset.latex;
                     let renderableLatex = template;
 
+                    // Para plantillas complejas, usamos un ejemplo para la visualización en el botón
                     switch (template) {
                         case '\\frac{}{}': renderableLatex = '\\frac{a}{b}'; break;
                         case '^{}': renderableLatex = 'x^{a}'; break;
@@ -46,9 +71,14 @@
                     
                     btn.innerHTML = `\\(${renderableLatex}\\)`;
                 });
+                // Renderiza todos los botones de la barra de herramientas a la vez
                 MathJax.typesetPromise(Array.from(buttons)).catch(err => console.log(err));
             }
             
+            /**
+             * Inserta una plantilla de LaTeX en la posición actual del cursor.
+             * @param {string} textToInsert - El código LaTeX a insertar.
+             */
             function insertAtCursor(textToInsert) {
                 const startPos = latexInput.selectionStart;
                 const endPos = latexInput.selectionEnd;
@@ -56,11 +86,17 @@
                 
                 latexInput.value = currentValue.substring(0, startPos) + textToInsert + currentValue.substring(endPos);
                 
+                // Intenta colocar el cursor en una posición lógica dentro de la plantilla
                 const cursorPos = textToInsert.indexOf('{}');
                 if (cursorPos !== -1) {
                     latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
                 } else if (textToInsert.includes('\\begin{')) {
-                    latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.indexOf(' a ') + 1;
+                     const examplePos = textToInsert.indexOf(' a ')
+                     if (examplePos !== -1) {
+                        latexInput.selectionStart = latexInput.selectionEnd = startPos + examplePos + 1;
+                     } else {
+                        latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
+                     }
                 } else {
                     latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
                 }
@@ -69,14 +105,19 @@
                 updatePreview();
             }
 
+            /**
+             * Gestiona la descarga de la previsualización como una imagen PNG.
+             */
             function handleDownload() {
+                // Pequeño retardo para asegurar que el renderizado de MathJax ha finalizado
                 setTimeout(() => {
                     html2canvas(preview, { 
-                        backgroundColor: null,
+                        backgroundColor: null, // Fondo transparente
                         logging: false
                     }).then(canvas => {
                         const link = document.createElement('a');
-                        link.download = 'formula.png';
+                        const uniqueName = generateUniqueImageName();
+                        link.download = `${uniqueName}.png`;
                         link.href = canvas.toDataURL('image/png');
                         link.click();
                     }).catch(err => {
@@ -84,31 +125,171 @@
                     });
                 }, 100);
             }
+
+            /**
+             * Gestiona la copia de la previsualización como imagen al portapapeles.
+             */
+            function handleCopyImage() {
+                // Pequeño retardo para asegurar que el renderizado de MathJax ha finalizado
+                setTimeout(() => {
+                    html2canvas(preview, {
+                        backgroundColor: null, // Fondo transparente
+                        logging: false
+                    }).then(canvas => {
+                        // Convierte el canvas a un Blob con nombre único
+                        canvas.toBlob(blob => {
+                            if (navigator.clipboard && navigator.clipboard.write) {
+                                // Genera un nombre único para la imagen
+                                const uniqueName = generateUniqueImageName();
+                                
+                                // Crea un nuevo File object con el nombre único
+                                const file = new File([blob], `${uniqueName}.png`, { 
+                                    type: 'image/png',
+                                    lastModified: Date.now()
+                                });
+                                
+                                // Usa la API del portapapeles para escribir la imagen con nombre único
+                                const item = new ClipboardItem({ 
+                                    'image/png': file
+                                });
+                                
+                                navigator.clipboard.write([item]).then(() => {
+                                    // Muestra feedback al usuario
+                                    copyImageFeedback.textContent = '¡Imagen copiada!';
+                                    copyImageFeedback.style.opacity = '1';
+                                    setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
+                                }).catch(err => {
+                                    console.error("Error al copiar la imagen: ", err);
+                                    // Fallback: intenta con el método original
+                                    const originalItem = new ClipboardItem({ 'image/png': blob });
+                                    navigator.clipboard.write([originalItem]).then(() => {
+                                        copyImageFeedback.textContent = '¡Imagen copiada!';
+                                        copyImageFeedback.style.opacity = '1';
+                                        setTimeout(() => { copyImageFeedback.style.opacity = '0'; }, 2000);
+                                    }).catch(fallbackErr => {
+                                        console.error("Error en fallback: ", fallbackErr);
+                                        alert("No se pudo copiar la imagen. Es posible que tu navegador no lo permita por seguridad.");
+                                    });
+                                });
+                            } else {
+                                alert("La función de copiar imagen no es compatible con tu navegador.");
+                            }
+                        }, 'image/png');
+                    }).catch(err => {
+                        console.error("Error al generar la imagen con html2canvas:", err);
+                    });
+                }, 100);
+            }
             
+            /**
+             * Genera una matriz personalizada con las dimensiones especificadas
+             * @param {string} matrixType - Tipo de matriz (pmatrix, bmatrix, vmatrix, Vmatrix)
+             */
+            function generateCustomMatrix(matrixType) {
+                const rows = parseInt(document.getElementById('matrix-rows').value) || 2;
+                const cols = parseInt(document.getElementById('matrix-cols').value) || 2;
+                const fillType = document.getElementById('matrix-fill').value;
+                
+                // Validar dimensiones
+                if (rows < 1 || rows > 10 || cols < 1 || cols > 10) {
+                    alert('Las dimensiones deben estar entre 1 y 10');
+                    return;
+                }
+                
+                let matrixContent = '';
+                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+                let counter = 1;
+                
+                for (let i = 0; i < rows; i++) {
+                    let rowContent = '';
+                    for (let j = 0; j < cols; j++) {
+                        let cellContent = '';
+                        
+                        switch (fillType) {
+                            case 'subscripts':
+                                // Comportamiento original con subíndices
+                                const baseVar = alphabet[j % alphabet.length];
+                                const subscript = Math.floor(j / alphabet.length) + i + 1;
+                                cellContent = `${baseVar}_{${subscript}}`;
+                                break;
+                                
+                            case 'zeros':
+                                cellContent = '0';
+                                break;
+                                
+                            case 'ones':
+                                cellContent = '1';
+                                break;
+                                
+                            case 'variables':
+                                // Variables simples: a, b, c, d, e, f...
+                                const varIndex = (i * cols + j) % alphabet.length;
+                                cellContent = alphabet[varIndex];
+                                break;
+                                
+                            case 'numbers':
+                                // Números secuenciales: 1, 2, 3, 4...
+                                cellContent = counter.toString();
+                                counter++;
+                                break;
+                                
+                            case 'empty':
+                                cellContent = '';
+                                break;
+                                
+                            default:
+                                cellContent = '';
+                        }
+                        
+                        rowContent += cellContent;
+                        
+                        if (j < cols - 1) {
+                            rowContent += ' & ';
+                        }
+                    }
+                    
+                    matrixContent += rowContent;
+                    if (i < rows - 1) {
+                        matrixContent += ' \\\\ ';
+                    }
+                }
+                
+                const latexCode = `\\begin{${matrixType}} ${matrixContent} \\end{${matrixType}}`;
+                insertAtCursor(latexCode);
+            }
             function handleTabSwitch(event) {
                 if (!event.target.matches('.tab-btn')) return;
 
+                // Oculta todas las pestañas y quita la clase activa
                 tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                 toolbar.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                 
+                // Muestra la pestaña seleccionada
                 event.target.classList.add('active');
                 const tabId = event.target.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.add('active');
             }
             
+            /**
+             * Añade el pie de página con los enlaces solicitados.
+             */
             function addFooter() {
                 const footer = document.getElementById('page-footer');
                 footer.innerHTML = `
                     <p style="margin-bottom: 10px;">
-                        <a href="https://labia.tiddlyhost.com" target="_blank" style="color: #3b82f6; text-decoration: none;">Laboratorio de aplicaciones educativas</a> | 
-                        <a href="https://bilateria.org" target="_blank" style="color: #3b82f6; text-decoration: none;">Aplicación hecha por Juan José de Haro</a>
+                        <a href="https://labia.tiddlyhost.com" target="_blank">Laboratorio de aplicaciones educativas</a> | 
+                        <a href="https://bilateria.org" target="_blank">Aplicación hecha por Juan José de Haro</a>
                     </p>
-                    <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" style="color: #3b82f6; text-decoration: none;">Licencia Creative Commons BY-SA</a>
+                    <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank">Licencia Creative Commons BY-SA</a>
                 `;
             }
 
+            // --- ASIGNACIÓN DE EVENTOS ---
+
+            // Actualiza la preview cada vez que se escribe en el textarea
             latexInput.addEventListener('input', updatePreview);
 
+            // Inserta la plantilla LaTeX al hacer clic en un botón de la barra de herramientas
             toolbar.addEventListener('click', (event) => {
                 const button = event.target.closest('.toolbar-btn');
                 if (button && button.dataset.latex) {
@@ -116,38 +297,57 @@
                 }
             });
 
+            // Copia el código LaTeX al portapapeles
             copyButton.addEventListener('click', () => {
+                if (!latexInput.value) return;
                 navigator.clipboard.writeText(latexInput.value).then(() => {
-                    copyFeedback.textContent = '¡Código copiado al portapapeles!';
-                    copyFeedback.style.opacity = '1';
-                    setTimeout(() => { copyFeedback.style.opacity = '0'; }, 2000);
+                    copyCodeFeedback.textContent = '¡Código copiado!';
+                    copyCodeFeedback.style.opacity = '1';
+                    setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
                 }).catch(err => {
                     console.error('No se pudo copiar el texto: ', err);
                 });
             });
 
+            // Borra el código LaTeX del textarea
+            clearButton.addEventListener('click', () => {
+                if (latexInput.value && confirm('¿Estás seguro de que quieres borrar todo el código?')) {
+                    latexInput.value = '';
+                    latexInput.focus();
+                    updatePreview();
+                }
+            });
+
+            // Asigna los manejadores de eventos a los botones de descarga y copia de imagen
             downloadButton.addEventListener('click', handleDownload);
+            copyImageButton.addEventListener('click', handleCopyImage);
             
-            if (copyImageButton) {
-                copyImageButton.addEventListener('click', handleCopyImage);
-            }
+            // Asigna el manejador de eventos para el cambio de pestañas
             tabsContainer.addEventListener('click', handleTabSwitch);
 
+            // --- INICIALIZACIÓN ---
+            
             initializeToolbar();
             updatePreview();
             addFooter();
+            
+            // Hacer la función generateCustomMatrix disponible globalmente
+            window.generateCustomMatrix = generateCustomMatrix;
         }
 
+        // Configuración de MathJax
         window.MathJax = {
             tex: {
                 inlineMath: [['$', '$'], ['\\(', '\\)']],
                 displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true
+                processEscapes: true,
+                 packages: {'[+]': ['cases', 'mathtools']}
             },
             svg: {
                 fontCache: 'global'
             },
             startup: {
+                // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización
                 ready: () => {
                     MathJax.startup.defaultReady();
                     initializeLatexEditor();
@@ -155,9 +355,24 @@
             }
         };
     </script>
+    <!-- Carga el script de MathJax -->
     <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
 
     <style>
+        :root {
+            --primary-color: #007bff;
+            --primary-dark: #0056b3;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef;
+            --dark-gray: #495057;
+            --white: #ffffff;
+            --text-color: #212529;
+            --border-radius: 12px;
+            --box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -168,6 +383,7 @@
             padding: 0;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: var(--text-color);
         }
 
         .container {
@@ -179,7 +395,7 @@
         .header {
             text-align: center;
             margin-bottom: 30px;
-            color: white;
+            color: var(--white);
         }
 
         .header h1 {
@@ -195,9 +411,9 @@
         }
 
         .tabs-section {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            background: var(--white);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
             margin-bottom: 20px;
             overflow: hidden;
         }
@@ -205,38 +421,35 @@
         .tabs-container {
             display: flex;
             flex-wrap: wrap;
-            background: #f8f9fa;
-            border-bottom: 3px solid #e9ecef;
+            background: var(--light-gray);
+            border-bottom: 3px solid var(--medium-gray);
         }
 
         .tab-btn {
             padding: 15px 20px;
-            background: #e9ecef;
+            background: transparent;
             border: none;
             cursor: pointer;
             font-weight: 600;
-            color: #495057;
+            color: var(--dark-gray);
             transition: all 0.3s ease;
-            border-right: 1px solid #dee2e6;
             position: relative;
+            border-bottom: 3px solid transparent;
         }
 
         .tab-btn:hover {
-            background: #dee2e6;
-            color: #212529;
-            transform: translateY(-2px);
+            background: var(--medium-gray);
+            color: var(--text-color);
         }
-
+        
         .tab-btn.active {
-            background: white;
-            color: #007bff;
-            box-shadow: 0 -3px 0 #007bff;
-            transform: translateY(-2px);
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
         }
 
         .toolbar-wrapper {
             padding: 20px;
-            background: white;
+            background: var(--white);
         }
 
         .tab-content {
@@ -248,6 +461,7 @@
             display: grid;
         }
 
+        /* Diseños de rejilla para cada pestaña */
         #tab-basico.active { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
         #tab-operadores.active { grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); }
         #tab-griego.active { grid-template-columns: repeat(auto-fit, minmax(50px, 1fr)); }
@@ -256,8 +470,8 @@
         #tab-sistemas.active { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
 
         .toolbar-btn {
-            background: white;
-            border: 2px solid #e9ecef;
+            background: var(--white);
+            border: 2px solid var(--medium-gray);
             border-radius: 8px;
             padding: 15px 10px;
             cursor: pointer;
@@ -266,11 +480,11 @@
             align-items: center;
             justify-content: center;
             min-height: 60px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .toolbar-btn:hover {
-            border-color: #007bff;
+            border-color: var(--primary-color);
             background: #f8f9ff;
             transform: translateY(-2px);
             box-shadow: 0 4px 8px rgba(0,123,255,0.2);
@@ -284,142 +498,167 @@
         }
 
         .panel {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            background: var(--white);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            display: flex;
+            flex-direction: column;
         }
 
         .panel h2 {
             margin: 0 0 15px 0;
             color: #333;
             font-size: 1.3rem;
+            border-bottom: 2px solid var(--medium-gray);
+            padding-bottom: 10px;
         }
 
         #latex-input {
             width: 100%;
             height: 200px;
-            border: 2px solid #e9ecef;
+            border: 2px solid var(--medium-gray);
             border-radius: 8px;
             padding: 15px;
             font-family: 'Courier New', monospace;
             font-size: 14px;
             resize: vertical;
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
+            flex-grow: 1; /* Permite que el textarea crezca */
         }
 
         #latex-input:focus {
             outline: none;
-            border-color: #007bff;
+            border-color: var(--primary-color);
             box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
 
         .preview-container {
             min-height: 200px;
-            border: 2px solid #e9ecef;
+            border: 2px dashed var(--medium-gray);
             border-radius: 8px;
             padding: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #fafafa;
+            background: var(--light-gray);
+            flex-grow: 1; /* Permite que la preview crezca */
         }
 
         #preview {
             font-size: 24px;
-            color: #333;
-        }
-
-        .actions {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            color: var(--text-color);
+            overflow-x: auto;
+            overflow-y: hidden;
+            width: 100%;
             text-align: center;
         }
 
+        .panel-actions {
+            margin-top: 15px;
+            text-align: center;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
         .btn {
-            padding: 12px 24px;
+            padding: 10px 20px;
             border: none;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
-            margin: 0 10px;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         .btn-primary {
-            background: linear-gradient(135deg, #007bff, #0056b3);
+            background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
             color: white;
         }
 
         .btn-secondary {
-            background: linear-gradient(135deg, #6c757d, #495057);
+            background: linear-gradient(45deg, var(--secondary-color), #495057);
             color: white;
         }
 
         .btn-success {
-            background: linear-gradient(135deg, #28a745, #1e7e34);
+            background: linear-gradient(45deg, var(--success-color), #1e7e34);
             color: white;
         }
 
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
         }
 
-        #copy-feedback {
-            color: #007bff;
+        .copy-feedback {
+            color: var(--primary-color);
             font-weight: 600;
             margin-top: 10px;
+            height: 20px;
             opacity: 0;
             transition: opacity 0.5s ease;
+            text-align: center;
+        }
+
+        /* Estilos para matriz personalizada */
+        #matrix-rows, #matrix-cols {
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 12px;
+        }
+
+        #matrix-rows:focus, #matrix-cols:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        #matrix-fill {
+            border: 1px solid var(--medium-gray);
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 12px;
+            background: white;
+            min-width: 150px;
+        }
+
+        #matrix-fill:focus {
+            outline: none;
+            border-color: var(--primary-color);
         }
 
         .footer {
             text-align: center;
             padding: 30px 20px;
             color: white;
-            opacity: 0.8;
+            opacity: 0.9;
+            font-size: 0.9rem;
         }
 
         .footer a {
             color: #ffffff;
-            text-decoration: none;
+            font-weight: 600;
         }
 
         .footer a:hover {
             text-decoration: underline;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 900px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .tab-btn {
-                padding: 10px 15px;
-                font-size: 14px;
-            }
-            
-            .container {
-                padding: 10px;
-            }
+        }
 
-            .btn {
-                margin: 5px;
-                width: calc(50% - 10px);
-            }
-
-            .actions {
-                text-align: center;
-            }
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .tab-btn { padding: 12px 15px; font-size: 14px; }
+            .container { padding: 10px; }
         }
     </style>
 </head>
@@ -433,14 +672,15 @@
         <div class="tabs-section">
             <div id="tabs-container" class="tabs-container">
                 <button class="tab-btn active" data-tab="basico">Básico</button>
-                <button class="tab-btn" data-tab="operadores">Operadores y símbolos</button>
+                <button class="tab-btn" data-tab="operadores">Operadores</button>
                 <button class="tab-btn" data-tab="griego">Griego</button>
-                <button class="tab-btn" data-tab="limites">Límites y funciones</button>
-                <button class="tab-btn" data-tab="matrices">Matrices y vectores</button>
+                <button class="tab-btn" data-tab="limites">Límites</button>
+                <button class="tab-btn" data-tab="matrices">Matrices</button>
                 <button class="tab-btn" data-tab="sistemas">Sistemas</button>
             </div>
             <div class="toolbar-wrapper">
                 <div id="toolbar">
+                    <!-- Contenido de las pestañas de la barra de herramientas -->
                     <div id="tab-basico" class="tab-content active">
                         <button class="toolbar-btn" data-latex="\frac{}{}" title="Fracción"></button>
                         <button class="toolbar-btn" data-latex="^{}" title="Superíndice"></button>
@@ -492,24 +732,42 @@
                         <button class="toolbar-btn" data-latex="\frac{dy}{dx}" title="Derivada"></button>
                     </div>
                     <div id="tab-matrices" class="tab-content">
-                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a & b \\ c & d \end{pmatrix}" title="Matriz 2x2 con paréntesis"></button>
-                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a & b & c \\ d & e & f \\ g & h & i \end{pmatrix}" title="Matriz 3x3 con paréntesis"></button>
-                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a_{11} & a_{12} & \cdots & a_{1n} \\ a_{21} & a_{22} & \cdots & a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \cdots & a_{mn} \end{pmatrix}" title="Matriz general mxn"></button>
-                        <button class="toolbar-btn" data-latex="\begin{bmatrix} a & b \\ c & d \end{bmatrix}" title="Matriz 2x2 con corchetes"></button>
-                        <button class="toolbar-btn" data-latex="\begin{bmatrix} a & b & c \\ d & e & f \\ g & h & i \end{bmatrix}" title="Matriz 3x3 con corchetes"></button>
-                        <button class="toolbar-btn" data-latex="\begin{bmatrix} a_{11} & a_{12} & \cdots & a_{1n} \\ a_{21} & a_{22} & \cdots & a_{2n} \\ \vdots & \vdots & \ddots & \vdots \\ a_{m1} & a_{m2} & \cdots & a_{mn} \end{bmatrix}" title="Matriz general mxn con corchetes"></button>
+                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a & b \\ c & d \end{pmatrix}" title="Matriz 2x2"></button>
+                        <button class="toolbar-btn" data-latex="\begin{bmatrix} a & b \\ c & d \end{bmatrix}" title="Matriz 2x2 corchetes"></button>
                         <button class="toolbar-btn" data-latex="\begin{vmatrix} a & b \\ c & d \end{vmatrix}" title="Determinante 2x2"></button>
-                        <button class="toolbar-btn" data-latex="\begin{vmatrix} a & b & c \\ d & e & f \\ g & h & i \end{vmatrix}" title="Determinante 3x3"></button>
-                        <button class="toolbar-btn" data-latex="\begin{vmatrix} a & b & c & d \\ e & f & g & h \\ i & j & k & l \\ m & n & o & p \end{vmatrix}" title="Determinante 4x4"></button>
-                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a_1 \\ a_2 \\ \vdots \\ a_n \end{pmatrix}" title="Vector columna"></button>
-                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a_1 & a_2 & \cdots & a_n \end{pmatrix}" title="Vector fila"></button>
-                        <button class="toolbar-btn" data-latex="\begin{pmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{pmatrix}" title="Matriz identidad 3x3"></button>
+                        <button class="toolbar-btn" data-latex="\begin{pmatrix} a & b & c \\ d & e & f \\ g & h & i \end{pmatrix}" title="Matriz 3x3"></button>
+                        
+                        <div style="grid-column: 1/-1; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-top: 10px;">
+                            <h4 style="margin: 0 0 10px 0; color: #333;">Matriz personalizada</h4>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                                <label>Filas: <input type="number" id="matrix-rows" min="1" max="10" value="2" style="width: 50px; margin-left: 5px;"></label>
+                                <label>Columnas: <input type="number" id="matrix-cols" min="1" max="10" value="2" style="width: 50px; margin-left: 5px;"></label>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;">
+                                <label>Rellenar con:
+                                    <select id="matrix-fill" style="margin-left: 5px; padding: 3px 6px; border: 1px solid #e9ecef; border-radius: 4px;">
+                                        <option value="subscripts">Subíndices (a₁, b₁...)</option>
+                                        <option value="zeros">Ceros (0)</option>
+                                        <option value="ones">Unos (1)</option>
+                                        <option value="variables">Variables (a, b, c...)</option>
+                                        <option value="numbers">Números (1, 2, 3...)</option>
+                                        <option value="empty">Vacío ({ })</option>
+                                    </select>
+                                </label>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                                <button class="btn btn-primary" onclick="generateCustomMatrix('pmatrix')" style="padding: 5px 10px; font-size: 12px;">( )</button>
+                                <button class="btn btn-primary" onclick="generateCustomMatrix('bmatrix')" style="padding: 5px 10px; font-size: 12px;">[ ]</button>
+                                <button class="btn btn-primary" onclick="generateCustomMatrix('vmatrix')" style="padding: 5px 10px; font-size: 12px;">| |</button>
+                                <button class="btn btn-primary" onclick="generateCustomMatrix('Vmatrix')" style="padding: 5px 10px; font-size: 12px;">|| ||</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="tab-sistemas" class="tab-content">
                         <button class="toolbar-btn" data-latex="\begin{cases} a_1x+b_1y=c_1 \\ a_2x+b_2y=c_2 \end{cases}" title="Sistema 2 ecuaciones"></button>
-                        <button class="toolbar-btn" data-latex="\begin{cases} a_1x+b_1y+c_1z=d_1 \\ a_2x+b_2y+c_2z=d_2 \\ a_3x+b_3y+c_3z=d_3 \end{cases}" title="Sistema 3 ecuaciones"></button>
-                        <button class="toolbar-btn" data-latex="\begin{cases} a_{11}x_1 + a_{12}x_2 + \cdots + a_{1n}x_n = b_1 \\ a_{21}x_1 + a_{22}x_2 + \cdots + a_{2n}x_n = b_2 \\ \vdots \\ a_{m1}x_1 + a_{m2}x_2 + \cdots + a_{mn}x_n = b_m \end{cases}" title="Sistema general m ecuaciones n incógnitas"></button>
                         <button class="toolbar-btn" data-latex="\left\{ \begin{array}{l} x + y = 1 \\ x - y = 0 \end{array} \right." title="Sistema con array"></button>
+                        <button class="toolbar-btn" data-latex="\begin{cases} a_1x+b_1y+c_1z=d_1 \\ a_2x+b_2y+c_2z=d_2 \\ a_3x+b_3y+c_3z=d_3 \end{cases}" title="Sistema 3 ecuaciones"></button>
+                        <button class="toolbar-btn" data-latex="\left\{ \begin{array}{l} x + y + z = 1 \\ 2x - y + z = 0 \\ x + 2y - z = 3 \end{array} \right." title="Sistema 3 ecuaciones con array"></button>
                     </div>
                 </div>
             </div>
@@ -518,26 +776,29 @@
         <div class="main-content">
             <div class="panel">
                 <h2>Código LaTeX</h2>
-                <textarea id="latex-input" placeholder="Escribe aquí tu código..."></textarea>
+                <textarea id="latex-input" placeholder="Escribe aquí tu código... \frac{a}{b}" spellcheck="false"></textarea>
+                <div class="panel-actions">
+                     <button id="copy-button" class="btn btn-primary">Copiar código LaTeX</button>
+                     <button id="clear-button" class="btn btn-secondary">Borrar código</button>
+                </div>
+                <div id="copy-code-feedback" class="copy-feedback"></div>
             </div>
             <div class="panel">
                 <h2>Previsualización</h2>
                 <div class="preview-container">
                     <div id="preview"></div>
                 </div>
+                <div class="panel-actions">
+                    <button id="copy-image-button" class="btn btn-secondary">Copiar como imagen</button>
+                    <button id="download-png-button" class="btn btn-success">Descargar PNG</button>
+                </div>
+                 <div id="copy-image-feedback" class="copy-feedback"></div>
             </div>
-        </div>
-
-        <div class="actions">
-            <button id="copy-button" class="btn btn-primary">Copiar código LaTeX</button>
-            <button id="copy-image-button" class="btn btn-secondary">Copiar imagen</button>
-            <button id="download-png-button" class="btn btn-success">Descargar PNG</button>
-            <div id="copy-feedback">¡Copiado al portapapeles!</div>
         </div>
     </div>
     
     <footer id="page-footer" class="footer">
-        <!-- El pie de página se añadirá aquí con JavaScript -->
+        <!-- El pie de página se añade aquí con JavaScript -->
     </footer>
 </body>
 </html>
