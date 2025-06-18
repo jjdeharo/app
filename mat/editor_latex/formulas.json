@@ -56,8 +56,8 @@
         },
         {
           "type": "button",
-          "latex": "\\left[\\right]",
-          "display": "[\\,]",
+          "latex": "\\left[\\,\\right]",
+          "display": "",
           "title": "Corchetes"
         },
         {
@@ -497,6 +497,12 @@
           "latex": "\\xrightarrow{}",
           "display": "\\xrightarrow{\\text{texto}}",
           "title": "Flecha con texto arriba"
+        },
+        {
+          "type": "button",
+          "title": "Flecha con texto abajo",
+          "latex": "\\underset{\\text{texto}}{\\xrightarrow{}}\n",
+          "display": ""
         },
         {
           "type": "button",
