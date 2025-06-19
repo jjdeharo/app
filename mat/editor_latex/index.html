@@ -238,6 +238,8 @@
             const copyButton = document.getElementById('copy-button');
             const clearButton = document.getElementById('clear-button');
             const viewImageButton = document.getElementById('view-image-button');
+            const delimiterSelector = document.getElementById('delimiter-selector');
+            const copyCodeFeedback = document.getElementById('copy-code-feedback');
             const tabsContainer = document.getElementById('tabs-container');
             const toolbar = document.getElementById('toolbar');
             const searchInput = document.getElementById('search-input');
@@ -563,7 +565,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.1</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.2</p>
                 `;
             }
 
@@ -574,6 +576,32 @@
                 if (button && button.dataset.latex) insertAtCursor(button.dataset.latex);
             });
             tabsContainer.addEventListener('click', handleTabSwitch);
+            
+            copyButton.addEventListener('click', () => {
+                const rawLatex = latexInput.value.trim();
+                if (!rawLatex) return;
+
+                let textToCopy;
+                switch (delimiterSelector.value) {
+                    case 'parentheses': textToCopy = `\\(${rawLatex}\\)`; break;
+                    case 'brackets': textToCopy = `\\[\n${rawLatex}\n\\]`; break;
+                    case 'double_dollar': textToCopy = `$$\n${rawLatex}\n$$`; break;
+                    case 'single_dollar': textToCopy = `$${rawLatex}$`; break;
+                    default: textToCopy = rawLatex;
+                }
+                navigator.clipboard.writeText(textToCopy);
+
+                copyCodeFeedback.textContent = '¡Código copiado!';
+                copyCodeFeedback.style.opacity = '1';
+                setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
+            });
+
+            clearButton.addEventListener('click', () => {
+                latexInput.value = '';
+                latexInput.focus();
+                updatePreview();
+            });
+
             viewImageButton.addEventListener('click', handleViewImage);
             imageModal.addEventListener('click', (e) => { if (e.target === imageModal) hideImageModal(); });
             settingsBtn.addEventListener('click', openSettingsModal);
