@@ -243,6 +243,7 @@
             <h2>Gestionar menús</h2>
             <div class="modal-body">
                 <h3>Menús disponibles</h3>
+                <p style="font-size:0.9em; text-align:center; color: var(--secondary-color); margin-top: -10px;">Los menús se cargan desde la carpeta <code>./docs/</code></p>
                 <ul id="available-menus-list" class="menu-list"><li>Cargando...</li></ul>
                 <div class="modal-buttons" style="justify-content: flex-end; margin-top: 10px;">
                     <button id="reload-menus-list-btn" class="btn btn-sm btn-secondary">Recargar lista</button>
@@ -257,9 +258,10 @@
                     <label for="file-input">Cargar menú desde archivo local</label>
                     <input type="file" id="file-input" accept=".json,application/json">
                 </div>
-                 <h3>Acciones</h3>
+                <h3>Acciones</h3>
                 <div id="modal-feedback" style="margin-bottom: 15px;"></div>
-                <div class="modal-buttons" style="flex-wrap: wrap;">
+                <div class="modal-buttons" style="flex-wrap: wrap; justify-content: center;">
+                    <a href="./editor_menu.html" target="_blank" class="btn btn-primary">Crear o editar menús</a>
                     <button id="clear-cache-btn" class="btn btn-secondary">Limpiar caché y recargar</button>
                 </div>
             </div>
@@ -307,7 +309,7 @@
             const clearCacheBtn = document.getElementById('clear-cache-btn');
             
             // --- CONFIGURACIÓN ---
-            const GITHUB_API_URL = 'https://api.github.com/repos/jjdeharo/app/contents/mat/editor_latex/docs';
+            const MENU_INDEX_URL = './docs/menu_index.json';
             const DEFAULT_MENU_GITHUB_URL = 'https://raw.githubusercontent.com/jjdeharo/app/main/mat/editor_latex/formulas.json';
             const DEFAULT_MENU_LOCAL_URL = './formulas.json';
             const MAX_RECENTS = 12;
@@ -315,7 +317,7 @@
             // --- ESTADO DE LA APLICACIÓN ---
             let loadedMenus = new Map();
             let menuCache = new Map();
-            let githubMenuListCache = null;
+            let menuListCache = null;
             let recentSymbols = [];
             
             // --- GESTIÓN DE DATOS Y ESTADO (Recientes y Menús) ---
@@ -359,7 +361,7 @@
             };
             const saveAddedMenusToStorage = () => {
                 const added = Array.from(loadedMenus.values())
-                    .filter(m => m.source !== 'default' && m.source !== 'localfile')
+                    .filter(m => m.source !== 'default' && m.source !== 'localfile' && m.source !== 'docs')
                     .map(m => ({ id: m.id, url: m.url, source: m.source, name: m.name }));
                 localStorage.setItem('latexAddedMenus', JSON.stringify(added));
             };
@@ -400,7 +402,7 @@
             };
             const getAllCategories = () => {
                 const allCategories = new Map();
-                const menuOrder = ['default', 'github', 'url', 'localfile'];
+                const menuOrder = ['default', 'docs', 'url', 'localfile'];
                 const sortedMenus = Array.from(loadedMenus.values()).sort((a,b) => menuOrder.indexOf(a.source) - menuOrder.indexOf(b.source));
 
                 for (const menu of sortedMenus) {
@@ -453,7 +455,8 @@
                 loadRecents();
                 loadedMenus.clear();
                 menuCache.clear();
-                githubMenuListCache = null;
+                menuListCache = null;
+
                 let baseMenuData;
                 try {
                     const response = await fetch(DEFAULT_MENU_LOCAL_URL);
@@ -491,8 +494,7 @@
                     const li = document.createElement('li');
                     
                     if (menu.source === 'error') {
-                        li.textContent = menu.name;
-                        li.style.color = 'var(--danger-color)'; li.style.justifyContent = 'center'; li.style.fontStyle = 'italic';
+                        li.innerHTML = `<span style="color: var(--danger-color); font-style: italic; width: 100%; text-align: center;">${menu.name}</span>`;
                         availableMenusList.appendChild(li);
                         return;
                     }
@@ -522,9 +524,13 @@
                 });
             };
             const loadAndDisplayAvailableMenus = async (forceRefetch = false) => {
-                if (!forceRefetch && githubMenuListCache) {
-                    renderAvailableMenus(githubMenuListCache);
+                if (!forceRefetch && menuListCache) {
+                    renderAvailableMenus(menuListCache);
                     return;
+                }
+                if(forceRefetch) {
+                    menuListCache = null;
+                    menuCache.clear();
                 }
 
                 availableMenusList.innerHTML = '<li>Cargando...</li>';
@@ -534,23 +540,22 @@
                 if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
 
                 try {
-                    const response = await fetch(GITHUB_API_URL);
-                    if (!response.ok) throw new Error(`Error al contactar con GitHub: ${response.statusText}`);
-                    const files = await response.json();
-                    if (!Array.isArray(files)) throw new Error('La respuesta de la API de GitHub no es válida.');
+                    const response = await fetch(MENU_INDEX_URL);
+                    if (!response.ok) throw new Error(`Error al cargar el índice de menús: ${response.statusText}`);
+                    const menuIndex = await response.json();
+                    if (!Array.isArray(menuIndex)) throw new Error('El índice de menús no es un array válido.');
                     
-                    const jsonFiles = files.filter(file => file.name.endsWith('.json') && file.type === 'file');
-                    jsonFiles.forEach(file => {
-                         menuItems.set(file.name, {
-                             id: file.name,
-                             name: file.name.replace('.json', '').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()),
-                             url: file.download_url,
-                             source: 'github'
+                    menuIndex.forEach(menuInfo => {
+                         menuItems.set(menuInfo.file, {
+                             id: menuInfo.file,
+                             name: menuInfo.name,
+                             url: `./docs/${menuInfo.file}`,
+                             source: 'docs'
                          });
                     });
                 } catch(e) {
                     console.error(e.message);
-                    const errorItem = { id: 'error-github-api', name: `No se pudo cargar la lista de menús.`, source: 'error' };
+                    const errorItem = { id: 'error-menu-index', name: `No se pudo cargar 'menu_index.json'.`, source: 'error' };
                     menuItems.set(errorItem.id, errorItem);
                 }
                 
@@ -560,8 +565,8 @@
                     }
                 }
                 
-                githubMenuListCache = menuItems;
-                renderAvailableMenus(githubMenuListCache);
+                menuListCache = menuItems;
+                renderAvailableMenus(menuItems);
             };
 
             availableMenusList.addEventListener('change', (e) => {
@@ -859,9 +864,12 @@
                         <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Aplicación hecha por Juan José de Haro</a>
                     </p>
                     <p style="margin-bottom: 10px;">
+                        <a href="https://github.com/jjdeharo/app/tree/main/mat/editor_latex" target="_blank" rel="noopener noreferrer">Código del proyecto en GitHub</a>
+                    </p>
+                    <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.4</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.7</p>
                 `;
             }
 
@@ -930,9 +938,8 @@
             });
             reloadMenusListBtn.addEventListener('click', () => loadAndDisplayAvailableMenus(true));
             clearCacheBtn.addEventListener('click', () => {
-                menuCache.clear();
-                githubMenuListCache = null;
-                showModalFeedback('Caché limpiada. Los menús se recargarán desde su origen.');
+                localStorage.removeItem('latexAddedMenus');
+                showModalFeedback('Caché y menús añadidos limpiados.');
                 initializeApp();
             });
             alertModalCloseBtn.addEventListener('click', hideAlert);
