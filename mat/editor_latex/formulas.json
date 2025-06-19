@@ -555,7 +555,7 @@
       "isCollapsed": true
     },
     {
-      "nombre": "Agrupación visual",
+      "nombre": "Agrupación",
       "id": "agrupacion",
       "grid_template_columns": "repeat(auto-fit, minmax(100px, 1fr))",
       "elementos": [
