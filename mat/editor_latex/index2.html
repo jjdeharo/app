@@ -459,7 +459,7 @@
                     baseMenuData = await response.json();
                     console.log("Default menu loaded from local file.");
                 } catch (e) {
-                    console.warn("Local default menu not found, fetching from GitHub.");
+                    console.warn("Local default menu not found, fetching from GitHub fallback.");
                     baseMenuData = await fetchMenuData(DEFAULT_MENU_GITHUB_URL);
                 }
                 if(baseMenuData) {
@@ -482,28 +482,31 @@
                 availableMenusList.innerHTML = '<li>Cargando...</li>';
                 const menuItems = new Map();
 
-                // 1. Añadir el menú base a la lista
                 const baseMenu = loadedMenus.get('formulas.json');
                 if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
 
-                // 2. Cargar índice de menús locales
                 try {
                     const response = await fetch(MENU_INDEX_URL);
-                    if (!response.ok) throw new Error('menu_index.json not found');
+                    if (!response.ok) throw new Error(`El archivo de índice de menús (menu_index.json) no se encontró en la carpeta /docs.`);
                     const localIndex = await response.json();
+                    if (!Array.isArray(localIndex)) throw new Error('menu_index.json no contiene un array válido.');
                     localIndex.forEach(item => menuItems.set(item.id, {...item, url: `./docs/${item.id}`, source: 'docs'}));
                 } catch(e) {
                     console.warn(e.message);
+                    const errorItem = {
+                        id: 'error-no-index',
+                        name: `No se encontró 'menu_index.json' en /docs.`,
+                        source: 'error'
+                    };
+                    menuItems.set(errorItem.id, errorItem);
                 }
                 
-                // 3. Añadir menús ya cargados desde otras fuentes (URL, archivo) que no estén en el índice
                 for (const menu of loadedMenus.values()){
                      if (!menuItems.has(menu.id)) {
                         menuItems.set(menu.id, {...menu});
                     }
                 }
 
-                // 4. Renderizar la lista
                 availableMenusList.innerHTML = '';
                 if(menuItems.size === 0) {
                      availableMenusList.innerHTML = '<li>No se encontraron menús.</li>';
@@ -512,6 +515,16 @@
 
                 menuItems.forEach(menu => {
                     const li = document.createElement('li');
+                    
+                    if (menu.source === 'error') {
+                        li.textContent = menu.name;
+                        li.style.color = 'var(--danger-color)';
+                        li.style.justifyContent = 'center';
+                        li.style.fontStyle = 'italic';
+                        availableMenusList.appendChild(li);
+                        return;
+                    }
+
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
                     checkbox.id = `menu-checkbox-${menu.id}`;
@@ -835,7 +848,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.2</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.3</p>
                 `;
             }
 
