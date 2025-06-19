@@ -111,9 +111,9 @@
     <div id="modal-container">
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md"><h2 id="modal-title" class="text-2xl font-bold mb-4"></h2><form id="modal-form"></form><div class="mt-6 flex justify-end space-x-3"><button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Guardar</button></div></div></div>
         <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-sm"><h2 id="confirm-title" class="text-xl font-bold mb-4"></h2><p id="confirm-message"></p><div class="mt-6 flex justify-end space-x-3"><button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="confirm-delete" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Eliminar</button></div></div></div>
-        <div id="paste-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><h2 class="text-2xl font-bold mb-4">Pegar contenido JSON</h2><div class="space-y-4"><textarea id="paste-textarea" rows="8" class="w-full border-gray-300 rounded-md font-mono text-sm" placeholder="Pega aquí el código JSON..."></textarea><div><label class="block text-sm font-medium text-gray-700">Tipo de contenido a pegar:</label><select id="paste-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="category">Categoría</option><option value="element">Elemento(s)</option></select></div><div id="paste-category-selector-div" class="hidden"><label class="block text-sm font-medium text-gray-700">Añadir elemento(s) a la categoría:</label><select id="paste-category-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div></div><div class="mt-6 flex justify-end space-x-3"><button id="paste-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="paste-add" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Añadir Contenido</button></div></div></div>
+        <div id="paste-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><h2 class="text-2xl font-bold mb-4">Pegar contenido JSON</h2><div class="space-y-4"><textarea id="paste-textarea" rows="8" class="w-full border-gray-300 rounded-md font-mono text-sm" placeholder="Pega aquí el código JSON..."></textarea><div><label class="block text-sm font-medium text-gray-700">Tipo de contenido a pegar:</label><select id="paste-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full">JSON Completo (en nueva pestaña)</option><option value="category">Categoría (en pestaña actual)</option><option value="element">Elemento(s) (en pestaña actual)</option></select></div><div id="paste-category-selector-div" class="hidden"><label class="block text-sm font-medium text-gray-700">Añadir elemento(s) a la categoría:</label><select id="paste-category-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div></div><div class="mt-6 flex justify-end space-x-3"><button id="paste-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="paste-add" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Añadir Contenido</button></div></div></div>
         <div id="ai-creator-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]"><h2 class="text-2xl font-bold mb-4 flex-shrink-0">Asistente de Creación con IA</h2><div class="overflow-y-auto -mx-6 px-6"><div class="space-y-4"><div><label for="ai-choice" class="block text-sm font-medium text-gray-700">1. ¿Qué quieres crear?</label><select id="ai-choice" name="ai-choice" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full_json">Archivo JSON completo</option><option value="category">Una sola categoría</option><option value="multiple_elements">Varios elementos</option><option value="element">Un solo elemento</option></select></div><div id="ai-inputs-container" class="mt-4"></div></div><div class="mt-6"><h3 class="text-base font-medium text-gray-900">2. Genera y usa el prompt</h3><p class="text-sm text-gray-600 mt-1">Sigue los pasos para generar un prompt y obtener el código JSON de la IA que prefieras.</p><textarea id="ai-prompt-output" rows="5" class="w-full border-gray-300 rounded-md font-mono text-xs mt-2 bg-gray-50" readonly placeholder="Aquí aparecerá el prompt generado..."></textarea><div class="mt-2 space-y-2"><button id="ai-generate-prompt-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">1. Generar Prompt</button><div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><button id="ai-launch-chatgpt-btn" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition disabled:bg-green-300 disabled:cursor-not-allowed" disabled>2. Lanzar en ChatGPT</button><button id="ai-copy-prompt-btn" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>2a. Copiar (otra IA)</button></div></div></div><div class="mt-6"><h3 class="text-base font-medium text-gray-900">3. Pega el resultado en el editor</h3><p class="text-sm text-gray-600 mt-1">Una vez tengas el código, cierra esta ventana y usa el botón <strong class="text-yellow-600">"Pegar"</strong> de la barra superior para añadir tu nueva creación.</p></div></div><div class="mt-auto pt-6 flex-shrink-0 flex justify-end"><button id="ai-creator-close-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cerrar</button></div></div></div>
-        <div id="add-tab-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold mb-4">Añadir conjunto de fórmulas</h2><button id="clear-cache-btn" class="text-sm text-blue-600 hover:underline">Limpiar caché</button></div><div id="github-files-list" class="space-y-2 max-h-80 overflow-y-auto">Cargando lista...</div><div class="mt-6 flex justify-end"><button id="add-tab-close-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cerrar</button></div></div></div>
+        <div id="add-tab-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold mb-4">Añadir conjunto de fórmulas</h2><button id="clear-cache-btn" class="text-sm text-blue-600 hover:underline">Limpiar caché</button></div><div class="space-y-4"><h3 class="text-lg font-medium text-gray-900">Desde GitHub</h3><div id="github-files-list" class="space-y-2 max-h-60 overflow-y-auto">Cargando lista...</div><hr class="my-4"><h3 class="text-lg font-medium text-gray-900">Otras fuentes</h3><div class="flex items-center space-x-2"><input type="url" id="custom-url-input" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Pegar URL de un JSON..."><button id="custom-url-load-btn" class="bg-indigo-500 text-white px-3 py-2 rounded-lg shadow-sm hover:bg-indigo-600 transition flex-shrink-0">Cargar</button></div><div class="mt-2"><label for="custom-file-input" class="w-full cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition text-center block">Abrir archivo local...</label><input type="file" id="custom-file-input" class="hidden" accept=".json"></div></div><div class="mt-6 flex justify-end"><button id="add-tab-close-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cerrar</button></div></div></div>
     </div>
 
     <script type="module">
@@ -165,6 +165,9 @@
             addTabCloseBtn: document.getElementById('add-tab-close-btn'),
             githubFilesList: document.getElementById('github-files-list'),
             clearCacheBtn: document.getElementById('clear-cache-btn'),
+            customUrlInput: document.getElementById('custom-url-input'),
+            customUrlLoadBtn: document.getElementById('custom-url-load-btn'),
+            customFileInput: document.getElementById('custom-file-input'),
         };
 
         // --- Core Functions ---
@@ -328,7 +331,7 @@
             render();
         }
 
-        async function addTab(name, url) {
+        async function addTab(name, url, directData = null) {
             const existingTab = tabs.find(t => t.id === name);
             if (existingTab) {
                 switchTab(name);
@@ -339,6 +342,12 @@
             const newTab = { id: tabId, name: name, url: url, data: { categorias: [] } };
             tabs.push(newTab);
             switchTab(tabId);
+            
+            if(directData){
+                newTab.data = directData;
+                render();
+                return;
+            }
             
             try {
                 const cachedData = localStorage.getItem(`formula-cache-${name}`);
@@ -368,14 +377,48 @@
             render();
         }
         
-        // --- Drag and Drop ---
+        // --- Drag and Drop (FIXED) ---
         function initDragAndDrop() {
-            const currentData = getActiveTabData()?.data;
-            if (!currentData || !currentData.categorias) return;
-            new Sortable(ui.editorContainer, { animation: 150, handle: '.cat-drag-handle', ghostClass: 'sortable-ghost', onEnd: (evt) => { const [item] = currentData.categorias.splice(evt.oldIndex, 1); currentData.categorias.splice(evt.newIndex, 0, item); setActiveTabData(currentData); render(); } });
+            // Sort categories
+            new Sortable(ui.editorContainer, {
+                animation: 150,
+                handle: '.cat-drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    // Use a deep copy to ensure immutability and prevent reference bugs.
+                    const freshData = getActiveTabData()?.data;
+                    if (!freshData || !freshData.categorias) return;
+
+                    const newData = JSON.parse(JSON.stringify(freshData));
+                    const [item] = newData.categorias.splice(evt.oldIndex, 1);
+                    newData.categorias.splice(evt.newIndex, 0, item);
+                    
+                    setActiveTabData(newData);
+                    render();
+                }
+            });
+
+            // Sort elements within each category
             document.querySelectorAll('.elements-list').forEach(list => {
                 const catIndex = list.dataset.catIndex;
-                new Sortable(list, { animation: 150, handle: '.el-drag-handle', ghostClass: 'sortable-ghost', onEnd: (evt) => { const [item] = currentData.categorias[catIndex].elementos.splice(evt.oldIndex, 1); currentData.categorias[catIndex].elementos.splice(evt.newIndex, 0, item); setActiveTabData(currentData); render(); } });
+                new Sortable(list, {
+                    animation: 150,
+                    handle: '.el-drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: (evt) => {
+                        const freshData = getActiveTabData()?.data;
+                        if (!freshData || !freshData.categorias || !freshData.categorias[catIndex]) return;
+
+                        // Deep copy is safest for nested arrays.
+                        const newData = JSON.parse(JSON.stringify(freshData));
+                        
+                        const [item] = newData.categorias[catIndex].elementos.splice(evt.oldIndex, 1);
+                        newData.categorias[catIndex].elementos.splice(evt.newIndex, 0, item);
+                        
+                        setActiveTabData(newData);
+                        render();
+                    }
+                });
             });
         }
         
@@ -392,9 +435,10 @@
         
         function handleToggleCollapse(e) {
             const catIndex = e.currentTarget.dataset.catIndex;
-            const currentData = getActiveTabData().data;
-            currentData.categorias[catIndex].isCollapsed = !currentData.categorias[catIndex].isCollapsed;
-            setActiveTabData(currentData);
+            const freshData = getActiveTabData().data;
+            const newData = JSON.parse(JSON.stringify(freshData));
+            newData.categorias[catIndex].isCollapsed = !newData.categorias[catIndex].isCollapsed;
+            setActiveTabData(newData);
             render();
         }
 
@@ -417,12 +461,13 @@
         
         function handlePreviewClick(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
-            const currentData = getActiveTabData().data;
-            const category = currentData.categorias[catIndex];
+            const freshData = getActiveTabData().data;
+            const category = freshData.categorias[catIndex];
 
             if (category.isCollapsed) {
-                category.isCollapsed = false;
-                setActiveTabData(currentData);
+                const newData = JSON.parse(JSON.stringify(freshData));
+                newData.categorias[catIndex].isCollapsed = false;
+                setActiveTabData(newData);
                 render();
                 setTimeout(() => {
                     const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
@@ -445,20 +490,20 @@
             handleEditElement({ currentTarget: { dataset: { catIndex, elIndex } } });
         }
         
-        // CRUD Handlers
-        function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', getActiveTabData().data.categorias[catIndex], (formData) => { const currentData = getActiveTabData().data; currentData.categorias[catIndex] = {...currentData.categorias[catIndex], ...formData}; setActiveTabData(currentData); render(); }); }
-        function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${getActiveTabData().data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { const currentData = getActiveTabData().data; currentData.categorias.splice(catIndex, 1); setActiveTabData(currentData); render(); }); }
-        function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { const currentData = getActiveTabData().data; if (!currentData.categorias[catIndex].elementos) { currentData.categorias[catIndex].elementos = []; } currentData.categorias[catIndex].elementos.push({ type: "button", ...formData }); setActiveTabData(currentData); render(); }); }
+        // CRUD Handlers (FIXED with immutable pattern)
+        function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', getActiveTabData().data.categorias[catIndex], (formData) => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias[catIndex] = {...newData.categorias[catIndex], ...formData}; setActiveTabData(newData); render(); }); }
+        function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${getActiveTabData().data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias.splice(catIndex, 1); setActiveTabData(newData); render(); }); }
+        function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); if (!newData.categorias[catIndex].elementos) { newData.categorias[catIndex].elementos = []; } newData.categorias[catIndex].elementos.push({ type: "button", ...formData }); setActiveTabData(newData); render(); }); }
         function handleEditElement(e) { 
             const { catIndex, elIndex } = e.currentTarget.dataset;
             showElementModal('Editar Elemento', getActiveTabData().data.categorias[catIndex].elementos[elIndex], (formData) => {
-                const currentData = getActiveTabData().data;
-                currentData.categorias[catIndex].elementos[elIndex] = {...currentData.categorias[catIndex].elementos[elIndex], ...formData};
-                setActiveTabData(currentData);
+                const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                newData.categorias[catIndex].elementos[elIndex] = {...newData.categorias[catIndex].elementos[elIndex], ...formData};
+                setActiveTabData(newData);
                 render();
             }, catIndex, elIndex);
         }
-        function handleDeleteElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; const el = getActiveTabData().data.categorias[catIndex].elementos[elIndex]; showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro?`, () => { const currentData = getActiveTabData().data; currentData.categorias[catIndex].elementos.splice(elIndex, 1); setActiveTabData(currentData); render(); }); }
+        function handleDeleteElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; const el = getActiveTabData().data.categorias[catIndex].elementos[elIndex]; showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro?`, () => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias[catIndex].elementos.splice(elIndex, 1); setActiveTabData(newData); render(); }); }
         
         // Other Event Listeners
         ui.addTabBtn.addEventListener('click', async () => {
@@ -502,6 +547,37 @@
             }
             alert(`Caché de ${clearedCount} archivo(s) de fórmulas limpiada.`);
         });
+        ui.customUrlLoadBtn.addEventListener('click', () => {
+            const url = ui.customUrlInput.value.trim();
+            if (url) {
+                const name = url.substring(url.lastIndexOf('/') + 1) || 'URL Personalizada';
+                addTab(name, url);
+                ui.addTabModal.classList.add('hidden');
+            } else {
+                alert("Por favor, introduce una URL válida.");
+            }
+        });
+        ui.customFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const loadedData = JSON.parse(event.target.result);
+                    if (loadedData.categorias && Array.isArray(loadedData.categorias)) {
+                        addTab(file.name, null, loadedData);
+                        ui.addTabModal.classList.add('hidden');
+                    } else {
+                        alert("El archivo JSON no tiene el formato esperado.");
+                    }
+                } catch (error) {
+                    alert("Error al procesar el archivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset for same-file uploads
+        });
+
 
         ui.categoryNavigator.addEventListener('change', (e) => {
             const catIndex = e.target.value;
@@ -524,11 +600,13 @@
         });
 
         ui.toggleAllBtn.addEventListener('click', () => {
-            const currentData = getActiveTabData().data;
-            if (!currentData.categorias || currentData.categorias.length === 0) return;
-            const shouldCollapse = currentData.categorias.some(cat => !cat.isCollapsed);
-            currentData.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
-            setActiveTabData(currentData);
+            const freshData = getActiveTabData().data;
+            if (!freshData.categorias || freshData.categorias.length === 0) return;
+
+            const newData = JSON.parse(JSON.stringify(freshData));
+            const shouldCollapse = newData.categorias.some(cat => !cat.isCollapsed);
+            newData.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
+            setActiveTabData(newData);
             render();
         });
         
@@ -556,13 +634,13 @@
 
         // --- Paste Logic ---
         ui.pasteBtn.addEventListener('click', () => {
-            const currentData = getActiveTabData().data;
+            const currentData = getActiveTabData()?.data;
             ui.pasteTextArea.value = '';
             ui.pasteCategorySelector.innerHTML = '';
             if (currentData && currentData.categorias) {
                 currentData.categorias.forEach((cat, index) => { const option = document.createElement('option'); option.value = index; option.textContent = cat.nombre; ui.pasteCategorySelector.appendChild(option); });
             }
-            ui.pasteType.value = 'category';
+            ui.pasteType.value = 'full';
             ui.pasteCategorySelectorDiv.classList.add('hidden');
             ui.pasteModal.classList.remove('hidden');
         });
@@ -578,39 +656,46 @@
             const jsonText = ui.pasteTextArea.value.trim();
             if (!jsonText) { alert("El área de texto está vacía."); return; }
             
-            const currentData = JSON.parse(JSON.stringify(getActiveTabData().data)); // Deep copy to modify
-
             try {
                 const type = ui.pasteType.value;
-                 if (type === 'category') {
+                if (type === 'full') {
                     const pastedData = JSON.parse(jsonText);
-                    if (pastedData.nombre && pastedData.elementos) {
-                        currentData.categorias.push(pastedData);
-                    } else { throw new Error("JSON de categoría inválido."); }
-                } else if (type === 'element') {
-                    const catIndex = ui.pasteCategorySelector.value;
-                    if (catIndex === '') { alert("Selecciona una categoría."); return; }
-                    
-                    let itemsToPaste = [];
-                    try {
-                        itemsToPaste = JSON.parse(`[${jsonText}]`);
-                    } catch (e) {
-                        throw new Error("El formato del elemento o de la lista de elementos es inválido. Asegúrate de que son objetos JSON válidos separados por comas.");
-                    }
-
-                    const validItems = itemsToPaste.filter(item => item.type && item.latex);
-                    if (validItems.length > 0) {
-                        if(!currentData.categorias[catIndex].elementos) {
-                           currentData.categorias[catIndex].elementos = [];
+                    if (pastedData.categorias && Array.isArray(pastedData.categorias)) {
+                        addTab(`Pegado-${Date.now().toString().slice(-5)}`, null, pastedData);
+                    } else { throw new Error("JSON completo inválido."); }
+                } else {
+                    // For category and element, we modify the current tab's data
+                    const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                    if (type === 'category') {
+                        const pastedData = JSON.parse(jsonText);
+                        if (pastedData.nombre && pastedData.elementos) {
+                            newData.categorias.push(pastedData);
+                        } else { throw new Error("JSON de categoría inválido."); }
+                    } else if (type === 'element') {
+                        const catIndex = ui.pasteCategorySelector.value;
+                        if (catIndex === '') { alert("Selecciona una categoría."); return; }
+                        
+                        let itemsToPaste = [];
+                        try {
+                            itemsToPaste = JSON.parse(`[${jsonText}]`);
+                        } catch (e) {
+                            throw new Error("El formato del elemento o de la lista de elementos es inválido. Asegúrate de que son objetos JSON válidos separados por comas.");
                         }
-                        currentData.categorias[catIndex].elementos.push(...validItems);
-                    } else {
-                        throw new Error("Ningún elemento válido encontrado en el texto pegado.");
+
+                        const validItems = itemsToPaste.filter(item => item.type && item.latex);
+                        if (validItems.length > 0) {
+                            if(!newData.categorias[catIndex].elementos) {
+                               newData.categorias[catIndex].elementos = [];
+                            }
+                            newData.categorias[catIndex].elementos.push(...validItems);
+                        } else {
+                            throw new Error("Ningún elemento válido encontrado en el texto pegado.");
+                        }
                     }
+                    setActiveTabData(newData);
+                    render();
                 }
-                setActiveTabData(currentData);
                 ui.pasteModal.classList.add('hidden');
-                render();
             } catch (error) {
                 alert("Error al procesar el JSON: " + error.message);
             }
@@ -672,10 +757,10 @@
                     e.preventDefault();
                     const newCatIndex = parseInt(selectEl.value, 10);
                     if (newCatIndex !== parseInt(catIndex, 10)) {
-                        const currentData = getActiveTabData().data;
-                        const [elementToMove] = currentData.categorias[catIndex].elementos.splice(elIndex, 1);
-                        currentData.categorias[newCatIndex].elementos.push(elementToMove);
-                        setActiveTabData(currentData);
+                        const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                        const [elementToMove] = newData.categorias[catIndex].elementos.splice(elIndex, 1);
+                        newData.categorias[newCatIndex].elementos.push(elementToMove);
+                        setActiveTabData(newData);
                         hideModal();
                         render();
                     } else {
