@@ -153,14 +153,13 @@
         #modal-feedback { font-size: 0.9em; height: 20px; text-align: center; }
         .modal-body { overflow-y: auto; padding-right: 15px; margin-right: -15px;}
         .menu-list { list-style: none; padding: 0; margin: 0; }
-        .menu-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 8px; transition: background-color 0.2s; }
+        .menu-list li { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; }
         .menu-list li:nth-child(odd) { background-color: var(--light-gray); }
-        .menu-list-item-name { font-weight: 500; }
-        .menu-list-item-status { font-size: 0.85em; color: var(--success-color); font-weight: bold; }
+        .menu-list-item-name { font-weight: 500; margin-left: 10px; }
         .footer { text-align: center; padding: 30px 20px; color: white; opacity: 0.9; font-size: 0.9rem; }
         .footer a { color: #ffffff; font-weight: 600; text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
-        
+        #clear-recents-btn-container { text-align: right; margin-top: 10px; }
         .matrix-builder {
             border: 2px solid var(--medium-gray); border-radius: var(--border-radius); padding: 10px; grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 15px; background-color: var(--light-gray);
         }
@@ -243,13 +242,10 @@
         <div class="modal-content">
             <h2>Gestionar menús</h2>
             <div class="modal-body">
-                <h3>Menús cargados actualmente</h3>
-                <ul id="loaded-menus-list" class="menu-list"></ul>
-                
-                <h3>Menús online disponibles</h3>
-                <ul id="github-menus-list" class="menu-list"><li>Cargando...</li></ul>
+                <h3>Menús disponibles</h3>
+                <ul id="available-menus-list" class="menu-list"><li>Cargando...</li></ul>
                 <div class="modal-buttons" style="justify-content: flex-end; margin-top: 10px;">
-                    <button id="reload-github-list-btn" class="btn btn-sm btn-secondary">Recargar lista</button>
+                    <button id="reload-menus-list-btn" class="btn btn-sm btn-secondary">Recargar lista</button>
                 </div>
 
                 <h3>Carga personalizada</h3>
@@ -264,7 +260,6 @@
                  <h3>Acciones</h3>
                 <div id="modal-feedback" style="margin-bottom: 15px;"></div>
                 <div class="modal-buttons" style="flex-wrap: wrap;">
-                    <button id="clear-added-menus-btn" class="btn btn-danger">Quitar todos los menús añadidos</button>
                     <button id="clear-cache-btn" class="btn btn-secondary">Limpiar caché y recargar</button>
                 </div>
             </div>
@@ -285,7 +280,7 @@
 
     <script>
         async function initializeLatexEditor() {
-            // Referencias al DOM
+            // --- REFERENCIAS AL DOM ---
             const latexInput = document.getElementById('latex-input');
             const preview = document.getElementById('preview');
             const copyButton = document.getElementById('copy-button');
@@ -297,7 +292,6 @@
             const toolbar = document.getElementById('toolbar');
             const searchInput = document.getElementById('search-input');
             const clearSearchBtn = document.getElementById('clear-search-btn');
-            const imageModal = document.getElementById('image-modal');
             const settingsBtn = document.getElementById('settings-btn');
             const settingsModal = document.getElementById('settings-modal');
             const closeSettingsBtn = document.getElementById('close-settings-btn');
@@ -308,16 +302,14 @@
             const alertModalTitle = document.getElementById('alert-modal-title');
             const alertModalMessage = document.getElementById('alert-modal-message');
             const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
-            const loadedMenusList = document.getElementById('loaded-menus-list');
-            const githubMenusList = document.getElementById('github-menus-list');
-            const reloadGithubListBtn = document.getElementById('reload-github-list-btn');
-            const clearAddedMenusBtn = document.getElementById('clear-added-menus-btn');
+            const availableMenusList = document.getElementById('available-menus-list');
+            const reloadMenusListBtn = document.getElementById('reload-menus-list-btn');
             const clearCacheBtn = document.getElementById('clear-cache-btn');
             
             // --- CONFIGURACIÓN ---
-            const GITHUB_API_URL = 'https://api.github.com/repos/jjdeharo/app/contents/mat/editor_latex/docs';
             const DEFAULT_MENU_GITHUB_URL = 'https://raw.githubusercontent.com/jjdeharo/app/main/mat/editor_latex/formulas.json';
             const DEFAULT_MENU_LOCAL_URL = './formulas.json';
+            const MENU_INDEX_URL = './docs/menu_index.json';
             const MAX_RECENTS = 12;
 
             // --- ESTADO DE LA APLICACIÓN ---
@@ -329,11 +321,14 @@
             const loadRecents = () => {
                 recentSymbols = JSON.parse(localStorage.getItem('latexRecents')) || [];
             };
-
             const saveRecents = () => {
                 localStorage.setItem('latexRecents', JSON.stringify(recentSymbols));
             };
-
+            const clearRecents = () => {
+                recentSymbols = [];
+                localStorage.removeItem('latexRecents');
+                rebuildToolbarAndUI();
+            };
             const createRecentsTab = () => {
                 if (document.querySelector('[data-tab="recientes"]')) return;
                 const recentsTabButton = document.createElement('button');
@@ -346,42 +341,25 @@
                 recentsContentDiv.className = 'tab-content';
                 toolbar.prepend(recentsContentDiv);
             };
-            
             const trackSymbolUsage = (latexCode) => {
                 const wasEmpty = recentSymbols.length === 0;
                 recentSymbols = recentSymbols.filter(item => item !== latexCode);
                 recentSymbols.unshift(latexCode);
                 if (recentSymbols.length > MAX_RECENTS) recentSymbols = recentSymbols.slice(0, MAX_RECENTS);
                 saveRecents();
-
                 if (wasEmpty) {
                     rebuildToolbarAndUI();
                 } else {
                     const recentsContent = document.getElementById('tab-recientes');
-                    if (recentsContent) {
-                        recentsContent.innerHTML = '';
-                        if (recentsContent.classList.contains('active')) {
-                            const allCategories = new Map();
-                            for (const menu of loadedMenus.values()) {
-                                if (!menu.data || !menu.data.categorias) continue;
-                                for (const categoria of menu.data.categorias) {
-                                    if (!allCategories.has(categoria.id)) {
-                                        allCategories.set(categoria.id, { ...categoria, elementos: [...categoria.elementos] });
-                                    } else {
-                                        allCategories.get(categoria.id).elementos.push(...categoria.elementos);
-                                    }
-                                }
-                            }
-                            renderTabContent('recientes', allCategories);
-                        }
+                    if (recentsContent && recentsContent.classList.contains('active')) {
+                        renderTabContent('recientes', getAllCategories());
                     }
                 }
             };
-
             const saveAddedMenusToStorage = () => {
                 const added = Array.from(loadedMenus.values())
                     .filter(m => m.source !== 'default' && m.source !== 'localfile')
-                    .map(m => ({ id: m.id, url: m.url, source: m.source }));
+                    .map(m => ({ id: m.id, url: m.url, source: m.source, name: m.name }));
                 localStorage.setItem('latexAddedMenus', JSON.stringify(added));
             };
             const loadAddedMenusFromStorage = () => {
@@ -403,37 +381,25 @@
                     return null;
                 }
             };
-            
             const addMenu = async (menuInfo) => {
-                if (loadedMenus.has(menuInfo.id)) {
-                    showModalFeedback(`El menú "${menuInfo.id}" ya está cargado.`);
-                    return;
-                }
+                if (loadedMenus.has(menuInfo.id)) return;
                 const data = await fetchMenuData(menuInfo.url);
                 if (data) {
                     loadedMenus.set(menuInfo.id, { ...menuInfo, data });
-                    showModalFeedback(`Menú "${menuInfo.id}" añadido.`, false);
                     rebuildToolbarAndUI();
                     saveAddedMenusToStorage();
                 }
             };
-
             const removeMenu = (menuId) => {
                 if (loadedMenus.has(menuId) && loadedMenus.get(menuId).source !== 'default') {
                     loadedMenus.delete(menuId);
                     rebuildToolbarAndUI();
                     saveAddedMenusToStorage();
-                     showModalFeedback(`Menú "${menuId}" quitado.`, false);
                 }
             };
-
-            const rebuildToolbarAndUI = () => {
-                tabsContainer.innerHTML = '';
-                toolbar.innerHTML = '';
-                
+            const getAllCategories = () => {
                 const allCategories = new Map();
-                const menuOrder = ['default', 'github', 'url', 'localfile'];
-                
+                const menuOrder = ['default', 'docs', 'url', 'localfile'];
                 const sortedMenus = Array.from(loadedMenus.values()).sort((a,b) => menuOrder.indexOf(a.source) - menuOrder.indexOf(b.source));
 
                 for (const menu of sortedMenus) {
@@ -447,7 +413,12 @@
                         }
                     }
                 }
-
+                return allCategories;
+            };
+            const rebuildToolbarAndUI = () => {
+                tabsContainer.innerHTML = '';
+                toolbar.innerHTML = '';
+                const allCategories = getAllCategories();
                 let isFirstTab = true;
                 if (recentSymbols.length > 0) {
                     createRecentsTab();
@@ -455,39 +426,32 @@
                     toolbar.querySelector('#tab-recientes').classList.add('active');
                     isFirstTab = false;
                 }
-
                 allCategories.forEach((categoria) => {
                     const tabButton = document.createElement('button');
                     tabButton.className = 'tab-btn';
                     tabButton.dataset.tab = categoria.id;
                     tabButton.textContent = categoria.nombre;
                     tabsContainer.appendChild(tabButton);
-
                     const contentDiv = document.createElement('div');
                     contentDiv.id = `tab-${categoria.id}`;
                     contentDiv.className = 'tab-content';
                     toolbar.appendChild(contentDiv);
-                    
                     if (isFirstTab) {
                         tabButton.classList.add('active');
                         contentDiv.classList.add('active');
                         isFirstTab = false;
                     }
                 });
-
                 const activeTab = tabsContainer.querySelector('.tab-btn.active');
                 if (activeTab) {
                     renderTabContent(activeTab.dataset.tab, allCategories);
                 }
-                updateLoadedMenusListUI();
-                updateGitHubListUI();
+                loadAndDisplayAvailableMenus();
             };
-
             const initializeApp = async () => {
                 loadRecents();
                 loadedMenus.clear();
                 menuCache.clear();
-                // 1. Cargar menú base
                 let baseMenuData;
                 try {
                     const response = await fetch(DEFAULT_MENU_LOCAL_URL);
@@ -498,12 +462,9 @@
                     console.warn("Local default menu not found, fetching from GitHub.");
                     baseMenuData = await fetchMenuData(DEFAULT_MENU_GITHUB_URL);
                 }
-                
                 if(baseMenuData) {
-                    loadedMenus.set('formulas.json', { id: 'formulas.json', url: DEFAULT_MENU_GITHUB_URL, source: 'default', data: baseMenuData });
+                    loadedMenus.set('formulas.json', { id: 'formulas.json', url: DEFAULT_MENU_GITHUB_URL, source: 'default', name: 'Base', data: baseMenuData });
                 }
-
-                // 2. Cargar menús añadidos desde localStorage
                 const previouslyAdded = loadAddedMenusFromStorage();
                 for (const menuInfo of previouslyAdded) {
                     const data = await fetchMenuData(menuInfo.url);
@@ -511,80 +472,89 @@
                         loadedMenus.set(menuInfo.id, { ...menuInfo, data });
                     }
                 }
-                
                 rebuildToolbarAndUI();
                 updatePreview();
                 addFooter();
             };
 
             // --- LÓGICA DE LA INTERFAZ DE USUARIO (UI) ---
-            const updateLoadedMenusListUI = () => {
-                loadedMenusList.innerHTML = '';
-                if(loadedMenus.size === 0) {
-                     loadedMenusList.innerHTML = '<li>No hay menús cargados.</li>';
+            const loadAndDisplayAvailableMenus = async () => {
+                availableMenusList.innerHTML = '<li>Cargando...</li>';
+                const menuItems = new Map();
+
+                // 1. Añadir el menú base a la lista
+                const baseMenu = loadedMenus.get('formulas.json');
+                if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
+
+                // 2. Cargar índice de menús locales
+                try {
+                    const response = await fetch(MENU_INDEX_URL);
+                    if (!response.ok) throw new Error('menu_index.json not found');
+                    const localIndex = await response.json();
+                    localIndex.forEach(item => menuItems.set(item.id, {...item, url: `./docs/${item.id}`, source: 'docs'}));
+                } catch(e) {
+                    console.warn(e.message);
+                }
+                
+                // 3. Añadir menús ya cargados desde otras fuentes (URL, archivo) que no estén en el índice
+                for (const menu of loadedMenus.values()){
+                     if (!menuItems.has(menu.id)) {
+                        menuItems.set(menu.id, {...menu});
+                    }
+                }
+
+                // 4. Renderizar la lista
+                availableMenusList.innerHTML = '';
+                if(menuItems.size === 0) {
+                     availableMenusList.innerHTML = '<li>No se encontraron menús.</li>';
                      return;
                 }
-                loadedMenus.forEach(menu => {
+
+                menuItems.forEach(menu => {
                     const li = document.createElement('li');
-                    li.innerHTML = `<span class="menu-list-item-name">${menu.id} <em style="font-weight:normal; font-size:0.9em; color: var(--secondary-color)">(${menu.source})</em></span>`;
-                    if (menu.source !== 'default') {
-                        const removeBtn = document.createElement('button');
-                        removeBtn.textContent = 'Quitar';
-                        removeBtn.className = 'btn btn-sm btn-danger';
-                        removeBtn.onclick = () => removeMenu(menu.id);
-                        li.appendChild(removeBtn);
-                    } else {
-                        li.innerHTML += '<span class="menu-list-item-status">Base</span>';
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `menu-checkbox-${menu.id}`;
+                    checkbox.checked = loadedMenus.has(menu.id);
+                    checkbox.dataset.id = menu.id;
+                    checkbox.dataset.url = menu.url;
+                    checkbox.dataset.name = menu.name;
+                    checkbox.dataset.source = menu.source;
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `menu-checkbox-${menu.id}`;
+                    label.className = 'menu-list-item-name';
+                    label.textContent = menu.name || menu.id;
+                    
+                    if(menu.source === 'default') {
+                        checkbox.disabled = true;
+                        label.innerHTML += ` <em style="font-weight:normal; font-size:0.9em; color: var(--secondary-color)">(Base)</em>`;
                     }
-                    loadedMenusList.appendChild(li);
+
+                    li.appendChild(checkbox);
+                    li.appendChild(label);
+                    availableMenusList.appendChild(li);
                 });
             };
 
-            const fetchAndDisplayGitHubMenus = async () => {
-                githubMenusList.innerHTML = '<li>Cargando...</li>';
-                try {
-                    const response = await fetch(GITHUB_API_URL);
-                    if(!response.ok) throw new Error("Failed to fetch GitHub menu list.");
-                    const files = await response.json();
-                    githubMenusList.innerHTML = '';
-                    const jsonFiles = files.filter(file => file.name.endsWith('.json'));
-                    if(jsonFiles.length === 0) {
-                         githubMenusList.innerHTML = '<li>No se encontraron menús online.</li>';
-                         return;
-                    }
-                    jsonFiles.forEach(file => {
-                        const li = document.createElement('li');
-                        li.innerHTML = `<span class="menu-list-item-name">${file.name}</span>`;
-                        const addBtn = document.createElement('button');
-                        addBtn.textContent = 'Añadir';
-                        addBtn.className = 'btn btn-sm btn-success';
-                        addBtn.dataset.url = file.download_url;
-                        addBtn.dataset.id = file.name;
-                        addBtn.onclick = () => addMenu({id: file.name, url: file.download_url, source: 'github'});
-                        li.appendChild(addBtn);
-                        githubMenusList.appendChild(li);
-                    });
-                     updateGitHubListUI();
-                } catch (error) {
-                    console.error('Error fetching GitHub menus:', error);
-                    githubMenusList.innerHTML = '<li>Error al cargar la lista.</li>';
+            availableMenusList.addEventListener('change', (e) => {
+                const checkbox = e.target;
+                if(checkbox.type !== 'checkbox') return;
+                
+                const menuInfo = {
+                    id: checkbox.dataset.id,
+                    url: checkbox.dataset.url,
+                    name: checkbox.dataset.name,
+                    source: checkbox.dataset.source
+                };
+
+                if (checkbox.checked) {
+                    addMenu(menuInfo);
+                } else {
+                    removeMenu(menuInfo.id);
                 }
-            };
-             const updateGitHubListUI = () => {
-                githubMenusList.querySelectorAll('button').forEach(btn => {
-                    if (loadedMenus.has(btn.dataset.id)) {
-                        btn.disabled = true;
-                        btn.textContent = 'Añadido';
-                        btn.classList.remove('btn-success');
-                        btn.classList.add('btn-secondary');
-                    } else {
-                        btn.disabled = false;
-                        btn.textContent = 'Añadir';
-                        btn.classList.remove('btn-secondary');
-                        btn.classList.add('btn-success');
-                    }
-                });
-            };
+            });
+
 
             function showAlert(title, htmlMessage) {
                 alertModalTitle.textContent = title;
@@ -610,7 +580,7 @@
                 document.getElementById('image-modal').classList.add('active');
             }
             function openSettingsModal() { 
-                fetchAndDisplayGitHubMenus();
+                loadAndDisplayAvailableMenus();
                 settingsModal.classList.add('active'); 
             }
             function closeSettingsModal() { settingsModal.classList.remove('active'); }
@@ -754,6 +724,12 @@
                 let gridColumns = "repeat(auto-fill, minmax(80px, 1fr))";
 
                 if (tabId === 'recientes') {
+                    if (recentSymbols.length === 0) {
+                         contentDiv.innerHTML = `<p style="color: var(--dark-gray); grid-column: 1 / -1; text-align:center;">Aún no hay símbolos recientes.</p>
+                         <div id="clear-recents-btn-container" style="grid-column: 1 / -1;"><button id="clear-recents-btn" class="btn btn-sm btn-danger">Borrar recientes</button></div>`;
+                         document.getElementById('clear-recents-btn').onclick = clearRecents;
+                         return;
+                    }
                     recentSymbols.forEach(latexCode => {
                         let symbolFound = false;
                         for (const menu of loadedMenus.values()) {
@@ -769,11 +745,6 @@
                             }
                         }
                     });
-
-                    if (elementsToRender.length === 0) {
-                        contentDiv.innerHTML = '<p style="color: var(--dark-gray); grid-column: 1 / -1; text-align:center;">Aún no hay símbolos recientes.</p>';
-                        return;
-                    }
                 } else {
                     const categoria = allCategories.get(tabId);
                     if (categoria) {
@@ -798,6 +769,19 @@
                         contentDiv.appendChild(button);
                     }
                 });
+                
+                if (tabId === 'recientes' && recentSymbols.length > 0) {
+                     const clearBtnContainer = document.createElement('div');
+                     clearBtnContainer.id = 'clear-recents-btn-container';
+                     clearBtnContainer.style.gridColumn = '1 / -1';
+                     const clearBtn = document.createElement('button');
+                     clearBtn.id = 'clear-recents-btn';
+                     clearBtn.className = 'btn btn-sm btn-danger';
+                     clearBtn.textContent = 'Borrar recientes';
+                     clearBtn.onclick = clearRecents;
+                     clearBtnContainer.appendChild(clearBtn);
+                     contentDiv.appendChild(clearBtnContainer);
+                }
 
                 MathJax.typesetPromise(contentDiv.querySelectorAll('.toolbar-btn'));
             }
@@ -809,19 +793,7 @@
                 button.classList.add('active');
                 const tabId = button.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.add('active');
-                 
-                const allCategories = new Map();
-                 for (const menu of loadedMenus.values()) {
-                    if (!menu.data || !menu.data.categorias) continue;
-                    for (const categoria of menu.data.categorias) {
-                        if (!allCategories.has(categoria.id)) {
-                             allCategories.set(categoria.id, { ...categoria, elementos: [...categoria.elementos] });
-                        } else {
-                            allCategories.get(categoria.id).elementos.push(...categoria.elementos);
-                        }
-                    }
-                }
-                renderTabContent(tabId, allCategories);
+                renderTabContent(tabId, getAllCategories());
             }
             let allTabsRenderedForSearch = false;
             searchInput.addEventListener('input', (e) => {
@@ -832,17 +804,7 @@
                 
                 if (query.length > 0) {
                     if (!allTabsRenderedForSearch) {
-                        const allCategories = new Map();
-                        for (const menu of loadedMenus.values()) {
-                           if (!menu.data || !menu.data.categorias) continue;
-                           for (const categoria of menu.data.categorias) {
-                               if (!allCategories.has(categoria.id)) {
-                                    allCategories.set(categoria.id, { ...categoria, elementos: [...categoria.elementos] });
-                               } else {
-                                   allCategories.get(categoria.id).elementos.push(...categoria.elementos);
-                               }
-                           }
-                       }
+                        const allCategories = getAllCategories();
                         allCategories.forEach(cat => renderTabContent(cat.id, allCategories));
                         allTabsRenderedForSearch = true;
                     }
@@ -873,7 +835,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.1</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.2</p>
                 `;
             }
 
@@ -917,7 +879,8 @@
             settingsModal.addEventListener('click', (e) => { if(e.target === settingsModal) closeSettingsModal(); });
             urlInput.addEventListener('change', () => {
                 if(urlInput.value) {
-                    addMenu({id: urlInput.value, url: urlInput.value, source: 'url'});
+                    const menuInfo = {id: urlInput.value, url: urlInput.value, source: 'url', name: urlInput.value};
+                    addMenu(menuInfo).then(() => loadAndDisplayAvailableMenus());
                     urlInput.value = '';
                 }
             });
@@ -928,7 +891,8 @@
                      reader.onload = (event) => {
                         try {
                             const data = JSON.parse(event.target.result);
-                            loadedMenus.set(file.name, {id: file.name, url: file.name, source: 'localfile', data});
+                            const menuInfo = {id: file.name, url: file.name, source: 'localfile', name: file.name, data: data };
+                            loadedMenus.set(file.name, menuInfo);
                             rebuildToolbarAndUI();
                         } catch (error) {
                              showModalFeedback('El archivo no es un JSON válido.', true);
@@ -938,21 +902,11 @@
                     fileInput.value = '';
                 }
             });
-            reloadGithubListBtn.addEventListener('click', fetchAndDisplayGitHubMenus);
+            reloadMenusListBtn.addEventListener('click', loadAndDisplayAvailableMenus);
             clearCacheBtn.addEventListener('click', () => {
                 menuCache.clear();
                 showModalFeedback('Caché limpiada. Los menús se recargarán desde su origen.');
                 initializeApp();
-            });
-            clearAddedMenusBtn.addEventListener('click', () => {
-                const defaultMenu = loadedMenus.get('formulas.json');
-                loadedMenus.clear();
-                if (defaultMenu) {
-                    loadedMenus.set('formulas.json', defaultMenu);
-                }
-                saveAddedMenusToStorage();
-                rebuildToolbarAndUI();
-                showModalFeedback('Se han quitado todos los menús añadidos.');
             });
             alertModalCloseBtn.addEventListener('click', hideAlert);
             alertModal.addEventListener('click', (e) => { if (e.target === alertModal) hideAlert(); });
