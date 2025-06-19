@@ -377,14 +377,48 @@
             render();
         }
         
-        // --- Drag and Drop ---
+        // --- Drag and Drop (FIXED) ---
         function initDragAndDrop() {
-            const currentData = getActiveTabData()?.data;
-            if (!currentData || !currentData.categorias) return;
-            new Sortable(ui.editorContainer, { animation: 150, handle: '.cat-drag-handle', ghostClass: 'sortable-ghost', onEnd: (evt) => { const [item] = currentData.categorias.splice(evt.oldIndex, 1); currentData.categorias.splice(evt.newIndex, 0, item); setActiveTabData(currentData); render(); } });
+            // Sort categories
+            new Sortable(ui.editorContainer, {
+                animation: 150,
+                handle: '.cat-drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    // Use a deep copy to ensure immutability and prevent reference bugs.
+                    const freshData = getActiveTabData()?.data;
+                    if (!freshData || !freshData.categorias) return;
+
+                    const newData = JSON.parse(JSON.stringify(freshData));
+                    const [item] = newData.categorias.splice(evt.oldIndex, 1);
+                    newData.categorias.splice(evt.newIndex, 0, item);
+                    
+                    setActiveTabData(newData);
+                    render();
+                }
+            });
+
+            // Sort elements within each category
             document.querySelectorAll('.elements-list').forEach(list => {
                 const catIndex = list.dataset.catIndex;
-                new Sortable(list, { animation: 150, handle: '.el-drag-handle', ghostClass: 'sortable-ghost', onEnd: (evt) => { const [item] = currentData.categorias[catIndex].elementos.splice(evt.oldIndex, 1); currentData.categorias[catIndex].elementos.splice(evt.newIndex, 0, item); setActiveTabData(currentData); render(); } });
+                new Sortable(list, {
+                    animation: 150,
+                    handle: '.el-drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: (evt) => {
+                        const freshData = getActiveTabData()?.data;
+                        if (!freshData || !freshData.categorias || !freshData.categorias[catIndex]) return;
+
+                        // Deep copy is safest for nested arrays.
+                        const newData = JSON.parse(JSON.stringify(freshData));
+                        
+                        const [item] = newData.categorias[catIndex].elementos.splice(evt.oldIndex, 1);
+                        newData.categorias[catIndex].elementos.splice(evt.newIndex, 0, item);
+                        
+                        setActiveTabData(newData);
+                        render();
+                    }
+                });
             });
         }
         
@@ -401,9 +435,10 @@
         
         function handleToggleCollapse(e) {
             const catIndex = e.currentTarget.dataset.catIndex;
-            const currentData = getActiveTabData().data;
-            currentData.categorias[catIndex].isCollapsed = !currentData.categorias[catIndex].isCollapsed;
-            setActiveTabData(currentData);
+            const freshData = getActiveTabData().data;
+            const newData = JSON.parse(JSON.stringify(freshData));
+            newData.categorias[catIndex].isCollapsed = !newData.categorias[catIndex].isCollapsed;
+            setActiveTabData(newData);
             render();
         }
 
@@ -426,12 +461,13 @@
         
         function handlePreviewClick(e) {
             const { catIndex, elIndex } = e.currentTarget.dataset;
-            const currentData = getActiveTabData().data;
-            const category = currentData.categorias[catIndex];
+            const freshData = getActiveTabData().data;
+            const category = freshData.categorias[catIndex];
 
             if (category.isCollapsed) {
-                category.isCollapsed = false;
-                setActiveTabData(currentData);
+                const newData = JSON.parse(JSON.stringify(freshData));
+                newData.categorias[catIndex].isCollapsed = false;
+                setActiveTabData(newData);
                 render();
                 setTimeout(() => {
                     const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
@@ -454,20 +490,20 @@
             handleEditElement({ currentTarget: { dataset: { catIndex, elIndex } } });
         }
         
-        // CRUD Handlers
-        function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', getActiveTabData().data.categorias[catIndex], (formData) => { const currentData = getActiveTabData().data; currentData.categorias[catIndex] = {...currentData.categorias[catIndex], ...formData}; setActiveTabData(currentData); render(); }); }
-        function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${getActiveTabData().data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { const currentData = getActiveTabData().data; currentData.categorias.splice(catIndex, 1); setActiveTabData(currentData); render(); }); }
-        function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { const currentData = getActiveTabData().data; if (!currentData.categorias[catIndex].elementos) { currentData.categorias[catIndex].elementos = []; } currentData.categorias[catIndex].elementos.push({ type: "button", ...formData }); setActiveTabData(currentData); render(); }); }
+        // CRUD Handlers (FIXED with immutable pattern)
+        function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', getActiveTabData().data.categorias[catIndex], (formData) => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias[catIndex] = {...newData.categorias[catIndex], ...formData}; setActiveTabData(newData); render(); }); }
+        function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${getActiveTabData().data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias.splice(catIndex, 1); setActiveTabData(newData); render(); }); }
+        function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); if (!newData.categorias[catIndex].elementos) { newData.categorias[catIndex].elementos = []; } newData.categorias[catIndex].elementos.push({ type: "button", ...formData }); setActiveTabData(newData); render(); }); }
         function handleEditElement(e) { 
             const { catIndex, elIndex } = e.currentTarget.dataset;
             showElementModal('Editar Elemento', getActiveTabData().data.categorias[catIndex].elementos[elIndex], (formData) => {
-                const currentData = getActiveTabData().data;
-                currentData.categorias[catIndex].elementos[elIndex] = {...currentData.categorias[catIndex].elementos[elIndex], ...formData};
-                setActiveTabData(currentData);
+                const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                newData.categorias[catIndex].elementos[elIndex] = {...newData.categorias[catIndex].elementos[elIndex], ...formData};
+                setActiveTabData(newData);
                 render();
             }, catIndex, elIndex);
         }
-        function handleDeleteElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; const el = getActiveTabData().data.categorias[catIndex].elementos[elIndex]; showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro?`, () => { const currentData = getActiveTabData().data; currentData.categorias[catIndex].elementos.splice(elIndex, 1); setActiveTabData(currentData); render(); }); }
+        function handleDeleteElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; const el = getActiveTabData().data.categorias[catIndex].elementos[elIndex]; showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro?`, () => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias[catIndex].elementos.splice(elIndex, 1); setActiveTabData(newData); render(); }); }
         
         // Other Event Listeners
         ui.addTabBtn.addEventListener('click', async () => {
@@ -564,11 +600,13 @@
         });
 
         ui.toggleAllBtn.addEventListener('click', () => {
-            const currentData = getActiveTabData().data;
-            if (!currentData.categorias || currentData.categorias.length === 0) return;
-            const shouldCollapse = currentData.categorias.some(cat => !cat.isCollapsed);
-            currentData.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
-            setActiveTabData(currentData);
+            const freshData = getActiveTabData().data;
+            if (!freshData.categorias || freshData.categorias.length === 0) return;
+
+            const newData = JSON.parse(JSON.stringify(freshData));
+            const shouldCollapse = newData.categorias.some(cat => !cat.isCollapsed);
+            newData.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
+            setActiveTabData(newData);
             render();
         });
         
@@ -596,7 +634,7 @@
 
         // --- Paste Logic ---
         ui.pasteBtn.addEventListener('click', () => {
-            const currentData = getActiveTabData().data;
+            const currentData = getActiveTabData()?.data;
             ui.pasteTextArea.value = '';
             ui.pasteCategorySelector.innerHTML = '';
             if (currentData && currentData.categorias) {
@@ -618,8 +656,6 @@
             const jsonText = ui.pasteTextArea.value.trim();
             if (!jsonText) { alert("El área de texto está vacía."); return; }
             
-            const currentData = JSON.parse(JSON.stringify(getActiveTabData().data)); // Deep copy to modify
-
             try {
                 const type = ui.pasteType.value;
                 if (type === 'full') {
@@ -627,35 +663,37 @@
                     if (pastedData.categorias && Array.isArray(pastedData.categorias)) {
                         addTab(`Pegado-${Date.now().toString().slice(-5)}`, null, pastedData);
                     } else { throw new Error("JSON completo inválido."); }
-                } else if (type === 'category') {
-                    const pastedData = JSON.parse(jsonText);
-                    if (pastedData.nombre && pastedData.elementos) {
-                        currentData.categorias.push(pastedData);
-                        setActiveTabData(currentData);
-                        render();
-                    } else { throw new Error("JSON de categoría inválido."); }
-                } else if (type === 'element') {
-                    const catIndex = ui.pasteCategorySelector.value;
-                    if (catIndex === '') { alert("Selecciona una categoría."); return; }
-                    
-                    let itemsToPaste = [];
-                    try {
-                        itemsToPaste = JSON.parse(`[${jsonText}]`);
-                    } catch (e) {
-                        throw new Error("El formato del elemento o de la lista de elementos es inválido. Asegúrate de que son objetos JSON válidos separados por comas.");
-                    }
-
-                    const validItems = itemsToPaste.filter(item => item.type && item.latex);
-                    if (validItems.length > 0) {
-                        if(!currentData.categorias[catIndex].elementos) {
-                           currentData.categorias[catIndex].elementos = [];
+                } else {
+                    // For category and element, we modify the current tab's data
+                    const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                    if (type === 'category') {
+                        const pastedData = JSON.parse(jsonText);
+                        if (pastedData.nombre && pastedData.elementos) {
+                            newData.categorias.push(pastedData);
+                        } else { throw new Error("JSON de categoría inválido."); }
+                    } else if (type === 'element') {
+                        const catIndex = ui.pasteCategorySelector.value;
+                        if (catIndex === '') { alert("Selecciona una categoría."); return; }
+                        
+                        let itemsToPaste = [];
+                        try {
+                            itemsToPaste = JSON.parse(`[${jsonText}]`);
+                        } catch (e) {
+                            throw new Error("El formato del elemento o de la lista de elementos es inválido. Asegúrate de que son objetos JSON válidos separados por comas.");
                         }
-                        currentData.categorias[catIndex].elementos.push(...validItems);
-                        setActiveTabData(currentData);
-                        render();
-                    } else {
-                        throw new Error("Ningún elemento válido encontrado en el texto pegado.");
+
+                        const validItems = itemsToPaste.filter(item => item.type && item.latex);
+                        if (validItems.length > 0) {
+                            if(!newData.categorias[catIndex].elementos) {
+                               newData.categorias[catIndex].elementos = [];
+                            }
+                            newData.categorias[catIndex].elementos.push(...validItems);
+                        } else {
+                            throw new Error("Ningún elemento válido encontrado en el texto pegado.");
+                        }
                     }
+                    setActiveTabData(newData);
+                    render();
                 }
                 ui.pasteModal.classList.add('hidden');
             } catch (error) {
@@ -666,17 +704,17 @@
         // --- AI Creator Modal Logic ---
         const PROMPTS = {
             full_json: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un ARCHIVO JSON COMPLETO que contenga una lista de categorías de comandos LaTeX sobre un tema específico.\n\n**Estructura del Archivo JSON:**\nEl archivo debe empezar con \`{"categorias": [ ... ]}\` y contener un array de objetos de categoría.\n\n**Estructura de cada Categoría:**\n\`\`\`json\n{\n  "nombre": "string",  // El nombre visible de la categoría (ej. "Vectores").\n  "id": "string",        // Un identificador único en minúsculas (ej. "vectores").\n  "grid_template_columns": "string", // Valor CSS para la rejilla. Usa un valor de minmax adecuado a la anchura de las fórmulas. Para fórmulas anchas como integrales o estadística, usa "repeat(auto-fit, minmax(180px, 1fr))". Para letras griegas, "repeat(auto-fit, minmax(50px, 1fr))" es suficiente.\n  "isCollapsed": false, // Siempre 'false' para que aparezca desplegada.\n  "elementos": [       // Lista de los botones de la categoría.\n    {\n      "type": "button",          // Siempre "button".\n      "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n      "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n      "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n    }\n  ]\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema general y las instrucciones adicionales, crea una estructura de categorías y elementos coherente.\n2. Genera el JSON completo, empezando por \`{"categorias": [ ... ]}\`.\n3. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Tema General:**\n{THEME}\n\n**Instrucciones Adicionales:**\n{INSTRUCTIONS}`,
-            category: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente una categoría de comandos LaTeX.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "nombre": "string",  // El nombre visible de la categoría (ej. "Vectores").\n  "id": "string",        // Un identificador único en minúsculas (ej. "vectores").\n  "grid_template_columns": "string", // Valor CSS para la rejilla. Usa un valor de minmax adecuado a la anchura de las fórmulas. Para fórmulas anchas como integrales o estadística, usa "repeat(auto-fit, minmax(180px, 1fr))". Para letras griegas, "repeat(auto-fit, minmax(50px, 1fr))" es suficiente.\n  "isCollapsed": false, // Siempre 'false' para que aparezca desplegada.\n  "elementos": [       // Lista de los botones de la categoría.\n    {\n      "type": "button",          // Siempre "button".\n      "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n      "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n      "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n    }\n  ]\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te doy a continuación, crea una lista de comandos LaTeX relevantes.\n2. Genera un único objeto JSON que siga la estructura y las reglas anteriores.\n3. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Tema de la categoría:**\n{THEME}\n\n**Instrucciones Adicionales:**\n{INSTRUCTIONS}`,
-            multiple_elements: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar una lista de objetos JSON que representen comandos LaTeX para botones.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te proporciono, crea una lista de EXACTAMENTE {ELEMENT_COUNT} objetos JSON de comandos LaTeX relevantes.\n2. Los objetos deben estar separados por comas.\n3. Tu respuesta debe ser únicamente la lista de objetos JSON, sin envolverla en un array \`[]\` y sin texto adicional.\n\n**Tema de los elementos:**\n{THEME}\n\n**Instrucciones Adicionales:**\n{INSTRUCTIONS}`,
-            element: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente un comando LaTeX para un botón.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en la descripción de la fórmula LaTeX que te proporciono a continuación, genera un único objeto JSON que siga la estructura y las reglas anteriores.\n2. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Descripción de la fórmula LaTeX:**\n{FORMULA}\n\n**Instrucciones Adicionales:**\n{INSTRUCTIONS}`
+            category: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente una categoría de comandos LaTeX.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "nombre": "string",  // El nombre visible de la categoría (ej. "Vectores").\n  "id": "string",        // Un identificador único en minúsculas (ej. "vectores").\n  "grid_template_columns": "string", // Valor CSS para la rejilla. Usa un valor de minmax adecuado a la anchura de las fórmulas. Para fórmulas anchas como integrales o estadística, usa "repeat(auto-fit, minmax(180px, 1fr))". Para letras griegas, "repeat(auto-fit, minmax(50px, 1fr))" es suficiente.\n  "isCollapsed": false, // Siempre 'false' para que aparezca desplegada.\n  "elementos": [       // Lista de los botones de la categoría.\n    {\n      "type": "button",          // Siempre "button".\n      "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n      "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n      "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n    }\n  ]\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te doy a continuación, crea una lista de EXACTAMENTE {ELEMENT_COUNT} comandos LaTeX relevantes.\n2. Genera un único objeto JSON que siga la estructura y las reglas anteriores.\n3. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Tema de la categoría:**\n{THEME}`,
+            multiple_elements: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar una lista de objetos JSON que representen comandos LaTeX para botones.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te proporciono, crea una lista de EXACTAMENTE {ELEMENT_COUNT} objetos JSON de comandos LaTeX relevantes.\n2. Los objetos deben estar separados por comas.\n3. Tu respuesta debe ser únicamente la lista de objetos JSON, sin envolverla en un array \`[]\` y sin texto adicional.\n\n**Tema de los elementos:**\n{THEME}`,
+            element: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente un comando LaTeX para un botón.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en la descripción de la fórmula LaTeX que te proporciono a continuación, genera un único objeto JSON que siga la estructura y las reglas anteriores.\n2. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Descripción de la fórmula LaTeX:**\n{FORMULA}`
         };
         
         function resetAiModal() { ui.aiPromptOutput.value = ''; ui.aiLaunchChatGptBtn.disabled = true; ui.aiCopyPromptBtn.disabled = true; }
         ui.aiCreatorBtn.addEventListener('click', () => { renderAiCreatorInputs('full_json'); resetAiModal(); ui.aiCreatorModal.classList.remove('hidden'); });
         ui.aiCreatorCloseBtn.addEventListener('click', () => ui.aiCreatorModal.classList.add('hidden'));
         ui.aiChoice.addEventListener('change', (e) => { renderAiCreatorInputs(e.target.value); resetAiModal(); });
-        function renderAiCreatorInputs(choice) { let html = ''; switch(choice) { case 'full_json': html = `<div><label for="ai-full-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema general:</label><input type="text" id="ai-full-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Estadística, Álgebra Lineal..."></div><div><label for="ai-full-instructions" class="block text-sm font-medium text-gray-700 mt-2">Instrucciones adicionales (opcional):</label><textarea id="ai-full-instructions" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Crear 3 categorías (básica, distribuciones, regresión) con 5 fórmulas cada una."></textarea></div>`; break; case 'category': html = `<div><label for="ai-category-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de la categoría:</label><input type="text" id="ai-category-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Vectores, Química Orgánica..."></div><div><label for="ai-category-instructions" class="block text-sm font-medium text-gray-700 mt-2">Instrucciones adicionales (opcional):</label><textarea id="ai-category-instructions" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: crear 5 fórmulas sobre este tema"></textarea></div>`; break; case 'multiple_elements': html = `<div><label for="ai-multi-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de los elementos:</label><input type="text" id="ai-multi-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Identidades trigonométricas"><label for="ai-multi-count" class="block text-sm font-medium text-gray-700 mt-2">Número de elementos:</label><input type="number" id="ai-multi-count" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"></div><div><label for="ai-multi-instructions" class="block text-sm font-medium text-gray-700 mt-2">Instrucciones adicionales (opcional):</label><textarea id="ai-multi-instructions" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Usar solo senos y cosenos."></textarea></div>`; break; case 'element': html = `<div><label for="ai-element-formula" class="block text-sm font-medium text-gray-700 mt-2">Descripción de la fórmula LaTeX:</label><input type="text" id="ai-element-formula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Fórmula de la distribución normal"></div><div><label for="ai-element-instructions" class="block text-sm font-medium text-gray-700 mt-2">Instrucciones adicionales (opcional):</label><textarea id="ai-element-instructions" rows="2" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Usar mu y sigma como parámetros."></textarea></div>`; break; } ui.aiInputsContainer.innerHTML = html; }
-        function generatePromptText() { let prompt = ''; const choice = ui.aiChoice.value; switch(choice) { case 'full_json': const fullTheme = document.getElementById('ai-full-theme').value.trim(); const fullInstructions = document.getElementById('ai-full-instructions').value.trim(); if (!fullTheme) { alert("Por favor, introduce un tema general."); return null; } prompt = PROMPTS.full_json.replace('{THEME}', fullTheme).replace('{INSTRUCTIONS}', fullInstructions || 'Ninguna'); break; case 'category': const catTheme = document.getElementById('ai-category-theme').value.trim(); const catInstructions = document.getElementById('ai-category-instructions').value.trim(); if (!catTheme) { alert("Por favor, introduce un tema para la categoría."); return null; } prompt = PROMPTS.category.replace('{THEME}', catTheme).replace('{INSTRUCTIONS}', catInstructions || 'Ninguna'); break; case 'multiple_elements': const multiTheme = document.getElementById('ai-multi-theme').value.trim(); const multiCount = document.getElementById('ai-multi-count').value; const multiInstructions = document.getElementById('ai-multi-instructions').value.trim(); if (!multiTheme) { alert("Por favor, introduce un tema para los elementos."); return null; } prompt = PROMPTS.multiple_elements.replace('{THEME}', multiTheme).replace('{ELEMENT_COUNT}', multiCount).replace('{INSTRUCTIONS}', multiInstructions || 'Ninguna'); break; case 'element': const formula = document.getElementById('ai-element-formula').value.trim(); const elInstructions = document.getElementById('ai-element-instructions').value.trim(); if (!formula) { alert("Por favor, introduce una fórmula o comando LaTeX."); return null; } prompt = PROMPTS.element.replace('{FORMULA}', formula).replace('{INSTRUCTIONS}', elInstructions || 'Ninguna'); break; } return prompt; }
+        function renderAiCreatorInputs(choice) { let html = ''; switch(choice) { case 'full_json': html = `<div><label for="ai-full-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema general:</label><input type="text" id="ai-full-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Estadística, Álgebra Lineal..."></div><div><label for="ai-full-instructions" class="block text-sm font-medium text-gray-700 mt-2">Instrucciones adicionales (opcional):</label><textarea id="ai-full-instructions" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Crear 3 categorías (básica, distribuciones, regresión) con 5 fórmulas cada una."></textarea></div>`; break; case 'category': html = `<div><label for="ai-category-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de la categoría:</label><input type="text" id="ai-category-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Vectores, Química Orgánica..."><label for="ai-category-count" class="block text-sm font-medium text-gray-700 mt-2">Número de elementos:</label><input type="number" id="ai-category-count" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"></div>`; break; case 'multiple_elements': html = `<div><label for="ai-multi-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de los elementos:</label><input type="text" id="ai-multi-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Identidades trigonométricas"><label for="ai-multi-count" class="block text-sm font-medium text-gray-700 mt-2">Número de elementos:</label><input type="number" id="ai-multi-count" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"></div>`; break; case 'element': html = `<div><label for="ai-element-formula" class="block text-sm font-medium text-gray-700 mt-2">Descripción de la fórmula LaTeX:</label><input type="text" id="ai-element-formula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Fórmula de la distribución normal"></div>`; break; } ui.aiInputsContainer.innerHTML = html; }
+        function generatePromptText() { let prompt = ''; const choice = ui.aiChoice.value; switch(choice) { case 'full_json': const fullTheme = document.getElementById('ai-full-theme').value.trim(); const instructions = document.getElementById('ai-full-instructions').value.trim(); if (!fullTheme) { alert("Por favor, introduce un tema general."); return null; } prompt = PROMPTS.full_json.replace('{THEME}', fullTheme).replace('{INSTRUCTIONS}', instructions || 'Ninguna'); break; case 'category': const catTheme = document.getElementById('ai-category-theme').value.trim(); const catCount = document.getElementById('ai-category-count').value; if (!catTheme) { alert("Por favor, introduce un tema para la categoría."); return null; } prompt = PROMPTS.category.replace('{THEME}', catTheme).replace('{ELEMENT_COUNT}', catCount); break; case 'multiple_elements': const multiTheme = document.getElementById('ai-multi-theme').value.trim(); const multiCount = document.getElementById('ai-multi-count').value; if (!multiTheme) { alert("Por favor, introduce un tema para los elementos."); return null; } prompt = PROMPTS.multiple_elements.replace('{THEME}', multiTheme).replace('{ELEMENT_COUNT}', multiCount); break; case 'element': const formula = document.getElementById('ai-element-formula').value.trim(); if (!formula) { alert("Por favor, introduce una fórmula o comando LaTeX."); return null; } prompt = PROMPTS.element.replace('{FORMULA}', formula); break; } return prompt; }
         ui.aiGeneratePromptBtn.addEventListener('click', () => { const promptText = generatePromptText(); if (promptText) { ui.aiPromptOutput.value = promptText; ui.aiLaunchChatGptBtn.disabled = false; ui.aiCopyPromptBtn.disabled = false; } });
         ui.aiCopyPromptBtn.addEventListener('click', () => { const promptText = ui.aiPromptOutput.value; if (!promptText) { return; } navigator.clipboard.writeText(promptText).then(() => { const originalText = ui.aiCopyPromptBtn.textContent; const originalClasses = [...ui.aiCopyPromptBtn.classList]; ui.aiCopyPromptBtn.textContent = "¡Copiado!"; ui.aiCopyPromptBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600'); ui.aiCopyPromptBtn.classList.add('bg-green-600'); setTimeout(() => { ui.aiCopyPromptBtn.textContent = originalText; ui.aiCopyPromptBtn.className = ''; originalClasses.forEach(c => ui.aiCopyPromptBtn.classList.add(c)); }, 2000); }).catch(err => { console.error('Error al copiar: ', err); alert("No se pudo copiar el prompt."); }); });
         ui.aiLaunchChatGptBtn.addEventListener('click', () => { const promptText = ui.aiPromptOutput.value; if (!promptText) { return; } const chatGptUrl = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`; window.open(chatGptUrl, '_blank'); });
@@ -719,10 +757,10 @@
                     e.preventDefault();
                     const newCatIndex = parseInt(selectEl.value, 10);
                     if (newCatIndex !== parseInt(catIndex, 10)) {
-                        const currentData = getActiveTabData().data;
-                        const [elementToMove] = currentData.categorias[catIndex].elementos.splice(elIndex, 1);
-                        currentData.categorias[newCatIndex].elementos.push(elementToMove);
-                        setActiveTabData(currentData);
+                        const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                        const [elementToMove] = newData.categorias[catIndex].elementos.splice(elIndex, 1);
+                        newData.categorias[newCatIndex].elementos.push(elementToMove);
+                        setActiveTabData(newData);
                         hideModal();
                         render();
                     } else {
