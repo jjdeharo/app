@@ -141,60 +141,45 @@
         .matrix-builder {
             border: 2px solid var(--medium-gray);
             border-radius: var(--border-radius);
-            padding: 20px;
+            padding: 10px;
             grid-column: 1 / -1;
-            display: grid;
-            grid-template-areas:
-                "title title"
-                "rows cols"
-                "fill fill"
-                "delimiters delimiters";
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 10px 15px;
             background-color: var(--light-gray);
         }
-        .matrix-builder-title {
-            grid-area: title;
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: var(--text-color);
-            margin: 0;
+        .matrix-builder-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-        .matrix-builder-group { display: flex; flex-direction: column; gap: 5px; }
-        .matrix-builder-group label { font-size: 0.9em; font-weight: 500; color: var(--dark-gray); }
+        .matrix-builder-group label {
+            font-size: 0.9em;
+            font-weight: 500;
+            color: var(--dark-gray);
+            white-space: nowrap;
+        }
         .matrix-builder-group input, .matrix-builder-group select {
-            padding: 10px;
+            padding: 6px;
             border-radius: 8px;
             border: 2px solid var(--medium-gray);
-            width: 100%;
-            font-size: 1rem;
+            font-size: 0.9rem;
+            width: 65px;
         }
-        #matrix-rows { grid-area: rows; }
-        #matrix-cols { grid-area: cols; }
-        #matrix-fill { grid-area: fill; }
+        .matrix-builder-group select {
+            width: auto;
+            min-width: 140px;
+        }
         .matrix-builder-delimiters {
-            grid-area: delimiters;
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
         .matrix-builder-delimiters .btn {
-            flex-grow: 1;
-            padding: 10px 5px;
-            font-size: 1.3rem;
-            font-weight: bold;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .matrix-builder-delimiters .btn:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            padding: 6px 14px;
+            font-size: 1.1rem;
         }
 
         @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
@@ -203,7 +188,9 @@
             .tab-btn { padding: 12px 15px; font-size: 14px; }
             .container { padding: 10px; }
             .modal-content { padding: 20px; }
-            .matrix-builder { grid-template-areas: "title" "rows" "cols" "fill" "delimiters"; grid-template-columns: 1fr; }
+            .matrix-builder {
+                justify-content: flex-start;
+            }
         }
     </style>
 </head>
@@ -412,7 +399,7 @@
                     console.log("Menú local (formulas.json) cargado con éxito.");
                 } catch (error) {
                     console.warn("No se pudo cargar el menú local. Cargando menú por defecto.", error);
-                    await loadMenuFromUrl(DEFAULT_MENU_URL, true); // Cargar por defecto y mostrar aviso
+                    await loadMenuFromUrl(DEFAULT_MENU_URL, true);
                 }
             }
             function rebuildToolbar(data) {
@@ -514,7 +501,7 @@
                 latexInput.selectionStart = latexInput.selectionEnd = startPos + (cursorPos !== -1 ? cursorPos + 1 : textToInsert.length);
                 latexInput.focus();
                 updatePreview();
-                if (textToInsert.includes('\\begin{')) return; // No registrar matrices enteras como recientes
+                if (textToInsert.includes('\\begin{')) return;
                 trackSymbolUsage(textToInsert);
             }
             function generateImage(callback) {
@@ -561,18 +548,18 @@
             function createMatrixBuilderUI(elemento) {
                 const container = document.createElement('div');
                 container.className = 'matrix-builder';
+                container.dataset.title = elemento.title || 'Matriz personalizada';
                 container.innerHTML = `
-                    <h3 class="matrix-builder-title">${elemento.title || 'Matriz personalizada'}</h3>
-                    <div class="matrix-builder-group" id="matrix-rows">
+                    <div class="matrix-builder-group">
                         <label for="mb-rows">Filas:</label>
                         <input type="number" id="mb-rows" value="2" min="1" max="20">
                     </div>
-                    <div class="matrix-builder-group" id="matrix-cols">
+                    <div class="matrix-builder-group">
                         <label for="mb-cols">Columnas:</label>
                         <input type="number" id="mb-cols" value="2" min="1" max="20">
                     </div>
-                    <div class="matrix-builder-group" id="matrix-fill">
-                        <label for="mb-fill">Rellenar con:</label>
+                    <div class="matrix-builder-group">
+                        <label for="mb-fill">Rellenar:</label>
                         <select id="mb-fill">
                             <option value="subscripts">Subíndices (a, b...)</option>
                             <option value="zeros">Ceros (0)</option>
@@ -631,11 +618,16 @@
             }
 
             // --- LÓGICA DE PESTAÑAS Y BÚSQUEDA ---
+            function normalizeString(str) {
+                if (typeof str !== 'string') return '';
+                return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            }
+
             function renderTabContent(tabId) {
                 const contentDiv = document.getElementById(`tab-${tabId}`);
                 if (!contentDiv || contentDiv.childElementCount > 0) return;
                 let elementsToRender = [];
-                let gridColumns = "repeat(5, 1fr)";
+                let gridColumns = "repeat(auto-fill, minmax(80px, 1fr))";
                 if (tabId === 'recientes') {
                     gridColumns = `repeat(${Math.min(MAX_RECENTS, 6)}, 1fr)`;
                     recentSymbols.forEach(latexCode => {
@@ -652,7 +644,7 @@
                     const categoria = toolbarData.categorias.find(c => c.id === tabId);
                     if (categoria) {
                         elementsToRender = categoria.elementos;
-                        gridColumns = categoria.grid_template_columns;
+                        gridColumns = categoria.grid_template_columns || gridColumns;
                     }
                 }
                 contentDiv.style.gridTemplateColumns = gridColumns;
@@ -683,7 +675,7 @@
             }
             let allTabsRenderedForSearch = false;
             searchInput.addEventListener('input', (e) => {
-                const query = e.target.value.toLowerCase().trim();
+                const query = normalizeString(e.target.value.trim());
                 tabsContainer.parentElement.classList.toggle('search-results-view', query.length > 0);
                 if (query.length > 0) {
                     if (!allTabsRenderedForSearch) {
@@ -692,15 +684,18 @@
                         allTabsRenderedForSearch = true;
                     }
                     toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
-                        const isVisible = btn.title.toLowerCase().includes(query) || (btn.dataset.latex && btn.dataset.latex.toLowerCase().includes(query));
+                        const title = normalizeString(btn.title);
+                        const latex = normalizeString(btn.dataset.latex);
+                        const isVisible = title.includes(query) || latex.includes(query);
                         btn.style.display = isVisible ? 'flex' : 'none';
                     });
                      toolbar.querySelectorAll('.matrix-builder').forEach(builder => {
-                        const title = builder.querySelector('.matrix-builder-title').textContent.toLowerCase();
-                        builder.style.display = title.includes(query) ? 'grid' : 'none';
+                        const title = normalizeString(builder.dataset.title);
+                        builder.style.display = title.includes(query) ? 'flex' : 'none';
                     });
                 } else {
-                    toolbar.querySelectorAll('.toolbar-btn, .matrix-builder').forEach(el => { el.style.display = el.classList.contains('matrix-builder') ? 'grid' : 'flex'; });
+                    toolbar.querySelectorAll('.toolbar-btn').forEach(btn => { btn.style.display = 'flex'; });
+                    toolbar.querySelectorAll('.matrix-builder').forEach(builder => { builder.style.display = 'flex'; });
                 }
             });
 
@@ -715,7 +710,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.4</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.6</p>
                 `;
             }
 
