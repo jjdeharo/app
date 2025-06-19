@@ -64,15 +64,34 @@
             padding: 15px 20px 10px 20px; 
             border-bottom: 1px solid var(--medium-gray); 
         }
-        #search-input { 
+        .search-input-container {
+            position: relative;
             flex-grow: 1;
-            padding: 12px; 
+        }
+        #search-input { 
+            width: 100%;
+            padding: 12px 40px 12px 12px; 
             border-radius: 8px; 
             border: 2px solid var(--medium-gray); 
             font-size: 1rem; 
             transition: all 0.3s ease; 
         }
         #search-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        #clear-search-btn {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: transparent;
+            border: none;
+            font-size: 1.8rem;
+            color: var(--secondary-color);
+            cursor: pointer;
+            padding: 0 5px;
+            line-height: 1;
+            display: none;
+        }
+        #clear-search-btn:hover { color: var(--dark-gray); }
         #settings-btn {
             background: none;
             border: none;
@@ -203,7 +222,10 @@
 
         <div id="tabs-section" class="tabs-section">
             <div class="search-wrapper">
-                <input type="search" id="search-input" placeholder="Buscar por descripción o código (ej: fracción, \int)..." autocomplete="off">
+                <div class="search-input-container">
+                    <input type="search" id="search-input" placeholder="Buscar por descripción o código (ej: fracción, \int)..." autocomplete="off">
+                    <button id="clear-search-btn" title="Borrar búsqueda">&times;</button>
+                </div>
                 <button id="settings-btn" title="Personalizar menú">⚙️</button>
             </div>
             <div id="tabs-container" class="tabs-container"></div>
@@ -297,6 +319,7 @@
             const tabsContainer = document.getElementById('tabs-container');
             const toolbar = document.getElementById('toolbar');
             const searchInput = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search-btn');
             const imageModal = document.getElementById('image-modal');
             const modalMessage = document.getElementById('modal-message');
             const modalButtons = document.getElementById('modal-buttons');
@@ -675,8 +698,12 @@
             }
             let allTabsRenderedForSearch = false;
             searchInput.addEventListener('input', (e) => {
+                const hasText = e.target.value.length > 0;
+                clearSearchBtn.style.display = hasText ? 'block' : 'none';
+
                 const query = normalizeString(e.target.value.trim());
                 tabsContainer.parentElement.classList.toggle('search-results-view', query.length > 0);
+                
                 if (query.length > 0) {
                     if (!allTabsRenderedForSearch) {
                         if (recentSymbols.length > 0) renderTabContent('recientes');
@@ -710,7 +737,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.6</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.7</p>
                 `;
             }
 
@@ -722,6 +749,12 @@
             });
             tabsContainer.addEventListener('click', handleTabSwitch);
             
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+                searchInput.focus();
+            });
+
             copyButton.addEventListener('click', () => {
                 const rawLatex = latexInput.value.trim();
                 if (!rawLatex) return;
