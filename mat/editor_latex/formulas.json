@@ -511,50 +511,6 @@
       "isCollapsed": true
     },
     {
-      "nombre": "Acentos",
-      "id": "acentos",
-      "grid_template_columns": "repeat(auto-fit, minmax(70px, 1fr))",
-      "elementos": [
-        {
-          "type": "button",
-          "latex": "\\bar{}",
-          "display": "\\bar{a}",
-          "title": "Barra"
-        },
-        {
-          "type": "button",
-          "latex": "\\overline{}",
-          "display": "\\overline{ab}",
-          "title": "Sobrebarra"
-        },
-        {
-          "type": "button",
-          "latex": "\\hat{}",
-          "display": "\\hat{a}",
-          "title": "Sombrero"
-        },
-        {
-          "type": "button",
-          "latex": "\\tilde{}",
-          "display": "\\tilde{a}",
-          "title": "Virgulilla"
-        },
-        {
-          "type": "button",
-          "latex": "\\dot{}",
-          "display": "\\dot{a}",
-          "title": "Punto"
-        },
-        {
-          "type": "button",
-          "latex": "\\ddot{}",
-          "display": "\\ddot{a}",
-          "title": "Doble punto"
-        }
-      ],
-      "isCollapsed": true
-    },
-    {
       "nombre": "Matrices",
       "id": "matrices",
       "grid_template_columns": "repeat(auto-fit, minmax(140px, 1fr))",
@@ -625,6 +581,50 @@
           "latex": "\\underbrace{}_{\\text{}}",
           "display": "\\underbrace{a+b+c}_{\\text{grupo}}",
           "title": "Llave inferior"
+        }
+      ],
+      "isCollapsed": true
+    },
+    {
+      "nombre": "Acentos",
+      "id": "acentos",
+      "grid_template_columns": "repeat(auto-fit, minmax(70px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\bar{}",
+          "display": "\\bar{a}",
+          "title": "Barra"
+        },
+        {
+          "type": "button",
+          "latex": "\\overline{}",
+          "display": "\\overline{ab}",
+          "title": "Sobrebarra"
+        },
+        {
+          "type": "button",
+          "latex": "\\hat{}",
+          "display": "\\hat{a}",
+          "title": "Sombrero"
+        },
+        {
+          "type": "button",
+          "latex": "\\tilde{}",
+          "display": "\\tilde{a}",
+          "title": "Virgulilla"
+        },
+        {
+          "type": "button",
+          "latex": "\\dot{}",
+          "display": "\\dot{a}",
+          "title": "Punto"
+        },
+        {
+          "type": "button",
+          "latex": "\\ddot{}",
+          "display": "\\ddot{a}",
+          "title": "Doble punto"
         }
       ],
       "isCollapsed": true
