@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editor LaTeX online</title>
     
-    <!-- Configuración de MathJax para que use SVG -->
     <script>
         window.MathJax = {
             tex: {
@@ -15,10 +14,9 @@
                 packages: {'[+]': ['cases', 'mathtools']}
             },
             svg: {
-                fontCache: 'local' // Usar caché local para que los SVG sean autocontenidos.
+                fontCache: 'local'
             },
             startup: {
-                // Cuando MathJax esté cargado y listo, llama a nuestra función de inicialización.
                 ready: () => {
                     MathJax.startup.defaultReady();
                     initializeLatexEditor();
@@ -26,7 +24,6 @@
             }
         };
     </script>
-    <!-- Carga el script de MathJax (versión SVG) -->
     <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
 
     <style>
@@ -45,11 +42,7 @@
             --border-radius: 12px;
             --box-shadow: 0 8px 24px rgba(0,0,0,0.1);
         }
-
-        * {
-            box-sizing: border-box;
-        }
-        
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -58,385 +51,93 @@
             min-height: 100vh;
             color: var(--text-color);
         }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            color: var(--white);
-        }
-
-        .header h1 {
-            font-size: 2.5rem;
-            margin: 0 0 10px 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
-            margin: 0;
-        }
-
-        .tabs-section {
-            background: var(--white);
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            margin-bottom: 20px;
-            overflow: hidden;
-        }
-
-        .tabs-container {
-            display: flex;
-            flex-wrap: wrap;
-            background: var(--light-gray);
-            border-bottom: 3px solid var(--medium-gray);
-        }
-
-        .tab-btn {
-            padding: 15px 20px;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--dark-gray);
-            transition: all 0.3s ease;
-            position: relative;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab-btn:hover {
-            background: var(--medium-gray);
-            color: var(--text-color);
-        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; color: var(--white); }
+        .header h1 { font-size: 2.5rem; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header p { font-size: 1.1rem; opacity: 0.9; margin: 0; }
+        .tabs-section { position: relative; background: var(--white); border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 20px; overflow: hidden; }
         
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-
-        .toolbar-wrapper {
-            padding: 20px;
-            background: var(--white);
-        }
-
-        .tab-content {
-            display: none;
-            gap: 10px;
-        }
-
-        .tab-content.active {
-            display: grid;
-        }
-
-        .toolbar-btn {
-            background: var(--white);
-            border: 2px solid var(--medium-gray);
-            border-radius: 8px;
-            padding: 15px 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .search-wrapper { 
             display: flex;
             align-items: center;
-            justify-content: center;
-            min-height: 60px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            gap: 10px;
+            padding: 15px 20px 10px 20px; 
+            border-bottom: 1px solid var(--medium-gray); 
         }
-
-        .toolbar-btn:hover {
-            border-color: var(--primary-color);
-            background: #f8f9ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,123,255,0.2);
-        }
-        
-        .custom-matrix-container {
-            grid-column: 1/-1; 
-            padding: 15px; 
-            background: #f8f9fa; 
+        #search-input { 
+            flex-grow: 1;
+            padding: 12px; 
             border-radius: 8px; 
-            margin-top: 10px;
+            border: 2px solid var(--medium-gray); 
+            font-size: 1rem; 
+            transition: all 0.3s ease; 
         }
-        .custom-matrix-container h4 {
-             margin: 0 0 10px 0; color: #333;
-        }
-        .custom-matrix-container .input-group {
-            display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px;
-        }
-        .custom-matrix-container .button-group {
-             display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
-        }
-        .custom-matrix-container .btn {
-            padding: 5px 10px; font-size: 12px;
-        }
-
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-
-        .panel {
-            background: var(--white);
-            padding: 25px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--box-shadow);
-            display: flex;
-            flex-direction: column;
-        }
-
-        .panel h2 {
-            margin: 0 0 15px 0;
-            color: #333;
-            font-size: 1.3rem;
-            border-bottom: 2px solid var(--medium-gray);
-            padding-bottom: 10px;
-        }
-
-        #latex-input {
-            width: 100%;
-            height: 200px;
-            border: 2px solid var(--medium-gray);
-            border-radius: 8px;
-            padding: 15px;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            resize: vertical;
-            transition: all 0.3s ease;
-            flex-grow: 1; /* Permite que el textarea crezca */
-        }
-
-        #latex-input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-        }
-
-        .preview-container {
-            min-height: 200px;
-            border: 2px dashed var(--medium-gray);
-            border-radius: 8px;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: var(--light-gray);
-            flex-grow: 1; /* Permite que la preview crezca */
-        }
-
-        #preview {
-            font-size: 24px;
-            color: var(--text-color);
-            overflow-x: auto;
-            overflow-y: hidden;
-            width: 100%;
-            text-align: center;
-        }
-
-        .copy-options-container {
-            margin-top: 15px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .copy-options-container label {
-            font-size: 0.9rem;
-            color: var(--dark-gray);
-            font-weight: 500;
-        }
-        
-        #delimiter-selector {
-            font-family: inherit;
-            padding: 5px 8px;
-            border-radius: 8px;
-            border: 2px solid var(--medium-gray);
-            background-color: white;
-            transition: border-color 0.2s ease-in-out;
-        }
-
-        #delimiter-selector:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-        }
-        
-        .panel-actions {
-            margin-top: 15px;
-            text-align: center;
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        .btn {
-            padding: 10px 20px;
+        #search-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        #settings-btn {
+            background: none;
             border: none;
-            border-radius: 8px;
-            font-weight: 600;
+            font-size: 1.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: var(--dark-gray);
+            transition: transform 0.3s, color 0.3s;
+            padding: 0 5px;
+            flex-shrink: 0;
         }
-
-        .btn-primary {
-            background: linear-gradient(45deg, var(--primary-color), var(--primary-dark));
-            color: white;
-        }
-
-        .btn-secondary {
-            background: linear-gradient(45deg, var(--secondary-color), #495057);
-            color: white;
-        }
-        
-        .btn-danger {
-            background: linear-gradient(45deg, var(--danger-color), var(--danger-dark));
-            color: white;
-        }
-
-        .btn-success {
-            background: linear-gradient(45deg, var(--success-color), #1e7e34);
-            color: white;
-        }
-
-        .btn:hover {
-            transform: translateY(-3px) scale(1.03);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
-        }
-
-        .copy-feedback {
+        #settings-btn:hover {
             color: var(--primary-color);
-            font-weight: 600;
-            margin-top: 10px;
-            height: 20px;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            text-align: center;
+            transform: rotate(45deg);
         }
-
-        #matrix-rows, #matrix-cols {
-            border: 1px solid var(--medium-gray);
-            border-radius: 4px;
-            padding: 3px 6px;
-            font-size: 12px;
-        }
-
-        #matrix-rows:focus, #matrix-cols:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        #matrix-fill {
-            border: 1px solid var(--medium-gray);
-            border-radius: 4px;
-            padding: 3px 6px;
-            font-size: 12px;
-            background: white;
-            min-width: 150px;
-        }
-
-        #matrix-fill:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-            padding: 20px;
-        }
-
-        .modal-overlay.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .modal-content {
-            background: var(--white);
-            padding: 30px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            display: inline-block;
-            max-width: 90vw;
-            max-height: 90vh;
-            text-align: center;
-            transform: scale(0.9);
-            transition: transform 0.3s;
-            overflow: auto;
-        }
-        
-        .modal-overlay.active .modal-content {
-            transform: scale(1);
-        }
-
-        #modal-message {
-            margin: 0 0 20px 0;
-            font-size: 1.1rem;
-            line-height: 1.5;
-        }
-        
-        #modal-message img {
-            display: block;
-            margin: 0 auto;
-        }
-
-        .modal-buttons {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-        }
-
-        .footer {
-            text-align: center;
-            padding: 30px 20px;
-            color: white;
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-
-        .footer a {
-            color: #ffffff;
-            font-weight: 600;
-        }
-
-        .footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (max-width: 900px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        @media (max-width: 600px) {
-            .header h1 { font-size: 2rem; }
-            .tab-btn { padding: 12px 15px; font-size: 14px; }
-            .container { padding: 10px; }
-            .modal-content { padding: 20px; }
-        }
+        .search-results-view .tabs-container { display: none; }
+        .search-results-view .tab-content { display: grid !important; }
+        .tabs-container { display: flex; flex-wrap: wrap; background: var(--light-gray); border-bottom: 3px solid var(--medium-gray); }
+        .tab-btn { padding: 15px 20px; background: transparent; border: none; cursor: pointer; font-weight: 600; color: var(--dark-gray); transition: all 0.3s ease; position: relative; border-bottom: 3px solid transparent; }
+        .tab-btn:hover { background: var(--medium-gray); color: var(--text-color); }
+        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+        .toolbar-wrapper { padding: 20px; background: var(--white); }
+        .tab-content { display: none; gap: 10px; }
+        .tab-content.active { display: grid; }
+        .toolbar-btn { background: var(--white); border: 2px solid var(--medium-gray); border-radius: 8px; padding: 15px 10px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .toolbar-btn:hover { border-color: var(--primary-color); background: #f8f9ff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .panel { background: var(--white); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); display: flex; flex-direction: column; }
+        .panel h2 { margin: 0 0 15px 0; color: #333; font-size: 1.3rem; border-bottom: 2px solid var(--medium-gray); padding-bottom: 10px; }
+        #latex-input { width: 100%; height: 200px; border: 2px solid var(--medium-gray); border-radius: 8px; padding: 15px; font-family: 'Courier New', monospace; font-size: 14px; resize: vertical; transition: all 0.3s ease; flex-grow: 1; }
+        #latex-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        .preview-container { min-height: 200px; border: 2px dashed var(--medium-gray); border-radius: 8px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--light-gray); flex-grow: 1; }
+        #preview { font-size: 24px; color: var(--text-color); overflow-x: auto; overflow-y: hidden; width: 100%; text-align: center; }
+        .copy-options-container { margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .copy-options-container label { font-size: 0.9rem; color: var(--dark-gray); font-weight: 500; }
+        #delimiter-selector { font-family: inherit; padding: 5px 8px; border-radius: 8px; border: 2px solid var(--medium-gray); background-color: white; transition: border-color 0.2s ease-in-out; }
+        #delimiter-selector:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        .panel-actions { margin-top: 15px; text-align: center; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-primary { background: linear-gradient(45deg, var(--primary-color), var(--primary-dark)); color: white; }
+        .btn-secondary { background: linear-gradient(45deg, var(--secondary-color), #495057); color: white; }
+        .btn-danger { background: linear-gradient(45deg, var(--danger-color), var(--danger-dark)); color: white; }
+        .btn-success { background: linear-gradient(45deg, var(--success-color), #1e7e34); color: white; }
+        .btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
+        .copy-feedback { color: var(--primary-color); font-weight: 600; margin-top: 10px; height: 20px; opacity: 0; transition: opacity 0.5s ease; text-align: center; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; padding: 20px; }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal-content { background: var(--white); padding: 30px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: inline-block; max-width: 90vw; max-height: 90vh; text-align: left; transform: scale(0.9); transition: transform 0.3s; overflow: auto; width: 500px; max-width: 90%;}
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-content h2 { text-align: center; margin-top: 0; }
+        #modal-message { margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.5; text-align: center; }
+        #modal-message img { display: block; margin: 0 auto; }
+        #alert-modal-message p { margin: 0 0 10px 0; }
+        .modal-buttons { display: flex; justify-content: center; gap: 15px; }
+        .modal-content .form-group { margin-bottom: 20px; }
+        .modal-content .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
+        .modal-content .form-group input { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid var(--medium-gray); font-size: 1rem; }
+        .modal-content .link-group { text-align: center; margin: -10px 0 15px 0; font-size: 0.95em; }
+        .modal-content .link-group a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+        .modal-content .link-group a:hover { text-decoration: underline; }
+        #modal-feedback { font-size: 0.9em; height: 20px; text-align: center; }
+        .footer { text-align: center; padding: 30px 20px; color: white; opacity: 0.9; font-size: 0.9rem; }
+        .footer a { color: #ffffff; font-weight: 600; text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
+        @media (max-width: 600px) { .header h1 { font-size: 2rem; } .tab-btn { padding: 12px 15px; font-size: 14px; } .container { padding: 10px; } .modal-content { padding: 20px; } }
     </style>
 </head>
 <body>
@@ -446,19 +147,19 @@
             <p>Crea fórmulas matemáticas visualmente, cópialas o descárgalas como imagen.</p>
         </header>
 
-        <div class="tabs-section">
-            <div id="tabs-container" class="tabs-container">
-                <!-- Las pestañas se generarán aquí dinámicamente -->
+        <div id="tabs-section" class="tabs-section">
+            <div class="search-wrapper">
+                <input type="search" id="search-input" placeholder="Buscar por descripción o código (ej: fracción, \int)..." autocomplete="off">
+                <button id="settings-btn" title="Personalizar menú">⚙️</button>
             </div>
+            <div id="tabs-container" class="tabs-container"></div>
             <div class="toolbar-wrapper">
-                <div id="toolbar">
-                    <!-- El contenido de las pestañas se generará aquí dinámicamente -->
-                </div>
+                <div id="toolbar"></div>
             </div>
         </div>
 
         <div class="main-content">
-            <div class="panel">
+             <div class="panel">
                 <h2>Código LaTeX</h2>
                 <textarea id="latex-input" placeholder="Escribe aquí tu código... \frac{a}{b}" spellcheck="false"></textarea>
                 <div class="copy-options-container">
@@ -490,53 +191,121 @@
         </div>
     </div>
     
-    <footer id="page-footer" class="footer">
-        <!-- El pie de página se añade aquí con JavaScript -->
-    </footer>
+    <footer id="page-footer" class="footer"></footer>
 
-    <!-- Estructura del Modal -->
-    <div id="modal" class="modal-overlay">
+    <div id="image-modal" class="modal-overlay">
         <div class="modal-content">
             <div id="modal-message"></div>
-            <div id="modal-buttons" class="modal-buttons">
-                <!-- Botones se insertarán aquí dinámicamente -->
+            <div id="modal-buttons" class="modal-buttons"></div>
+        </div>
+    </div>
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Personalizar Menú</h2>
+            <div class="form-group">
+                <label for="url-input">Cargar menú desde URL</label>
+                <input type="url" id="url-input" placeholder="https://ejemplo.com/formulas.json">
+            </div>
+            <div class="form-group">
+                <label for="file-input">Cargar menú desde archivo local</label>
+                <input type="file" id="file-input" accept=".json,application/json">
+            </div>
+            <div class="link-group">
+                <a href="./editor_menu.html" target="_blank" rel="noopener noreferrer">Con este programa podrás personalizar tu propio menú.</a>
+            </div>
+            <div id="modal-feedback"></div>
+            <div class="modal-buttons">
+                <button id="restore-default-btn" class="btn btn-secondary">Restaurar por defecto</button>
+                <button id="close-settings-btn" class="btn btn-danger">Cerrar</button>
+            </div>
+        </div>
+    </div>
+    <div id="alert-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="alert-modal-title" style="text-align: center;"></h2>
+            <div id="alert-modal-message" style="font-size: 1rem; line-height: 1.5;"></div>
+            <div class="modal-buttons">
+                <button id="alert-modal-close-btn" class="btn btn-primary">Entendido</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Función principal que se ejecuta cuando el DOM está listo y MathJax está preparado.
         async function initializeLatexEditor() {
-            // Obtener referencias a los elementos del DOM
+            // Referencias a elementos del DOM
             const latexInput = document.getElementById('latex-input');
             const preview = document.getElementById('preview');
             const copyButton = document.getElementById('copy-button');
             const clearButton = document.getElementById('clear-button');
             const viewImageButton = document.getElementById('view-image-button');
-            const copyCodeFeedback = document.getElementById('copy-code-feedback');
-            const copyImageFeedback = document.getElementById('copy-image-feedback');
-            const toolbar = document.getElementById('toolbar');
             const tabsContainer = document.getElementById('tabs-container');
-            const modal = document.getElementById('modal');
+            const toolbar = document.getElementById('toolbar');
+            const searchInput = document.getElementById('search-input');
+            const imageModal = document.getElementById('image-modal');
             const modalMessage = document.getElementById('modal-message');
             const modalButtons = document.getElementById('modal-buttons');
-            const delimiterSelector = document.getElementById('delimiter-selector');
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsModal = document.getElementById('settings-modal');
+            const closeSettingsBtn = document.getElementById('close-settings-btn');
+            const urlInput = document.getElementById('url-input');
+            const fileInput = document.getElementById('file-input');
+            const restoreDefaultBtn = document.getElementById('restore-default-btn');
+            const modalFeedback = document.getElementById('modal-feedback');
+            const alertModal = document.getElementById('alert-modal');
+            const alertModalTitle = document.getElementById('alert-modal-title');
+            const alertModalMessage = document.getElementById('alert-modal-message');
+            const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
 
-            // --- FUNCIONES DE ALMACENAMIENTO LOCAL ---
-            function saveSettings() {
-                localStorage.setItem('latexDelimiter', delimiterSelector.value);
+            // --- CONFIGURACIÓN ---
+            const DEFAULT_MENU_URL = 'https://raw.githubusercontent.com/jjdeharo/app/refs/heads/main/mat/editor_latex/formulas.json';
+            const LOCAL_MENU_URL = './formulas.json';
+            const MAX_RECENTS = 12;
+
+            // --- ESTADO DE LA APLICACIÓN ---
+            let toolbarData = null;
+            let recentSymbols = [];
+            
+            // --- GESTIÓN DE LOCALSTORAGE Y DATOS RECIENTES ---
+            function loadRecents() {
+                recentSymbols = JSON.parse(localStorage.getItem('latexRecents')) || [];
             }
-
-            function loadSettings() {
-                const savedDelimiter = localStorage.getItem('latexDelimiter');
-                if (savedDelimiter) {
-                    delimiterSelector.value = savedDelimiter;
+            function saveRecents() {
+                localStorage.setItem('latexRecents', JSON.stringify(recentSymbols));
+            }
+            function createRecentsTab() {
+                if (document.querySelector('[data-tab="recientes"]')) return;
+                const recentsTabButton = document.createElement('button');
+                recentsTabButton.className = 'tab-btn';
+                recentsTabButton.dataset.tab = 'recientes';
+                recentsTabButton.textContent = 'Recientes';
+                tabsContainer.prepend(recentsTabButton);
+                const recentsContentDiv = document.createElement('div');
+                recentsContentDiv.id = 'tab-recientes';
+                recentsContentDiv.className = 'tab-content';
+                toolbar.prepend(recentsContentDiv);
+            }
+            function trackSymbolUsage(latexCode) {
+                if (recentSymbols.length === 0) createRecentsTab();
+                recentSymbols = recentSymbols.filter(item => item !== latexCode);
+                recentSymbols.unshift(latexCode);
+                if (recentSymbols.length > MAX_RECENTS) recentSymbols = recentSymbols.slice(0, MAX_RECENTS);
+                saveRecents();
+                const recentsContent = document.getElementById('tab-recientes');
+                if (recentsContent) {
+                    recentsContent.innerHTML = '';
+                    renderTabContent('recientes');
                 }
             }
             
-            // --- FUNCIONES DEL MODAL ---
-            function showModal(message, buttons) {
-                modalMessage.innerHTML = `<p>${message}</p>`;
+            // --- FUNCIONES DE MODALES ---
+            function showAlert(title, htmlMessage) {
+                alertModalTitle.textContent = title;
+                alertModalMessage.innerHTML = htmlMessage;
+                alertModal.classList.add('active');
+            }
+            function hideAlert() { alertModal.classList.remove('active'); }
+            function showImageModal(message, buttons) {
+                modalMessage.innerHTML = message;
                 modalButtons.innerHTML = '';
                 buttons.forEach(btnInfo => {
                     const button = document.createElement('button');
@@ -544,183 +313,246 @@
                     button.className = `btn ${btnInfo.class}`;
                     button.onclick = () => {
                         if(btnInfo.action) btnInfo.action();
-                        hideModal();
+                        hideImageModal();
                     };
                     modalButtons.appendChild(button);
                 });
-                modal.classList.add('active');
+                imageModal.classList.add('active');
             }
-            function hideModal() {
-                modal.classList.remove('active');
-            }
-
-            // --- FUNCIONES PRINCIPALES ---
-            function generateUniqueImageName() {
-                const now = new Date();
-                const year = now.getFullYear();
-                const month = (now.getMonth() + 1).toString().padStart(2, '0');
-                const day = now.getDate().toString().padStart(2, '0');
-                const hours = now.getHours().toString().padStart(2, '0');
-                const minutes = now.getMinutes().toString().padStart(2, '0');
-                const seconds = now.getSeconds().toString().padStart(2, '0');
-                return `formula_${year}${month}${day}_${hours}${minutes}${seconds}`;
+            function hideImageModal() { imageModal.classList.remove('active'); }
+            function openSettingsModal() { settingsModal.classList.add('active'); }
+            function closeSettingsModal() { settingsModal.classList.remove('active'); }
+            function showModalFeedback(message, isError = false) {
+                modalFeedback.textContent = message;
+                modalFeedback.style.color = isError ? 'var(--danger-color)' : 'var(--success-color)';
+                setTimeout(() => modalFeedback.textContent = '', 3000);
             }
 
-            function updatePreview() {
-                const latexCode = latexInput.value.trim();
-                if (latexCode === "") {
-                    preview.innerHTML = "";
+            // --- LÓGICA DE CARGA DE MENÚ ---
+            async function initializeMenu() {
+                const customUrl = localStorage.getItem('latexCustomMenuUrl');
+                if (customUrl) {
+                    await loadMenuFromUrl(customUrl);
                     return;
                 }
-                preview.innerHTML = `$$${latexCode}$$`;
-                MathJax.typesetPromise([preview]).catch(err => {
-                    console.error('Error en MathJax al renderizar:', err);
-                    preview.innerHTML = `<span style="color:red;">Error en la sintaxis de LaTeX</span>`;
+                try {
+                    const response = await fetch(LOCAL_MENU_URL);
+                    if (!response.ok) throw new Error('Menú local no encontrado');
+                    const data = await response.json();
+                    rebuildToolbar(data);
+                    console.log("Menú local (formulas.json) cargado con éxito.");
+                } catch (error) {
+                    console.warn("No se pudo cargar el menú local. Cargando menú por defecto.", error);
+                    await loadMenuFromUrl(DEFAULT_MENU_URL, true); // Cargar por defecto y mostrar aviso
+                }
+            }
+            function rebuildToolbar(data) {
+                if (!data || !Array.isArray(data.categorias)) {
+                    showModalFeedback('El archivo JSON no tiene el formato correcto.', true);
+                    return false;
+                }
+                toolbarData = data;
+                allTabsRenderedForSearch = false;
+                tabsContainer.innerHTML = '';
+                toolbar.innerHTML = '';
+                let isFirstTab = true;
+                if (recentSymbols.length > 0) {
+                    createRecentsTab();
+                    tabsContainer.querySelector('[data-tab="recientes"]').classList.add('active');
+                    toolbar.querySelector('#tab-recientes').classList.add('active');
+                    isFirstTab = false;
+                }
+                toolbarData.categorias.forEach((categoria) => {
+                    const tabButton = document.createElement('button');
+                    tabButton.className = 'tab-btn';
+                    const contentDiv = document.createElement('div');
+                    contentDiv.id = `tab-${categoria.id}`;
+                    contentDiv.className = 'tab-content';
+                    if (isFirstTab) {
+                       tabButton.classList.add('active');
+                       contentDiv.classList.add('active');
+                       isFirstTab = false;
+                    }
+                    tabButton.dataset.tab = categoria.id;
+                    tabButton.textContent = categoria.nombre;
+                    tabsContainer.appendChild(tabButton);
+                    toolbar.appendChild(contentDiv);
                 });
+                const activeTab = tabsContainer.querySelector('.tab-btn.active');
+                if(activeTab) renderTabContent(activeTab.dataset.tab);
+                return true;
+            }
+            async function loadMenuFromUrl(url, showLocalFailNotification = false) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
+                    const data = await response.json();
+                    if (rebuildToolbar(data)) {
+                        if (url !== DEFAULT_MENU_URL) {
+                            localStorage.setItem('latexCustomMenuUrl', url);
+                            showModalFeedback('Menú cargado desde URL correctamente.');
+                        }
+                        urlInput.value = localStorage.getItem('latexCustomMenuUrl') || '';
+                        if (showLocalFailNotification) {
+                             showAlert(
+                                'Aviso de carga de menú',
+                                `<p>No se pudo cargar el menú local <code>${LOCAL_MENU_URL}</code>.</p>
+                                <p style="font-size: 0.9em;">Esto suele ocurrir al abrir el archivo HTML directamente desde el ordenador. Para usar un menú local, la aplicación debe ejecutarse en un servidor web.</p>
+                                <p>Se ha cargado el menú por defecto. Puede usar el botón de configuración (⚙️) para cargar un menú personalizado desde una URL o un archivo.</p>`
+                            );
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error cargando menú desde URL:", error);
+                    showModalFeedback('No se pudo cargar o procesar la URL.', true);
+                }
+            }
+            function loadMenuFromFile(file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const data = JSON.parse(event.target.result);
+                        if (rebuildToolbar(data)) {
+                            localStorage.removeItem('latexCustomMenuUrl');
+                            showModalFeedback(`Menú cargado desde "${file.name}".`);
+                            urlInput.value = '';
+                        }
+                    } catch (error) {
+                         showModalFeedback('El archivo no es un JSON válido.', true);
+                    }
+                };
+                reader.readAsText(file);
+            }
+            function restoreDefaultMenu() {
+                localStorage.removeItem('latexCustomMenuUrl');
+                urlInput.value = '';
+                loadMenuFromUrl(DEFAULT_MENU_URL);
+                showModalFeedback('Menú por defecto restaurado.');
             }
             
+            // --- FUNCIONES DEL EDITOR ---
+            function updatePreview() {
+                preview.innerHTML = latexInput.value.trim() === "" ? "" : `$$${latexInput.value.trim()}$$`;
+                MathJax.typesetPromise([preview]).catch(err => {
+                    preview.innerHTML = `<span style="color:red;">Error de sintaxis</span>`;
+                });
+            }
             function insertAtCursor(textToInsert) {
                 const startPos = latexInput.selectionStart;
                 const endPos = latexInput.selectionEnd;
-                const currentValue = latexInput.value;
-                latexInput.value = currentValue.substring(0, startPos) + textToInsert + currentValue.substring(endPos);
+                latexInput.value = latexInput.value.substring(0, startPos) + textToInsert + latexInput.value.substring(endPos);
                 let cursorPos = textToInsert.indexOf('{}');
-                if (cursorPos !== -1) {
-                    latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
-                } else if ((cursorPos = textToInsert.indexOf('[]')) !== -1) {
-                     latexInput.selectionStart = latexInput.selectionEnd = startPos + cursorPos + 1;
-                } else {
-                    latexInput.selectionStart = latexInput.selectionEnd = startPos + textToInsert.length;
-                }
+                latexInput.selectionStart = latexInput.selectionEnd = startPos + (cursorPos !== -1 ? cursorPos + 1 : textToInsert.length);
                 latexInput.focus();
                 updatePreview();
+                trackSymbolUsage(textToInsert);
             }
-
-            /**
-             * Genera una imagen a partir del SVG renderizado por MathJax.
-             * @param {function} callback - Función que se ejecuta con el canvas como argumento.
-             */
             function generateImage(callback) {
                 const svgElement = preview.querySelector('svg');
-
                 if (!svgElement) {
-                    showModal("No se ha encontrado ninguna fórmula para capturar. Asegúrate de que la previsualización es correcta.", [{text: 'OK', class: 'btn-primary'}]);
+                    showImageModal('<p>No hay fórmula para capturar.</p>', [{text: 'OK', class: 'btn-primary'}]);
                     return;
                 }
-                
-                const rect = svgElement.getBoundingClientRect();
-
                 const serializer = new XMLSerializer();
                 const svgString = serializer.serializeToString(svgElement);
-
                 const img = new Image();
                 const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
                 const url = URL.createObjectURL(svgBlob);
-
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
                     const padding = 20;
-                    
-                    canvas.width = rect.width + padding * 2;
-                    canvas.height = rect.height + padding * 2;
-                    
+                    canvas.width = svgElement.width.baseVal.value + padding * 2;
+                    canvas.height = svgElement.height.baseVal.value + padding * 2;
                     const ctx = canvas.getContext('2d');
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    
-                    ctx.drawImage(img, padding, padding, rect.width, rect.height);
-                    
+                    ctx.drawImage(img, padding, padding, svgElement.width.baseVal.value, svgElement.height.baseVal.value);
                     URL.revokeObjectURL(url);
                     callback(canvas);
                 };
-                
-                img.onerror = function(e) {
-                     console.error("Error al cargar el SVG como imagen:", e);
-                     showModal("Hubo un error al procesar la fórmula como imagen.", [{text: 'OK', class: 'btn-primary'}]);
-                     URL.revokeObjectURL(url);
-                };
-
                 img.src = url;
             }
-
             function handleViewImage() {
                 generateImage(canvas => {
-                    modalMessage.innerHTML = '';
-                    modalButtons.innerHTML = '';
-                    
                     const imgElement = document.createElement('img');
                     imgElement.src = canvas.toDataURL('image/png');
                     imgElement.style.maxWidth = '100%';
                     imgElement.style.maxHeight = '80vh';
-                    imgElement.style.borderRadius = '8px';
-                    imgElement.style.userSelect = 'none';
-
                     const instruction = document.createElement('p');
-                    instruction.textContent = 'Haz clic derecho sobre la imagen para guardarla o copiarla.';
-                    instruction.style.marginTop = '15px';
-                    instruction.style.fontSize = '0.9em';
-                    instruction.style.color = 'var(--dark-gray)';
-
-                    modalMessage.appendChild(imgElement);
-                    modalMessage.appendChild(instruction);
-                    
-                    const closeButton = document.createElement('button');
-                    closeButton.textContent = 'Cerrar';
-                    closeButton.className = 'btn btn-secondary';
-                    closeButton.onclick = hideModal;
-                    modalButtons.appendChild(closeButton);
-
-                    modal.classList.add('active');
+                    instruction.textContent = 'Clic derecho sobre la imagen para guardarla o copiarla.';
+                    const messageContainer = document.createElement('div');
+                    messageContainer.appendChild(imgElement);
+                    messageContainer.appendChild(instruction);
+                    showImageModal(messageContainer.innerHTML, [{text: 'Cerrar', class: 'btn-secondary'}]);
                 });
             }
-            
-            function generateCustomMatrix(matrixType) {
-                const rows = parseInt(document.getElementById('matrix-rows').value) || 2;
-                const cols = parseInt(document.getElementById('matrix-cols').value) || 2;
-                const fillType = document.getElementById('matrix-fill').value;
-                if (rows < 1 || rows > 10 || cols < 1 || cols > 10) {
-                    showModal('Las dimensiones de la matriz deben estar entre 1 y 10.', [{text: 'Entendido', class: 'btn-primary'}]);
-                    return;
-                }
-                let matrixContent = '';
-                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-                let counter = 1;
-                for (let i = 0; i < rows; i++) {
-                    let rowContent = [];
-                    for (let j = 0; j < cols; j++) {
-                        let cellContent = '';
-                        switch (fillType) {
-                            case 'subscripts': cellContent = `a_{${i+1}${j+1}}`; break;
-                            case 'zeros': cellContent = '0'; break;
-                            case 'ones': cellContent = '1'; break;
-                            case 'variables':
-                                const varIndex = (i * cols + j) % alphabet.length;
-                                cellContent = alphabet[varIndex];
-                                break;
-                            case 'numbers': cellContent = `${counter++}`; break;
-                            case 'empty': cellContent = '{}'; break;
-                            default: cellContent = '';
-                        }
-                        rowContent.push(cellContent);
-                    }
-                    matrixContent += rowContent.join(' & ');
-                    if (i < rows - 1) {
-                        matrixContent += ' \\\\ ';
-                    }
-                }
-                const latexCode = `\\begin{${matrixType}}${matrixContent}\\end{${matrixType}}`;
-                insertAtCursor(latexCode);
-            }
 
+            // --- LÓGICA DE PESTAÑAS Y BÚSQUEDA ---
+            function renderTabContent(tabId) {
+                const contentDiv = document.getElementById(`tab-${tabId}`);
+                if (!contentDiv || contentDiv.childElementCount > 0) return;
+                let elementsToRender = [];
+                let gridColumns = "repeat(5, 1fr)";
+                if (tabId === 'recientes') {
+                    gridColumns = `repeat(${Math.min(MAX_RECENTS, 6)}, 1fr)`;
+                    recentSymbols.forEach(latexCode => {
+                        for (const categoria of toolbarData.categorias) {
+                            const found = categoria.elementos.find(el => el.latex === latexCode);
+                            if (found) { elementsToRender.push(found); break; }
+                        }
+                    });
+                     if (elementsToRender.length === 0) {
+                        contentDiv.innerHTML = '<p style="color: var(--dark-gray); grid-column: 1 / -1; text-align:center;">Aún no hay símbolos recientes.</p>';
+                        return;
+                    }
+                } else {
+                    const categoria = toolbarData.categorias.find(c => c.id === tabId);
+                    if (categoria) {
+                        elementsToRender = categoria.elementos;
+                        gridColumns = categoria.grid_template_columns;
+                    }
+                }
+                contentDiv.style.gridTemplateColumns = gridColumns;
+                elementsToRender.forEach(elemento => {
+                    const button = document.createElement('button');
+                    button.className = 'toolbar-btn';
+                    button.dataset.latex = elemento.latex;
+                    button.title = elemento.title;
+                    button.innerHTML = `\\(${elemento.display || elemento.latex}\\)`;
+                    contentDiv.appendChild(button);
+                });
+                MathJax.typesetPromise(contentDiv.querySelectorAll('.toolbar-btn'));
+            }
             function handleTabSwitch(event) {
-                if (!event.target.matches('.tab-btn')) return;
+                const button = event.target.closest('.tab-btn');
+                if (!button) return;
                 tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
                 toolbar.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                event.target.classList.add('active');
-                const tabId = event.target.dataset.tab;
+                button.classList.add('active');
+                const tabId = button.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.add('active');
+                renderTabContent(tabId);
             }
-            
+            let allTabsRenderedForSearch = false;
+            searchInput.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+                tabsContainer.parentElement.classList.toggle('search-results-view', query.length > 0);
+                if (query.length > 0) {
+                    if (!allTabsRenderedForSearch) {
+                        if (recentSymbols.length > 0) renderTabContent('recientes');
+                        toolbarData.categorias.forEach(cat => renderTabContent(cat.id));
+                        allTabsRenderedForSearch = true;
+                    }
+                    toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
+                        const isVisible = btn.title.toLowerCase().includes(query) || btn.dataset.latex.toLowerCase().includes(query);
+                        btn.style.display = isVisible ? 'flex' : 'none';
+                    });
+                } else {
+                    toolbar.querySelectorAll('.toolbar-btn').forEach(btn => { btn.style.display = 'flex'; });
+                }
+            });
+
+            // --- FOOTER ---
             function addFooter() {
                 const footer = document.getElementById('page-footer');
                 footer.innerHTML = `
@@ -731,175 +563,33 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.2.4</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.1</p>
                 `;
             }
 
-            async function buildToolbar() {
-                const url = 'https://raw.githubusercontent.com/jjdeharo/app/refs/heads/main/mat/editor_latex/formulas.json';
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error(`Error de red: ${response.statusText}`);
-                    }
-                    const data = await response.json();
-                    
-                    tabsContainer.innerHTML = '';
-                    toolbar.innerHTML = '';
-
-                    data.categorias.forEach((categoria, index) => {
-                        // Crear pestaña
-                        const tabButton = document.createElement('button');
-                        tabButton.className = `tab-btn ${index === 0 ? 'active' : ''}`;
-                        tabButton.dataset.tab = categoria.id;
-                        tabButton.textContent = categoria.nombre;
-                        tabsContainer.appendChild(tabButton);
-
-                        // Crear contenido de la pestaña
-                        const contentDiv = document.createElement('div');
-                        contentDiv.id = `tab-${categoria.id}`;
-                        contentDiv.className = `tab-content ${index === 0 ? 'active' : ''}`;
-                        contentDiv.style.gridTemplateColumns = categoria.grid_template_columns;
-
-                        categoria.elementos.forEach(elemento => {
-                            if (elemento.type === 'button') {
-                                const button = document.createElement('button');
-                                button.className = 'toolbar-btn';
-                                button.dataset.latex = elemento.latex;
-                                button.title = elemento.title;
-                                button.innerHTML = `\\(${elemento.display || elemento.latex}\\)`;
-                                contentDiv.appendChild(button);
-                            } else if (elemento.type === 'custom_matrix') {
-                                const customMatrixHTML = `
-                                <div class="custom-matrix-container">
-                                    <h4>Matriz personalizada</h4>
-                                    <div class="input-group">
-                                        <label>Filas: <input type="number" id="matrix-rows" min="1" max="10" value="2" style="width: 50px; margin-left: 5px;"></label>
-                                        <label>Columnas: <input type="number" id="matrix-cols" min="1" max="10" value="2" style="width: 50px; margin-left: 5px;"></label>
-                                    </div>
-                                    <div class="input-group">
-                                        <label>Rellenar con:
-                                            <select id="matrix-fill" style="margin-left: 5px;">
-                                                <option value="subscripts">Subíndices (a₁, b₁...)</option>
-                                                <option value="zeros">Ceros (0)</option>
-                                                <option value="ones">Unos (1)</option>
-                                                <option value="variables">Variables (a, b, c...)</option>
-                                                <option value="numbers">Números (1, 2, 3...)</option>
-                                                <option value="empty">Vacío ({ })</option>
-                                            </select>
-                                        </label>
-                                    </div>
-                                    <div class="button-group">
-                                        <button class="btn btn-primary" onclick="generateCustomMatrix('pmatrix')">( )</button>
-                                        <button class="btn btn-primary" onclick="generateCustomMatrix('bmatrix')">[ ]</button>
-                                        <button class="btn btn-primary" onclick="generateCustomMatrix('vmatrix')">| |</button>
-                                        <button class="btn btn-primary" onclick="generateCustomMatrix('Vmatrix')">|| ||</button>
-                                    </div>
-                                </div>`;
-                                contentDiv.innerHTML += customMatrixHTML;
-                            }
-                        });
-                        toolbar.appendChild(contentDiv);
-                    });
-
-                    // Renderizar las nuevas fórmulas con MathJax
-                    MathJax.typesetPromise(toolbar.querySelectorAll('.toolbar-btn'));
-
-                } catch (error) {
-                    console.error('Error al cargar las fórmulas:', error);
-                    showModal('No se pudieron cargar las fórmulas desde el servidor. Por favor, recarga la página.', [{text: 'OK', class: 'btn-primary'}]);
-                }
-            }
-
-
-            // --- ASIGNACIÓN DE EVENTOS ---
+            // --- EVENT LISTENERS ---
             latexInput.addEventListener('input', updatePreview);
-            delimiterSelector.addEventListener('change', saveSettings);
-
             toolbar.addEventListener('click', (event) => {
                 const button = event.target.closest('.toolbar-btn');
-                if (button && button.dataset.latex) {
-                    insertAtCursor(button.dataset.latex);
-                }
+                if (button && button.dataset.latex) insertAtCursor(button.dataset.latex);
             });
-
-            copyButton.addEventListener('click', () => {
-                const rawLatex = latexInput.value.trim();
-                if (!rawLatex) return;
-
-                const delimiter = delimiterSelector.value;
-                let textToCopy;
-
-                switch (delimiter) {
-                    case 'parentheses':
-                        textToCopy = `\\(${rawLatex}\\)`;
-                        break;
-                    case 'brackets':
-                        textToCopy = `\\[\n${rawLatex}\n\\]`;
-                        break;
-                    case 'double_dollar':
-                        textToCopy = `$$\n${rawLatex}\n$$`;
-                        break;
-                    case 'single_dollar':
-                        textToCopy = `$${rawLatex}$`;
-                        break;
-                    default:
-                        textToCopy = rawLatex;
-                }
-
-                navigator.clipboard.writeText(textToCopy).then(() => {
-                    copyCodeFeedback.textContent = '¡Código copiado!';
-                    copyCodeFeedback.style.opacity = '1';
-                    setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
-                }).catch(err => {
-                    console.error('No se pudo copiar el texto: ', err);
-                    showModal('No se pudo copiar el código al portapapeles.', [{text: 'OK', class: 'btn-primary'}]);
-                });
-            });
-
-            let isConfirmingClear = false;
-            let clearConfirmTimeout;
-            clearButton.addEventListener('click', () => {
-                if (!latexInput.value) return;
-
-                if (isConfirmingClear) {
-                    clearTimeout(clearConfirmTimeout);
-                    latexInput.value = '';
-                    latexInput.focus();
-                    updatePreview();
-                    
-                    isConfirmingClear = false;
-                    clearButton.textContent = 'Borrar código';
-                    clearButton.classList.remove('btn-danger');
-                    clearButton.classList.add('btn-secondary');
-                } else {
-                    isConfirmingClear = true;
-                    clearButton.textContent = 'Confirmar borrado';
-                    clearButton.classList.remove('btn-secondary');
-                    clearButton.classList.add('btn-danger');
-
-                    clearConfirmTimeout = setTimeout(() => {
-                        isConfirmingClear = false;
-                        clearButton.textContent = 'Borrar código';
-                        clearButton.classList.remove('btn-danger');
-                        clearButton.classList.add('btn-secondary');
-                    }, 4000);
-                }
-            });
-
-            viewImageButton.addEventListener('click', handleViewImage);
             tabsContainer.addEventListener('click', handleTabSwitch);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) hideModal();
-            });
-            
+            viewImageButton.addEventListener('click', handleViewImage);
+            imageModal.addEventListener('click', (e) => { if (e.target === imageModal) hideImageModal(); });
+            settingsBtn.addEventListener('click', openSettingsModal);
+            closeSettingsBtn.addEventListener('click', closeSettingsModal);
+            settingsModal.addEventListener('click', (e) => { if(e.target === settingsModal) closeSettingsModal(); });
+            urlInput.addEventListener('change', () => {if(urlInput.value) loadMenuFromUrl(urlInput.value)});
+            fileInput.addEventListener('change', () => { if(fileInput.files.length > 0) loadMenuFromFile(fileInput.files[0]); });
+            restoreDefaultBtn.addEventListener('click', restoreDefaultMenu);
+            alertModalCloseBtn.addEventListener('click', hideAlert);
+            alertModal.addEventListener('click', (e) => { if (e.target === alertModal) hideAlert(); });
+
             // --- INICIALIZACIÓN ---
-            loadSettings();
-            await buildToolbar();
+            loadRecents();
+            await initializeMenu();
             updatePreview();
             addFooter();
-            
-            window.generateCustomMatrix = generateCustomMatrix;
         }
     </script>
 </body>
