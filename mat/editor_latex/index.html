@@ -130,6 +130,7 @@
         #delimiter-selector:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
         .panel-actions { margin-top: 15px; text-align: center; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn-sm { padding: 5px 10px; font-size: 0.85rem; }
         .btn-primary { background: linear-gradient(45deg, var(--primary-color), var(--primary-dark)); color: white; }
         .btn-secondary { background: linear-gradient(45deg, var(--secondary-color), #495057); color: white; }
         .btn-danger { background: linear-gradient(45deg, var(--danger-color), var(--danger-dark)); color: white; }
@@ -138,78 +139,40 @@
         .copy-feedback { color: var(--primary-color); font-weight: 600; margin-top: 10px; height: 20px; opacity: 0; transition: opacity 0.5s ease; text-align: center; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; padding: 20px; }
         .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background: var(--white); padding: 30px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: inline-block; max-width: 90vw; max-height: 90vh; text-align: left; transform: scale(0.9); transition: transform 0.3s; overflow: auto; width: 500px; max-width: 90%;}
+        .modal-content { background: var(--white); padding: 30px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-width: 90vw; max-height: 90vh; text-align: left; transform: scale(0.9); transition: transform 0.3s; width: 600px; }
         .modal-overlay.active .modal-content { transform: scale(1); }
-        .modal-content h2 { text-align: center; margin-top: 0; }
+        .modal-content h2, .modal-content h3 { text-align: center; margin-top: 0; color: var(--text-color); }
+        .modal-content h3 { margin-top: 20px; margin-bottom: 10px; border-top: 1px solid var(--medium-gray); padding-top: 20px; font-size: 1.1rem;}
         #modal-message { margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.5; text-align: center; }
         #modal-message img { display: block; margin: 0 auto; }
         #alert-modal-message p { margin: 0 0 10px 0; }
-        .modal-buttons { display: flex; justify-content: center; gap: 15px; }
+        .modal-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 25px;}
         .modal-content .form-group { margin-bottom: 20px; }
         .modal-content .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
         .modal-content .form-group input { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid var(--medium-gray); font-size: 1rem; }
-        .modal-content .link-group { text-align: center; margin: -10px 0 15px 0; font-size: 0.95em; }
-        .modal-content .link-group a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
-        .modal-content .link-group a:hover { text-decoration: underline; }
         #modal-feedback { font-size: 0.9em; height: 20px; text-align: center; }
+        .modal-body { overflow-y: auto; padding-right: 15px; margin-right: -15px;}
+        .menu-list { list-style: none; padding: 0; margin: 0; }
+        .menu-list li { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; }
+        .menu-list li:nth-child(odd) { background-color: var(--light-gray); }
+        .menu-list-item-name { font-weight: 500; margin-left: 10px; }
         .footer { text-align: center; padding: 30px 20px; color: white; opacity: 0.9; font-size: 0.9rem; }
         .footer a { color: #ffffff; font-weight: 600; text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
-        
-        /* Estilos para el constructor de matrices */
+        #clear-recents-btn-container { text-align: right; margin-top: 10px; }
         .matrix-builder {
-            border: 2px solid var(--medium-gray);
-            border-radius: var(--border-radius);
-            padding: 10px;
-            grid-column: 1 / -1;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: center;
-            gap: 10px 15px;
-            background-color: var(--light-gray);
+            border: 2px solid var(--medium-gray); border-radius: var(--border-radius); padding: 10px; grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 15px; background-color: var(--light-gray);
         }
-        .matrix-builder-group {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .matrix-builder-group label {
-            font-size: 0.9em;
-            font-weight: 500;
-            color: var(--dark-gray);
-            white-space: nowrap;
-        }
-        .matrix-builder-group input, .matrix-builder-group select {
-            padding: 6px;
-            border-radius: 8px;
-            border: 2px solid var(--medium-gray);
-            font-size: 0.9rem;
-            width: 65px;
-        }
-        .matrix-builder-group select {
-            width: auto;
-            min-width: 140px;
-        }
-        .matrix-builder-delimiters {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .matrix-builder-delimiters .btn {
-            padding: 6px 14px;
-            font-size: 1.1rem;
-        }
+        .matrix-builder-group { display: flex; align-items: center; gap: 5px; }
+        .matrix-builder-group label { font-size: 0.9em; font-weight: 500; color: var(--dark-gray); white-space: nowrap; }
+        .matrix-builder-group input, .matrix-builder-group select { padding: 6px; border-radius: 8px; border: 2px solid var(--medium-gray); font-size: 0.9rem; width: 65px; }
+        .matrix-builder-group select { width: auto; min-width: 140px; }
+        .matrix-builder-delimiters { display: flex; align-items: center; gap: 8px; }
+        .matrix-builder-delimiters .btn { padding: 6px 14px; font-size: 1.1rem; }
 
         @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
         @media (max-width: 600px) {
-            .header h1 { font-size: 2rem; }
-            .tab-btn { padding: 12px 15px; font-size: 14px; }
-            .container { padding: 10px; }
-            .modal-content { padding: 20px; }
-            .matrix-builder {
-                justify-content: flex-start;
-            }
+            .header h1 { font-size: 2rem; } .tab-btn { padding: 12px 15px; font-size: 14px; } .container { padding: 10px; } .modal-content { padding: 20px; } .matrix-builder { justify-content: flex-start; }
         }
     </style>
 </head>
@@ -277,22 +240,31 @@
     </div>
     <div id="settings-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>Personalizar Menú</h2>
-            <div class="form-group">
-                <label for="url-input">Cargar menú desde URL</label>
-                <input type="url" id="url-input" placeholder="https://ejemplo.com/formulas.json">
+            <h2>Gestionar menús</h2>
+            <div class="modal-body">
+                <h3>Menús disponibles</h3>
+                <ul id="available-menus-list" class="menu-list"><li>Cargando...</li></ul>
+                <div class="modal-buttons" style="justify-content: flex-end; margin-top: 10px;">
+                    <button id="reload-menus-list-btn" class="btn btn-sm btn-secondary">Recargar lista</button>
+                </div>
+
+                <h3>Carga personalizada</h3>
+                <div class="form-group">
+                    <label for="url-input">Cargar menú desde URL externa</label>
+                    <input type="url" id="url-input" placeholder="https://ejemplo.com/formulas.json">
+                </div>
+                <div class="form-group">
+                    <label for="file-input">Cargar menú desde archivo local</label>
+                    <input type="file" id="file-input" accept=".json,application/json">
+                </div>
+                 <h3>Acciones</h3>
+                <div id="modal-feedback" style="margin-bottom: 15px;"></div>
+                <div class="modal-buttons" style="flex-wrap: wrap;">
+                    <button id="clear-cache-btn" class="btn btn-secondary">Limpiar caché y recargar</button>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="file-input">Cargar menú desde archivo local</label>
-                <input type="file" id="file-input" accept=".json,application/json">
-            </div>
-            <div class="link-group">
-                <a href="./editor_menu.html" target="_blank" rel="noopener noreferrer">Con este programa podrás personalizar tu propio menú.</a>
-            </div>
-            <div id="modal-feedback"></div>
             <div class="modal-buttons">
-                <button id="restore-default-btn" class="btn btn-secondary">Restaurar por defecto</button>
-                <button id="close-settings-btn" class="btn btn-danger">Cerrar</button>
+                <button id="close-settings-btn" class="btn btn-primary">Cerrar</button>
             </div>
         </div>
     </div>
@@ -308,7 +280,7 @@
 
     <script>
         async function initializeLatexEditor() {
-            // Referencias a elementos del DOM
+            // --- REFERENCIAS AL DOM ---
             const latexInput = document.getElementById('latex-input');
             const preview = document.getElementById('preview');
             const copyButton = document.getElementById('copy-button');
@@ -320,38 +292,45 @@
             const toolbar = document.getElementById('toolbar');
             const searchInput = document.getElementById('search-input');
             const clearSearchBtn = document.getElementById('clear-search-btn');
-            const imageModal = document.getElementById('image-modal');
-            const modalMessage = document.getElementById('modal-message');
-            const modalButtons = document.getElementById('modal-buttons');
             const settingsBtn = document.getElementById('settings-btn');
             const settingsModal = document.getElementById('settings-modal');
             const closeSettingsBtn = document.getElementById('close-settings-btn');
             const urlInput = document.getElementById('url-input');
             const fileInput = document.getElementById('file-input');
-            const restoreDefaultBtn = document.getElementById('restore-default-btn');
             const modalFeedback = document.getElementById('modal-feedback');
             const alertModal = document.getElementById('alert-modal');
             const alertModalTitle = document.getElementById('alert-modal-title');
             const alertModalMessage = document.getElementById('alert-modal-message');
             const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
-
+            const availableMenusList = document.getElementById('available-menus-list');
+            const reloadMenusListBtn = document.getElementById('reload-menus-list-btn');
+            const clearCacheBtn = document.getElementById('clear-cache-btn');
+            
             // --- CONFIGURACIÓN ---
-            const DEFAULT_MENU_URL = 'https://raw.githubusercontent.com/jjdeharo/app/refs/heads/main/mat/editor_latex/formulas.json';
-            const LOCAL_MENU_URL = './formulas.json';
+            const GITHUB_API_URL = 'https://api.github.com/repos/jjdeharo/app/contents/mat/editor_latex/docs';
+            const DEFAULT_MENU_GITHUB_URL = 'https://raw.githubusercontent.com/jjdeharo/app/main/mat/editor_latex/formulas.json';
+            const DEFAULT_MENU_LOCAL_URL = './formulas.json';
             const MAX_RECENTS = 12;
 
             // --- ESTADO DE LA APLICACIÓN ---
-            let toolbarData = null;
+            let loadedMenus = new Map();
+            let menuCache = new Map();
+            let githubMenuListCache = null;
             let recentSymbols = [];
             
-            // --- GESTIÓN DE LOCALSTORAGE Y DATOS RECIENTES ---
-            function loadRecents() {
+            // --- GESTIÓN DE DATOS Y ESTADO (Recientes y Menús) ---
+            const loadRecents = () => {
                 recentSymbols = JSON.parse(localStorage.getItem('latexRecents')) || [];
-            }
-            function saveRecents() {
+            };
+            const saveRecents = () => {
                 localStorage.setItem('latexRecents', JSON.stringify(recentSymbols));
-            }
-            function createRecentsTab() {
+            };
+            const clearRecents = () => {
+                recentSymbols = [];
+                localStorage.removeItem('latexRecents');
+                rebuildToolbarAndUI();
+            };
+            const createRecentsTab = () => {
                 if (document.querySelector('[data-tab="recientes"]')) return;
                 const recentsTabButton = document.createElement('button');
                 recentsTabButton.className = 'tab-btn';
@@ -362,21 +341,247 @@
                 recentsContentDiv.id = 'tab-recientes';
                 recentsContentDiv.className = 'tab-content';
                 toolbar.prepend(recentsContentDiv);
-            }
-            function trackSymbolUsage(latexCode) {
-                if (recentSymbols.length === 0) createRecentsTab();
+            };
+            const trackSymbolUsage = (latexCode) => {
+                const wasEmpty = recentSymbols.length === 0;
                 recentSymbols = recentSymbols.filter(item => item !== latexCode);
                 recentSymbols.unshift(latexCode);
                 if (recentSymbols.length > MAX_RECENTS) recentSymbols = recentSymbols.slice(0, MAX_RECENTS);
                 saveRecents();
-                const recentsContent = document.getElementById('tab-recientes');
-                if (recentsContent) {
-                    recentsContent.innerHTML = '';
-                    renderTabContent('recientes');
+                if (wasEmpty) {
+                    rebuildToolbarAndUI();
+                } else {
+                    const recentsContent = document.getElementById('tab-recientes');
+                    if (recentsContent && recentsContent.classList.contains('active')) {
+                        renderTabContent('recientes', getAllCategories());
+                    }
                 }
-            }
-            
-            // --- FUNCIONES DE MODALES ---
+            };
+            const saveAddedMenusToStorage = () => {
+                const added = Array.from(loadedMenus.values())
+                    .filter(m => m.source !== 'default' && m.source !== 'localfile')
+                    .map(m => ({ id: m.id, url: m.url, source: m.source, name: m.name }));
+                localStorage.setItem('latexAddedMenus', JSON.stringify(added));
+            };
+            const loadAddedMenusFromStorage = () => {
+                return JSON.parse(localStorage.getItem('latexAddedMenus')) || [];
+            };
+
+            // --- LÓGICA DE CARGA Y GESTIÓN DE MENÚS ---
+            const fetchMenuData = async (url) => {
+                if (menuCache.has(url)) return menuCache.get(url);
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+                    menuCache.set(url, data);
+                    return data;
+                } catch (error) {
+                    console.error(`Error fetching menu from ${url}:`, error);
+                    showModalFeedback(`Error al cargar ${url}`, true);
+                    return null;
+                }
+            };
+            const addMenu = async (menuInfo) => {
+                if (loadedMenus.has(menuInfo.id)) return;
+                const data = await fetchMenuData(menuInfo.url);
+                if (data) {
+                    loadedMenus.set(menuInfo.id, { ...menuInfo, data });
+                    rebuildToolbarAndUI();
+                    saveAddedMenusToStorage();
+                }
+            };
+            const removeMenu = (menuId) => {
+                if (loadedMenus.has(menuId) && loadedMenus.get(menuId).source !== 'default') {
+                    loadedMenus.delete(menuId);
+                    rebuildToolbarAndUI();
+                    saveAddedMenusToStorage();
+                }
+            };
+            const getAllCategories = () => {
+                const allCategories = new Map();
+                const menuOrder = ['default', 'github', 'url', 'localfile'];
+                const sortedMenus = Array.from(loadedMenus.values()).sort((a,b) => menuOrder.indexOf(a.source) - menuOrder.indexOf(b.source));
+
+                for (const menu of sortedMenus) {
+                    if (!menu.data || !menu.data.categorias) continue;
+                    for (const categoria of menu.data.categorias) {
+                        if (!allCategories.has(categoria.id)) {
+                             allCategories.set(categoria.id, { ...categoria, elementos: [...categoria.elementos] });
+                        } else {
+                            const existingCategory = allCategories.get(categoria.id);
+                            existingCategory.elementos.push(...categoria.elementos);
+                        }
+                    }
+                }
+                return allCategories;
+            };
+            const rebuildToolbarAndUI = () => {
+                tabsContainer.innerHTML = '';
+                toolbar.innerHTML = '';
+                const allCategories = getAllCategories();
+                let isFirstTab = true;
+                if (recentSymbols.length > 0) {
+                    createRecentsTab();
+                    tabsContainer.querySelector('[data-tab="recientes"]').classList.add('active');
+                    toolbar.querySelector('#tab-recientes').classList.add('active');
+                    isFirstTab = false;
+                }
+                allCategories.forEach((categoria) => {
+                    const tabButton = document.createElement('button');
+                    tabButton.className = 'tab-btn';
+                    tabButton.dataset.tab = categoria.id;
+                    tabButton.textContent = categoria.nombre;
+                    tabsContainer.appendChild(tabButton);
+                    const contentDiv = document.createElement('div');
+                    contentDiv.id = `tab-${categoria.id}`;
+                    contentDiv.className = 'tab-content';
+                    toolbar.appendChild(contentDiv);
+                    if (isFirstTab) {
+                        tabButton.classList.add('active');
+                        contentDiv.classList.add('active');
+                        isFirstTab = false;
+                    }
+                });
+                const activeTab = tabsContainer.querySelector('.tab-btn.active');
+                if (activeTab) {
+                    renderTabContent(activeTab.dataset.tab, allCategories);
+                }
+                loadAndDisplayAvailableMenus();
+            };
+            const initializeApp = async () => {
+                loadRecents();
+                loadedMenus.clear();
+                menuCache.clear();
+                githubMenuListCache = null;
+                let baseMenuData;
+                try {
+                    const response = await fetch(DEFAULT_MENU_LOCAL_URL);
+                    if (!response.ok) throw new Error("Local default not found");
+                    baseMenuData = await response.json();
+                    console.log("Default menu loaded from local file.");
+                } catch (e) {
+                    console.warn("Local default menu not found, fetching from GitHub fallback.");
+                    baseMenuData = await fetchMenuData(DEFAULT_MENU_GITHUB_URL);
+                }
+                if(baseMenuData) {
+                    loadedMenus.set('formulas.json', { id: 'formulas.json', url: DEFAULT_MENU_GITHUB_URL, source: 'default', name: 'Base', data: baseMenuData });
+                }
+                const previouslyAdded = loadAddedMenusFromStorage();
+                for (const menuInfo of previouslyAdded) {
+                    const data = await fetchMenuData(menuInfo.url);
+                    if (data) {
+                        loadedMenus.set(menuInfo.id, { ...menuInfo, data });
+                    }
+                }
+                rebuildToolbarAndUI();
+                updatePreview();
+                addFooter();
+            };
+
+            // --- LÓGICA DE LA INTERFAZ DE USUARIO (UI) ---
+            const renderAvailableMenus = (menuItemsMap) => {
+                availableMenusList.innerHTML = '';
+                if(menuItemsMap.size === 0) {
+                     availableMenusList.innerHTML = '<li>No se encontraron menús.</li>';
+                     return;
+                }
+
+                menuItemsMap.forEach(menu => {
+                    const li = document.createElement('li');
+                    
+                    if (menu.source === 'error') {
+                        li.textContent = menu.name;
+                        li.style.color = 'var(--danger-color)'; li.style.justifyContent = 'center'; li.style.fontStyle = 'italic';
+                        availableMenusList.appendChild(li);
+                        return;
+                    }
+
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `menu-checkbox-${menu.id}`;
+                    checkbox.checked = loadedMenus.has(menu.id);
+                    checkbox.dataset.id = menu.id;
+                    checkbox.dataset.url = menu.url;
+                    checkbox.dataset.name = menu.name;
+                    checkbox.dataset.source = menu.source;
+
+                    const label = document.createElement('label');
+                    label.htmlFor = `menu-checkbox-${menu.id}`;
+                    label.className = 'menu-list-item-name';
+                    label.textContent = menu.name || menu.id;
+                    
+                    if(menu.source === 'default') {
+                        checkbox.disabled = true;
+                        label.innerHTML += ` <em style="font-weight:normal; font-size:0.9em; color: var(--secondary-color)">(Base)</em>`;
+                    }
+
+                    li.appendChild(checkbox);
+                    li.appendChild(label);
+                    availableMenusList.appendChild(li);
+                });
+            };
+            const loadAndDisplayAvailableMenus = async (forceRefetch = false) => {
+                if (!forceRefetch && githubMenuListCache) {
+                    renderAvailableMenus(githubMenuListCache);
+                    return;
+                }
+
+                availableMenusList.innerHTML = '<li>Cargando...</li>';
+                const menuItems = new Map();
+
+                const baseMenu = loadedMenus.get('formulas.json');
+                if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
+
+                try {
+                    const response = await fetch(GITHUB_API_URL);
+                    if (!response.ok) throw new Error(`Error al contactar con GitHub: ${response.statusText}`);
+                    const files = await response.json();
+                    if (!Array.isArray(files)) throw new Error('La respuesta de la API de GitHub no es válida.');
+                    
+                    const jsonFiles = files.filter(file => file.name.endsWith('.json') && file.type === 'file');
+                    jsonFiles.forEach(file => {
+                         menuItems.set(file.name, {
+                             id: file.name,
+                             name: file.name.replace('.json', '').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()),
+                             url: file.download_url,
+                             source: 'github'
+                         });
+                    });
+                } catch(e) {
+                    console.error(e.message);
+                    const errorItem = { id: 'error-github-api', name: `No se pudo cargar la lista de menús.`, source: 'error' };
+                    menuItems.set(errorItem.id, errorItem);
+                }
+                
+                for (const menu of loadedMenus.values()){
+                     if (!menuItems.has(menu.id)) {
+                        menuItems.set(menu.id, {...menu});
+                    }
+                }
+                
+                githubMenuListCache = menuItems;
+                renderAvailableMenus(githubMenuListCache);
+            };
+
+            availableMenusList.addEventListener('change', (e) => {
+                const checkbox = e.target;
+                if(checkbox.type !== 'checkbox') return;
+                
+                const menuInfo = {
+                    id: checkbox.dataset.id,
+                    url: checkbox.dataset.url,
+                    name: checkbox.dataset.name,
+                    source: checkbox.dataset.source
+                };
+
+                if (checkbox.checked) {
+                    addMenu(menuInfo);
+                } else {
+                    removeMenu(menuInfo.id);
+                }
+            });
+
             function showAlert(title, htmlMessage) {
                 alertModalTitle.textContent = title;
                 alertModalMessage.innerHTML = htmlMessage;
@@ -384,6 +589,8 @@
             }
             function hideAlert() { alertModal.classList.remove('active'); }
             function showImageModal(message, buttons) {
+                const modalMessage = document.getElementById('modal-message');
+                const modalButtons = document.getElementById('modal-buttons');
                 modalMessage.innerHTML = message;
                 modalButtons.innerHTML = '';
                 buttons.forEach(btnInfo => {
@@ -392,125 +599,23 @@
                     button.className = `btn ${btnInfo.class}`;
                     button.onclick = () => {
                         if(btnInfo.action) btnInfo.action();
-                        hideImageModal();
+                        document.getElementById('image-modal').classList.remove('active');
                     };
                     modalButtons.appendChild(button);
                 });
-                imageModal.classList.add('active');
+                document.getElementById('image-modal').classList.add('active');
             }
-            function hideImageModal() { imageModal.classList.remove('active'); }
-            function openSettingsModal() { settingsModal.classList.add('active'); }
+            function openSettingsModal() { 
+                loadAndDisplayAvailableMenus();
+                settingsModal.classList.add('active'); 
+            }
             function closeSettingsModal() { settingsModal.classList.remove('active'); }
             function showModalFeedback(message, isError = false) {
                 modalFeedback.textContent = message;
                 modalFeedback.style.color = isError ? 'var(--danger-color)' : 'var(--success-color)';
                 setTimeout(() => modalFeedback.textContent = '', 3000);
             }
-
-            // --- LÓGICA DE CARGA DE MENÚ ---
-            async function initializeMenu() {
-                const customUrl = localStorage.getItem('latexCustomMenuUrl');
-                if (customUrl) {
-                    await loadMenuFromUrl(customUrl);
-                    return;
-                }
-                try {
-                    const response = await fetch(LOCAL_MENU_URL);
-                    if (!response.ok) throw new Error('Menú local no encontrado');
-                    const data = await response.json();
-                    rebuildToolbar(data);
-                    console.log("Menú local (formulas.json) cargado con éxito.");
-                } catch (error) {
-                    console.warn("No se pudo cargar el menú local. Cargando menú por defecto.", error);
-                    await loadMenuFromUrl(DEFAULT_MENU_URL, true);
-                }
-            }
-            function rebuildToolbar(data) {
-                if (!data || !Array.isArray(data.categorias)) {
-                    showModalFeedback('El archivo JSON no tiene el formato correcto.', true);
-                    return false;
-                }
-                toolbarData = data;
-                allTabsRenderedForSearch = false;
-                tabsContainer.innerHTML = '';
-                toolbar.innerHTML = '';
-                let isFirstTab = true;
-                if (recentSymbols.length > 0) {
-                    createRecentsTab();
-                    tabsContainer.querySelector('[data-tab="recientes"]').classList.add('active');
-                    toolbar.querySelector('#tab-recientes').classList.add('active');
-                    isFirstTab = false;
-                }
-                toolbarData.categorias.forEach((categoria) => {
-                    const tabButton = document.createElement('button');
-                    tabButton.className = 'tab-btn';
-                    const contentDiv = document.createElement('div');
-                    contentDiv.id = `tab-${categoria.id}`;
-                    contentDiv.className = 'tab-content';
-                    if (isFirstTab) {
-                       tabButton.classList.add('active');
-                       contentDiv.classList.add('active');
-                       isFirstTab = false;
-                    }
-                    tabButton.dataset.tab = categoria.id;
-                    tabButton.textContent = categoria.nombre;
-                    tabsContainer.appendChild(tabButton);
-                    toolbar.appendChild(contentDiv);
-                });
-                const activeTab = tabsContainer.querySelector('.tab-btn.active');
-                if(activeTab) renderTabContent(activeTab.dataset.tab);
-                return true;
-            }
-            async function loadMenuFromUrl(url, showLocalFailNotification = false) {
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`Error HTTP: ${response.status}`);
-                    const data = await response.json();
-                    if (rebuildToolbar(data)) {
-                        if (url !== DEFAULT_MENU_URL) {
-                            localStorage.setItem('latexCustomMenuUrl', url);
-                            showModalFeedback('Menú cargado desde URL correctamente.');
-                        }
-                        urlInput.value = localStorage.getItem('latexCustomMenuUrl') || '';
-                        if (showLocalFailNotification) {
-                             showAlert(
-                                'Aviso de carga de menú',
-                                `<p>No se pudo cargar el menú local <code>${LOCAL_MENU_URL}</code>.</p>
-                                <p style="font-size: 0.9em;">Esto suele ocurrir al abrir el archivo HTML directamente desde el ordenador. Para usar un menú local, la aplicación debe ejecutarse en un servidor web.</p>
-                                <p>Se ha cargado el menú por defecto. Puede usar el botón de configuración (⚙️) para cargar un menú personalizado desde una URL o un archivo.</p>`
-                            );
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error cargando menú desde URL:", error);
-                    showModalFeedback('No se pudo cargar o procesar la URL.', true);
-                }
-            }
-            function loadMenuFromFile(file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    try {
-                        const data = JSON.parse(event.target.result);
-                        if (rebuildToolbar(data)) {
-                            localStorage.removeItem('latexCustomMenuUrl');
-                            showModalFeedback(`Menú cargado desde "${file.name}".`);
-                            urlInput.value = '';
-                        }
-                    } catch (error) {
-                         showModalFeedback('El archivo no es un JSON válido.', true);
-                    }
-                };
-                reader.readAsText(file);
-            }
-            function restoreDefaultMenu() {
-                localStorage.removeItem('latexCustomMenuUrl');
-                urlInput.value = '';
-                loadMenuFromUrl(DEFAULT_MENU_URL);
-                showModalFeedback('Menú por defecto restaurado.');
-            }
-            
-            // --- FUNCIONES DEL EDITOR ---
-            function updatePreview() {
+             function updatePreview() {
                 preview.innerHTML = latexInput.value.trim() === "" ? "" : `$$${latexInput.value.trim()}$$`;
                 MathJax.typesetPromise([preview]).catch(err => {
                     preview.innerHTML = `<span style="color:red;">Error de sintaxis</span>`;
@@ -566,8 +671,6 @@
                     showImageModal(messageContainer.innerHTML, [{text: 'Cerrar', class: 'btn-secondary'}]);
                 });
             }
-            
-            // --- LÓGICA CONSTRUCTOR DE MATRICES ---
             function createMatrixBuilderUI(elemento) {
                 const container = document.createElement('div');
                 container.className = 'matrix-builder';
@@ -599,20 +702,16 @@
                         <button class="btn" data-delimiter="Vmatrix">|||</button>
                     </div>
                 `;
-
                 container.querySelector('.matrix-builder-delimiters').addEventListener('click', (e) => {
                     const button = e.target.closest('button');
                     if (!button) return;
-                    
                     const rows = parseInt(container.querySelector('#mb-rows').value, 10);
                     const cols = parseInt(container.querySelector('#mb-cols').value, 10);
                     const fillType = container.querySelector('#mb-fill').value;
                     const delimiter = button.dataset.delimiter;
-
                     const matrixCode = generateMatrixCode(rows, cols, fillType, delimiter);
                     insertAtCursor(matrixCode);
                 });
-
                 return container;
             }
             function generateMatrixCode(rows, cols, fillType, delimiter) {
@@ -620,7 +719,6 @@
                 let content = '';
                 const alphabet = 'abcdefghijklmnopqrstuvwxyz';
                 let counter = 0;
-
                 for (let i = 1; i <= rows; i++) {
                     for (let j = 1; j <= cols; j++) {
                         let cell;
@@ -639,43 +737,56 @@
                 }
                 return `\\begin{${delimiter}}\n  ${content}\n\\end{${delimiter}}`;
             }
-
-            // --- LÓGICA DE PESTAÑAS Y BÚSQUEDA ---
             function normalizeString(str) {
                 if (typeof str !== 'string') return '';
                 return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
             }
-
-            function renderTabContent(tabId) {
+            function renderTabContent(tabId, allCategories) {
                 const contentDiv = document.getElementById(`tab-${tabId}`);
-                if (!contentDiv || contentDiv.childElementCount > 0) return;
+                if (!contentDiv) return;
+                contentDiv.innerHTML = '';
+
                 let elementsToRender = [];
                 let gridColumns = "repeat(auto-fill, minmax(80px, 1fr))";
+
                 if (tabId === 'recientes') {
-                    gridColumns = `repeat(${Math.min(MAX_RECENTS, 6)}, 1fr)`;
+                    if (recentSymbols.length === 0) {
+                         contentDiv.innerHTML = `<p style="color: var(--dark-gray); grid-column: 1 / -1; text-align:center;">Aún no hay símbolos recientes.</p>
+                         <div id="clear-recents-btn-container" style="grid-column: 1 / -1;"><button id="clear-recents-btn" class="btn btn-sm btn-danger">Borrar recientes</button></div>`;
+                         document.getElementById('clear-recents-btn').onclick = clearRecents;
+                         return;
+                    }
                     recentSymbols.forEach(latexCode => {
-                        for (const categoria of toolbarData.categorias) {
-                            const found = categoria.elementos.find(el => el.latex === latexCode);
-                            if (found) { elementsToRender.push(found); break; }
+                        let symbolFound = false;
+                        for (const menu of loadedMenus.values()) {
+                            if (symbolFound) break;
+                            if (!menu.data || !menu.data.categorias) continue;
+                            for (const categoria of menu.data.categorias) {
+                                if (symbolFound) break;
+                                const found = categoria.elementos.find(el => el && el.latex === latexCode);
+                                if (found) {
+                                    elementsToRender.push(found);
+                                    symbolFound = true;
+                                }
+                            }
                         }
                     });
-                     if (elementsToRender.length === 0) {
-                        contentDiv.innerHTML = '<p style="color: var(--dark-gray); grid-column: 1 / -1; text-align:center;">Aún no hay símbolos recientes.</p>';
-                        return;
-                    }
                 } else {
-                    const categoria = toolbarData.categorias.find(c => c.id === tabId);
+                    const categoria = allCategories.get(tabId);
                     if (categoria) {
                         elementsToRender = categoria.elementos;
                         gridColumns = categoria.grid_template_columns || gridColumns;
                     }
                 }
+                
                 contentDiv.style.gridTemplateColumns = gridColumns;
+
                 elementsToRender.forEach(elemento => {
+                    if (!elemento) return;
                     if (elemento.type === 'custom_matrix') {
                         const matrixBuilder = createMatrixBuilderUI(elemento);
                         contentDiv.appendChild(matrixBuilder);
-                    } else {
+                    } else if (elemento.latex) {
                         const button = document.createElement('button');
                         button.className = 'toolbar-btn';
                         button.dataset.latex = elemento.latex;
@@ -684,6 +795,20 @@
                         contentDiv.appendChild(button);
                     }
                 });
+                
+                if (tabId === 'recientes' && recentSymbols.length > 0) {
+                     const clearBtnContainer = document.createElement('div');
+                     clearBtnContainer.id = 'clear-recents-btn-container';
+                     clearBtnContainer.style.gridColumn = '1 / -1';
+                     const clearBtn = document.createElement('button');
+                     clearBtn.id = 'clear-recents-btn';
+                     clearBtn.className = 'btn btn-sm btn-danger';
+                     clearBtn.textContent = 'Borrar recientes';
+                     clearBtn.onclick = clearRecents;
+                     clearBtnContainer.appendChild(clearBtn);
+                     contentDiv.appendChild(clearBtnContainer);
+                }
+
                 MathJax.typesetPromise(contentDiv.querySelectorAll('.toolbar-btn'));
             }
             function handleTabSwitch(event) {
@@ -694,20 +819,19 @@
                 button.classList.add('active');
                 const tabId = button.dataset.tab;
                 document.getElementById(`tab-${tabId}`).classList.add('active');
-                renderTabContent(tabId);
+                renderTabContent(tabId, getAllCategories());
             }
             let allTabsRenderedForSearch = false;
             searchInput.addEventListener('input', (e) => {
                 const hasText = e.target.value.length > 0;
                 clearSearchBtn.style.display = hasText ? 'block' : 'none';
-
                 const query = normalizeString(e.target.value.trim());
                 tabsContainer.parentElement.classList.toggle('search-results-view', query.length > 0);
                 
                 if (query.length > 0) {
                     if (!allTabsRenderedForSearch) {
-                        if (recentSymbols.length > 0) renderTabContent('recientes');
-                        toolbarData.categorias.forEach(cat => renderTabContent(cat.id));
+                        const allCategories = getAllCategories();
+                        allCategories.forEach(cat => renderTabContent(cat.id, allCategories));
                         allTabsRenderedForSearch = true;
                     }
                     toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
@@ -721,12 +845,12 @@
                         builder.style.display = title.includes(query) ? 'flex' : 'none';
                     });
                 } else {
+                     allTabsRenderedForSearch = false;
                     toolbar.querySelectorAll('.toolbar-btn').forEach(btn => { btn.style.display = 'flex'; });
                     toolbar.querySelectorAll('.matrix-builder').forEach(builder => { builder.style.display = 'flex'; });
+                    rebuildToolbarAndUI();
                 }
             });
-
-            // --- FOOTER ---
             function addFooter() {
                 const footer = document.getElementById('page-footer');
                 footer.innerHTML = `
@@ -737,7 +861,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.7</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.4</p>
                 `;
             }
 
@@ -748,17 +872,14 @@
                 if (button && button.dataset.latex) insertAtCursor(button.dataset.latex);
             });
             tabsContainer.addEventListener('click', handleTabSwitch);
-            
             clearSearchBtn.addEventListener('click', () => {
                 searchInput.value = '';
                 searchInput.dispatchEvent(new Event('input', { bubbles: true }));
                 searchInput.focus();
             });
-
             copyButton.addEventListener('click', () => {
                 const rawLatex = latexInput.value.trim();
                 if (!rawLatex) return;
-
                 let textToCopy;
                 switch (delimiterSelector.value) {
                     case 'parentheses': textToCopy = `\\(${rawLatex}\\)`; break;
@@ -768,34 +889,56 @@
                     default: textToCopy = rawLatex;
                 }
                 navigator.clipboard.writeText(textToCopy);
-
                 copyCodeFeedback.textContent = '¡Código copiado!';
                 copyCodeFeedback.style.opacity = '1';
                 setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
             });
-
             clearButton.addEventListener('click', () => {
                 latexInput.value = '';
                 latexInput.focus();
                 updatePreview();
             });
-
             viewImageButton.addEventListener('click', handleViewImage);
-            imageModal.addEventListener('click', (e) => { if (e.target === imageModal) hideImageModal(); });
+            document.getElementById('image-modal').addEventListener('click', (e) => { if (e.target.id === 'image-modal') document.getElementById('image-modal').classList.remove('active'); });
             settingsBtn.addEventListener('click', openSettingsModal);
             closeSettingsBtn.addEventListener('click', closeSettingsModal);
             settingsModal.addEventListener('click', (e) => { if(e.target === settingsModal) closeSettingsModal(); });
-            urlInput.addEventListener('change', () => {if(urlInput.value) loadMenuFromUrl(urlInput.value)});
-            fileInput.addEventListener('change', () => { if(fileInput.files.length > 0) loadMenuFromFile(fileInput.files[0]); });
-            restoreDefaultBtn.addEventListener('click', restoreDefaultMenu);
+            urlInput.addEventListener('change', () => {
+                if(urlInput.value) {
+                    const menuInfo = {id: urlInput.value, url: urlInput.value, source: 'url', name: urlInput.value};
+                    addMenu(menuInfo).then(() => loadAndDisplayAvailableMenus());
+                    urlInput.value = '';
+                }
+            });
+            fileInput.addEventListener('change', () => { 
+                if(fileInput.files.length > 0) {
+                     const file = fileInput.files[0];
+                     const reader = new FileReader();
+                     reader.onload = (event) => {
+                        try {
+                            const data = JSON.parse(event.target.result);
+                            const menuInfo = {id: file.name, url: file.name, source: 'localfile', name: file.name, data: data };
+                            loadedMenus.set(file.name, menuInfo);
+                            rebuildToolbarAndUI();
+                        } catch (error) {
+                             showModalFeedback('El archivo no es un JSON válido.', true);
+                        }
+                    };
+                    reader.readAsText(file);
+                    fileInput.value = '';
+                }
+            });
+            reloadMenusListBtn.addEventListener('click', () => loadAndDisplayAvailableMenus(true));
+            clearCacheBtn.addEventListener('click', () => {
+                menuCache.clear();
+                githubMenuListCache = null;
+                showModalFeedback('Caché limpiada. Los menús se recargarán desde su origen.');
+                initializeApp();
+            });
             alertModalCloseBtn.addEventListener('click', hideAlert);
             alertModal.addEventListener('click', (e) => { if (e.target === alertModal) hideAlert(); });
 
-            // --- INICIALIZACIÓN ---
-            loadRecents();
-            await initializeMenu();
-            updatePreview();
-            addFooter();
+            initializeApp();
         }
     </script>
 </body>
