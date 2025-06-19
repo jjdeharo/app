@@ -136,8 +136,75 @@
         .footer { text-align: center; padding: 30px 20px; color: white; opacity: 0.9; font-size: 0.9rem; }
         .footer a { color: #ffffff; font-weight: 600; text-decoration: none; }
         .footer a:hover { text-decoration: underline; }
+        
+        /* Estilos para el constructor de matrices */
+        .matrix-builder {
+            border: 2px solid var(--medium-gray);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-areas:
+                "title title"
+                "rows cols"
+                "fill fill"
+                "delimiters delimiters";
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            background-color: var(--light-gray);
+        }
+        .matrix-builder-title {
+            grid-area: title;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin: 0;
+        }
+        .matrix-builder-group { display: flex; flex-direction: column; gap: 5px; }
+        .matrix-builder-group label { font-size: 0.9em; font-weight: 500; color: var(--dark-gray); }
+        .matrix-builder-group input, .matrix-builder-group select {
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--medium-gray);
+            width: 100%;
+            font-size: 1rem;
+        }
+        #matrix-rows { grid-area: rows; }
+        #matrix-cols { grid-area: cols; }
+        #matrix-fill { grid-area: fill; }
+        .matrix-builder-delimiters {
+            grid-area: delimiters;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+        .matrix-builder-delimiters .btn {
+            flex-grow: 1;
+            padding: 10px 5px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .matrix-builder-delimiters .btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
         @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
-        @media (max-width: 600px) { .header h1 { font-size: 2rem; } .tab-btn { padding: 12px 15px; font-size: 14px; } .container { padding: 10px; } .modal-content { padding: 20px; } }
+        @media (max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .tab-btn { padding: 12px 15px; font-size: 14px; }
+            .container { padding: 10px; }
+            .modal-content { padding: 20px; }
+            .matrix-builder { grid-template-areas: "title" "rows" "cols" "fill" "delimiters"; grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -447,6 +514,7 @@
                 latexInput.selectionStart = latexInput.selectionEnd = startPos + (cursorPos !== -1 ? cursorPos + 1 : textToInsert.length);
                 latexInput.focus();
                 updatePreview();
+                if (textToInsert.includes('\\begin{')) return; // No registrar matrices enteras como recientes
                 trackSymbolUsage(textToInsert);
             }
             function generateImage(callback) {
@@ -488,6 +556,79 @@
                     showImageModal(messageContainer.innerHTML, [{text: 'Cerrar', class: 'btn-secondary'}]);
                 });
             }
+            
+            // --- LÓGICA CONSTRUCTOR DE MATRICES ---
+            function createMatrixBuilderUI(elemento) {
+                const container = document.createElement('div');
+                container.className = 'matrix-builder';
+                container.innerHTML = `
+                    <h3 class="matrix-builder-title">${elemento.title || 'Matriz personalizada'}</h3>
+                    <div class="matrix-builder-group" id="matrix-rows">
+                        <label for="mb-rows">Filas:</label>
+                        <input type="number" id="mb-rows" value="2" min="1" max="20">
+                    </div>
+                    <div class="matrix-builder-group" id="matrix-cols">
+                        <label for="mb-cols">Columnas:</label>
+                        <input type="number" id="mb-cols" value="2" min="1" max="20">
+                    </div>
+                    <div class="matrix-builder-group" id="matrix-fill">
+                        <label for="mb-fill">Rellenar con:</label>
+                        <select id="mb-fill">
+                            <option value="subscripts">Subíndices (a, b...)</option>
+                            <option value="zeros">Ceros (0)</option>
+                            <option value="ones">Unos (1)</option>
+                            <option value="vars">Variables (a, b, c...)</option>
+                            <option value="numbers">Números (1, 2, 3...)</option>
+                            <option value="empty">Vacío ({})</option>
+                        </select>
+                    </div>
+                    <div class="matrix-builder-delimiters">
+                        <button class="btn" data-delimiter="pmatrix">()</button>
+                        <button class="btn" data-delimiter="bmatrix">[]</button>
+                        <button class="btn" data-delimiter="vmatrix">||</button>
+                        <button class="btn" data-delimiter="Vmatrix">|||</button>
+                    </div>
+                `;
+
+                container.querySelector('.matrix-builder-delimiters').addEventListener('click', (e) => {
+                    const button = e.target.closest('button');
+                    if (!button) return;
+                    
+                    const rows = parseInt(container.querySelector('#mb-rows').value, 10);
+                    const cols = parseInt(container.querySelector('#mb-cols').value, 10);
+                    const fillType = container.querySelector('#mb-fill').value;
+                    const delimiter = button.dataset.delimiter;
+
+                    const matrixCode = generateMatrixCode(rows, cols, fillType, delimiter);
+                    insertAtCursor(matrixCode);
+                });
+
+                return container;
+            }
+            function generateMatrixCode(rows, cols, fillType, delimiter) {
+                if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) return '';
+                let content = '';
+                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
+                let counter = 0;
+
+                for (let i = 1; i <= rows; i++) {
+                    for (let j = 1; j <= cols; j++) {
+                        let cell;
+                        switch(fillType) {
+                            case 'subscripts': cell = `a_{${i}${j}}`; break;
+                            case 'zeros': cell = '0'; break;
+                            case 'ones': cell = '1'; break;
+                            case 'vars': cell = alphabet[counter % alphabet.length]; counter++; break;
+                            case 'numbers': cell = (counter + 1).toString(); counter++; break;
+                            case 'empty': cell = '{}'; break;
+                            default: cell = '';
+                        }
+                        content += cell + (j < cols ? ' & ' : '');
+                    }
+                    if (i < rows) content += ' \\\\\n  ';
+                }
+                return `\\begin{${delimiter}}\n  ${content}\n\\end{${delimiter}}`;
+            }
 
             // --- LÓGICA DE PESTAÑAS Y BÚSQUEDA ---
             function renderTabContent(tabId) {
@@ -516,12 +657,17 @@
                 }
                 contentDiv.style.gridTemplateColumns = gridColumns;
                 elementsToRender.forEach(elemento => {
-                    const button = document.createElement('button');
-                    button.className = 'toolbar-btn';
-                    button.dataset.latex = elemento.latex;
-                    button.title = elemento.title;
-                    button.innerHTML = `\\(${elemento.display || elemento.latex}\\)`;
-                    contentDiv.appendChild(button);
+                    if (elemento.type === 'custom_matrix') {
+                        const matrixBuilder = createMatrixBuilderUI(elemento);
+                        contentDiv.appendChild(matrixBuilder);
+                    } else {
+                        const button = document.createElement('button');
+                        button.className = 'toolbar-btn';
+                        button.dataset.latex = elemento.latex;
+                        button.title = elemento.title;
+                        button.innerHTML = `\\(${elemento.display || elemento.latex}\\)`;
+                        contentDiv.appendChild(button);
+                    }
                 });
                 MathJax.typesetPromise(contentDiv.querySelectorAll('.toolbar-btn'));
             }
@@ -546,11 +692,15 @@
                         allTabsRenderedForSearch = true;
                     }
                     toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
-                        const isVisible = btn.title.toLowerCase().includes(query) || btn.dataset.latex.toLowerCase().includes(query);
+                        const isVisible = btn.title.toLowerCase().includes(query) || (btn.dataset.latex && btn.dataset.latex.toLowerCase().includes(query));
                         btn.style.display = isVisible ? 'flex' : 'none';
                     });
+                     toolbar.querySelectorAll('.matrix-builder').forEach(builder => {
+                        const title = builder.querySelector('.matrix-builder-title').textContent.toLowerCase();
+                        builder.style.display = title.includes(query) ? 'grid' : 'none';
+                    });
                 } else {
-                    toolbar.querySelectorAll('.toolbar-btn').forEach(btn => { btn.style.display = 'flex'; });
+                    toolbar.querySelectorAll('.toolbar-btn, .matrix-builder').forEach(el => { el.style.display = el.classList.contains('matrix-builder') ? 'grid' : 'flex'; });
                 }
             });
 
@@ -565,7 +715,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.2</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v.3.4</p>
                 `;
             }
 
