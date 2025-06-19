@@ -84,6 +84,8 @@ Cada archivo contiene un objeto con una única propiedad `categorias`, que es un
 }
 ```
 
+Hay un elemento especial con la propiedad `type: custom_matrix` que actualmente se encuentra en la categoría "matrices" de `formulas.json` que hace que el programa despliegue una serie de campos para crear matrices personalizadas, tanto en el número de filas y de columnas como de su contenido. 
+
 ### Descripción de los campos
 
 * `categorias`: Lista de categorías temáticas (por ejemplo, fracciones, límites, álgebra...).
