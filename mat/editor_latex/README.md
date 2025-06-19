@@ -1,4 +1,4 @@
-# Editor LaTeX online
+# Editor $\LaTeX$ online
 
 ## ¿Qué es esto?
 
@@ -25,7 +25,7 @@ Este proyecto es una herramienta gratuita pensada para que docentes puedan crear
 
 ---
 
-## 2. editor_menu.html → Editor del menú del Editor LaTeX online
+## 2. editor_menu.html → Editor del menú del Editor $\LaTeX$ online
 
 Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crear, editar, organizar y exportar colecciones de botones que insertan fórmulas matemáticas en LaTeX, todo de manera visual y sin necesidad de escribir código a mano.
 
