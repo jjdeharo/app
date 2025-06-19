@@ -243,7 +243,7 @@
             <h2>Gestionar menús</h2>
             <div class="modal-body">
                 <h3>Menús disponibles</h3>
-                <p style="font-size:0.9em; text-align:center; color: var(--secondary-color); margin-top: -10px;">Los menús se cargan desde la carpeta <code>./docs/</code></p>
+                <p style="font-size:0.9em; text-align:center; color: var(--secondary-color); margin-top: -10px;">Los menús se cargan desde <code>./docs/menu_index.json</code></p>
                 <ul id="available-menus-list" class="menu-list"><li>Cargando...</li></ul>
                 <div class="modal-buttons" style="justify-content: flex-end; margin-top: 10px;">
                     <button id="reload-menus-list-btn" class="btn btn-sm btn-secondary">Recargar lista</button>
@@ -310,7 +310,6 @@
             
             // --- CONFIGURACIÓN ---
             const MENU_INDEX_URL = './docs/menu_index.json';
-            const DEFAULT_MENU_GITHUB_URL = 'https://raw.githubusercontent.com/jjdeharo/app/main/mat/editor_latex/formulas.json';
             const DEFAULT_MENU_LOCAL_URL = './formulas.json';
             const MAX_RECENTS = 12;
 
@@ -361,7 +360,7 @@
             };
             const saveAddedMenusToStorage = () => {
                 const added = Array.from(loadedMenus.values())
-                    .filter(m => m.source !== 'default' && m.source !== 'localfile' && m.source !== 'docs')
+                    .filter(m => m.source === 'url' || m.source === 'localfile_user') // Solo guardar los añadidos explícitamente por el usuario
                     .map(m => ({ id: m.id, url: m.url, source: m.source, name: m.name }));
                 localStorage.setItem('latexAddedMenus', JSON.stringify(added));
             };
@@ -371,30 +370,47 @@
 
             // --- LÓGICA DE CARGA Y GESTIÓN DE MENÚS ---
             const fetchMenuData = async (url) => {
-                if (menuCache.has(url)) return menuCache.get(url);
+                if (menuCache.has(url)) {
+                    return menuCache.get(url);
+                }
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    if (!response.ok) {
+                        throw new Error(`Error HTTP: ${response.status} al intentar cargar ${url}`);
+                    }
                     const data = await response.json();
                     menuCache.set(url, data);
                     return data;
                 } catch (error) {
-                    console.error(`Error fetching menu from ${url}:`, error);
+                    console.error(`Error al obtener el menú desde ${url}:`, error);
                     showModalFeedback(`Error al cargar ${url}`, true);
                     return null;
                 }
             };
+
             const addMenu = async (menuInfo) => {
                 if (loadedMenus.has(menuInfo.id)) return;
-                const data = await fetchMenuData(menuInfo.url);
+                
+                let data;
+                if (menuInfo.source === 'localfile_user' && menuInfo.data) {
+                    data = menuInfo.data; // Usar datos ya leídos del archivo
+                } else {
+                    data = await fetchMenuData(menuInfo.url);
+                }
+                
                 if (data) {
-                    loadedMenus.set(menuInfo.id, { ...menuInfo, data });
+                    // Si el menuInfo no tiene 'data', se lo añadimos
+                    const newMenuInfo = { ...menuInfo, data };
+                    loadedMenus.set(menuInfo.id, newMenuInfo);
                     rebuildToolbarAndUI();
-                    saveAddedMenusToStorage();
+                    if(menuInfo.source === 'url' || menuInfo.source === 'localfile_user') {
+                        saveAddedMenusToStorage();
+                    }
                 }
             };
             const removeMenu = (menuId) => {
-                if (loadedMenus.has(menuId) && loadedMenus.get(menuId).source !== 'default') {
+                const menu = loadedMenus.get(menuId);
+                if (menu && menu.source !== 'default') {
                     loadedMenus.delete(menuId);
                     rebuildToolbarAndUI();
                     saveAddedMenusToStorage();
@@ -402,7 +418,7 @@
             };
             const getAllCategories = () => {
                 const allCategories = new Map();
-                const menuOrder = ['default', 'docs', 'url', 'localfile'];
+                const menuOrder = ['default', 'docs', 'url', 'localfile_user'];
                 const sortedMenus = Array.from(loadedMenus.values()).sort((a,b) => menuOrder.indexOf(a.source) - menuOrder.indexOf(b.source));
 
                 for (const menu of sortedMenus) {
@@ -457,25 +473,24 @@
                 menuCache.clear();
                 menuListCache = null;
 
-                let baseMenuData;
+                // Cargar el menú base local. Es fundamental.
                 try {
-                    const response = await fetch(DEFAULT_MENU_LOCAL_URL);
-                    if (!response.ok) throw new Error("Local default not found");
-                    baseMenuData = await response.json();
-                    console.log("Default menu loaded from local file.");
-                } catch (e) {
-                    console.warn("Local default menu not found, fetching from GitHub fallback.");
-                    baseMenuData = await fetchMenuData(DEFAULT_MENU_GITHUB_URL);
+                    const baseMenuData = await fetchMenuData(DEFAULT_MENU_LOCAL_URL);
+                    if (baseMenuData) {
+                        loadedMenus.set('formulas.json', { id: 'formulas.json', url: DEFAULT_MENU_LOCAL_URL, source: 'default', name: 'Base', data: baseMenuData });
+                    } else {
+                       throw new Error("El archivo base 'formulas.json' no se pudo cargar o está vacío.");
+                    }
+                } catch(e) {
+                    console.error(e);
+                    showAlert("Error crítico", "No se pudo cargar el archivo base <code>formulas.json</code>. La aplicación no puede funcionar sin él. Asegúrate de que el archivo existe y es accesible.");
+                    return;
                 }
-                if(baseMenuData) {
-                    loadedMenus.set('formulas.json', { id: 'formulas.json', url: DEFAULT_MENU_GITHUB_URL, source: 'default', name: 'Base', data: baseMenuData });
-                }
+                
+                // Cargar menús añadidos explícitamente por el usuario (URL/archivo) desde localStorage
                 const previouslyAdded = loadAddedMenusFromStorage();
                 for (const menuInfo of previouslyAdded) {
-                    const data = await fetchMenuData(menuInfo.url);
-                    if (data) {
-                        loadedMenus.set(menuInfo.id, { ...menuInfo, data });
-                    }
+                    await addMenu(menuInfo);
                 }
                 rebuildToolbarAndUI();
                 updatePreview();
@@ -485,7 +500,7 @@
             // --- LÓGICA DE LA INTERFAZ DE USUARIO (UI) ---
             const renderAvailableMenus = (menuItemsMap) => {
                 availableMenusList.innerHTML = '';
-                if(menuItemsMap.size === 0) {
+                if(menuItemsMap.size === 0 && !Array.from(loadedMenus.values()).some(m => m.source === 'default')) {
                      availableMenusList.innerHTML = '<li>No se encontraron menús.</li>';
                      return;
                 }
@@ -536,29 +551,34 @@
                 availableMenusList.innerHTML = '<li>Cargando...</li>';
                 const menuItems = new Map();
 
+                // Siempre mostrar el menú base si está cargado
                 const baseMenu = loadedMenus.get('formulas.json');
                 if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
 
+                // Cargar la lista de menús desde el archivo de índice local
                 try {
-                    const response = await fetch(MENU_INDEX_URL);
-                    if (!response.ok) throw new Error(`Error al cargar el índice de menús: ${response.statusText}`);
-                    const menuIndex = await response.json();
-                    if (!Array.isArray(menuIndex)) throw new Error('El índice de menús no es un array válido.');
-                    
-                    menuIndex.forEach(menuInfo => {
-                         menuItems.set(menuInfo.file, {
-                             id: menuInfo.file,
-                             name: menuInfo.name,
-                             url: `./docs/${menuInfo.file}`,
-                             source: 'docs'
-                         });
-                    });
+                    const menuIndex = await fetchMenuData(MENU_INDEX_URL);
+                    if (menuIndex && Array.isArray(menuIndex)) {
+                        menuIndex.forEach(menuInfo => {
+                            if(menuInfo.file && menuInfo.name) {
+                                menuItems.set(menuInfo.file, {
+                                    id: menuInfo.file,
+                                    name: menuInfo.name,
+                                    url: `./docs/${menuInfo.file}`,
+                                    source: 'docs'
+                                });
+                            }
+                        });
+                    } else {
+                         throw new Error('Índice de menús no válido.');
+                    }
                 } catch(e) {
-                    console.error(e.message);
-                    const errorItem = { id: 'error-menu-index', name: `No se pudo cargar 'menu_index.json'.`, source: 'error' };
+                    console.warn(e.message);
+                    const errorItem = { id: 'error-menu-index', name: `Aviso: No se pudo cargar <code>./docs/menu_index.json</code>.`, source: 'error' };
                     menuItems.set(errorItem.id, errorItem);
                 }
                 
+                // Añadir los menús cargados por el usuario que no estén ya en la lista
                 for (const menu of loadedMenus.values()){
                      if (!menuItems.has(menu.id)) {
                         menuItems.set(menu.id, {...menu});
@@ -869,7 +889,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.7</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v5.0</p>
                 `;
             }
 
@@ -911,10 +931,11 @@
             settingsBtn.addEventListener('click', openSettingsModal);
             closeSettingsBtn.addEventListener('click', closeSettingsModal);
             settingsModal.addEventListener('click', (e) => { if(e.target === settingsModal) closeSettingsModal(); });
-            urlInput.addEventListener('change', () => {
+            urlInput.addEventListener('change', async () => {
                 if(urlInput.value) {
                     const menuInfo = {id: urlInput.value, url: urlInput.value, source: 'url', name: urlInput.value};
-                    addMenu(menuInfo).then(() => loadAndDisplayAvailableMenus());
+                    await addMenu(menuInfo);
+                    loadAndDisplayAvailableMenus();
                     urlInput.value = '';
                 }
             });
@@ -925,9 +946,8 @@
                      reader.onload = (event) => {
                         try {
                             const data = JSON.parse(event.target.result);
-                            const menuInfo = {id: file.name, url: file.name, source: 'localfile', name: file.name, data: data };
-                            loadedMenus.set(file.name, menuInfo);
-                            rebuildToolbarAndUI();
+                            const menuInfo = {id: file.name, url: file.name, source: 'localfile_user', name: file.name, data: data };
+                            addMenu(menuInfo);
                         } catch (error) {
                              showModalFeedback('El archivo no es un JSON válido.', true);
                         }
@@ -939,6 +959,7 @@
             reloadMenusListBtn.addEventListener('click', () => loadAndDisplayAvailableMenus(true));
             clearCacheBtn.addEventListener('click', () => {
                 localStorage.removeItem('latexAddedMenus');
+                localStorage.removeItem('latexRecents');
                 showModalFeedback('Caché y menús añadidos limpiados.');
                 initializeApp();
             });
