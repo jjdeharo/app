@@ -3,971 +3,817 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editor LaTeX online</title>
+    <title>Editor Visual de Fórmulas LaTeX</title>
     
+    <!-- Tailwind CSS para un diseño moderno y responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- MathJax para renderizar LaTeX -->
     <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']],
-                processEscapes: true,
-                packages: {'[+]': ['cases', 'mathtools']}
-            },
-            svg: {
-                fontCache: 'local'
-            },
-            startup: {
-                ready: () => {
-                    MathJax.startup.defaultReady();
-                    initializeLatexEditor();
-                }
-            }
+        MathJax = {
+          tex: {
+            inlineMath: [['$', '$'], ['\\(', '\\)']],
+            displayMath: [['$$', '$$'], ['\\[', '\\]']]
+          },
+          svg: {
+            fontCache: 'global'
+          }
         };
     </script>
-    <script id="MathJax-script" async src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
+    <!-- SortableJS para Drag and Drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    
     <style>
-        :root {
-            --primary-color: #007bff;
-            --primary-dark: #0056b3;
-            --secondary-color: #6c757d;
-            --danger-color: #dc3545;
-            --danger-dark: #a71d2a;
-            --success-color: #28a745;
-            --light-gray: #f8f9fa;
-            --medium-gray: #e9ecef;
-            --dark-gray: #495057;
-            --white: #ffffff;
-            --text-color: #212529;
-            --border-radius: 12px;
-            --box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-        }
-        * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: var(--text-color);
-        }
-        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .header { text-align: center; margin-bottom: 30px; color: var(--white); }
-        .header h1 { font-size: 2.5rem; margin: 0 0 10px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-        .header p { font-size: 1.1rem; opacity: 0.9; margin: 0; }
-        .tabs-section { position: relative; background: var(--white); border-radius: var(--border-radius); box-shadow: var(--box-shadow); margin-bottom: 20px; overflow: hidden; }
-        
-        .search-wrapper { 
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 15px 20px 10px 20px; 
-            border-bottom: 1px solid var(--medium-gray); 
-        }
-        .search-input-container {
-            position: relative;
-            flex-grow: 1;
-        }
-        #search-input { 
+        body { font-family: 'Inter', sans-serif; }
+        .preview-button { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 50px;
+            padding: 0.5rem;
+            font-size: 1.2rem; 
+            transition: all 0.2s ease-in-out; 
+            cursor: pointer; 
             width: 100%;
-            padding: 12px 40px 12px 12px; 
-            border-radius: 8px; 
-            border: 2px solid var(--medium-gray); 
-            font-size: 1rem; 
-            transition: all 0.3s ease; 
+            overflow: hidden; /* Evita desbordamiento visual */
         }
-        #search-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
-        #clear-search-btn {
-            position: absolute;
-            right: 10px;
-            top: 50%;
-            transform: translateY(-50%);
-            background: transparent;
-            border: none;
-            font-size: 1.8rem;
-            color: var(--secondary-color);
-            cursor: pointer;
-            padding: 0 5px;
-            line-height: 1;
+        .preview-button:hover { transform: scale(1.05); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        .highlight { transition: background-color 0.3s ease-in-out; background-color: #fefcbf !important; border-color: #facc15; }
+        .drag-handle, .toggle-collapse-btn { cursor: pointer; }
+        .drag-handle { padding: 0 8px; color: #9ca3af; }
+        .drag-handle:hover { color: #1f2937; }
+        .sortable-ghost { opacity: 0.4; background-color: #c7d2fe; }
+        .preview-container.mathjax-processing { visibility: hidden; }
+        .toggle-collapse-btn { transition: transform 0.2s ease-in-out; }
+        .collapsed .toggle-collapse-btn { transform: rotate(-90deg); }
+        /* Estilos para pestañas */
+        .tab {
+            transition: background-color 0.2s ease-in-out;
+        }
+        .tab.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+        .tab-close-btn {
             display: none;
         }
-        #clear-search-btn:hover { color: var(--dark-gray); }
-        #settings-btn {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: var(--dark-gray);
-            transition: transform 0.3s, color 0.3s;
-            padding: 0 5px;
-            flex-shrink: 0;
-        }
-        #settings-btn:hover {
-            color: var(--primary-color);
-            transform: rotate(45deg);
-        }
-        .search-results-view .tabs-container { display: none; }
-        .search-results-view .tab-content { display: grid !important; }
-        .tabs-container { display: flex; flex-wrap: wrap; background: var(--light-gray); border-bottom: 3px solid var(--medium-gray); }
-        .tab-btn { padding: 15px 20px; background: transparent; border: none; cursor: pointer; font-weight: 600; color: var(--dark-gray); transition: all 0.3s ease; position: relative; border-bottom: 3px solid transparent; }
-        .tab-btn:hover { background: var(--medium-gray); color: var(--text-color); }
-        .tab-btn.active { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-        .toolbar-wrapper { padding: 20px; background: var(--white); }
-        .tab-content { display: none; gap: 10px; }
-        .tab-content.active { display: grid; }
-        .toolbar-btn { background: var(--white); border: 2px solid var(--medium-gray); border-radius: 8px; padding: 15px 10px; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; min-height: 60px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .toolbar-btn:hover { border-color: var(--primary-color); background: #f8f9ff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
-        .main-content { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-        .panel { background: var(--white); padding: 25px; border-radius: var(--border-radius); box-shadow: var(--box-shadow); display: flex; flex-direction: column; }
-        .panel h2 { margin: 0 0 15px 0; color: #333; font-size: 1.3rem; border-bottom: 2px solid var(--medium-gray); padding-bottom: 10px; }
-        #latex-input { width: 100%; height: 200px; border: 2px solid var(--medium-gray); border-radius: 8px; padding: 15px; font-family: 'Courier New', monospace; font-size: 14px; resize: vertical; transition: all 0.3s ease; flex-grow: 1; }
-        #latex-input:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
-        .preview-container { min-height: 200px; border: 2px dashed var(--medium-gray); border-radius: 8px; padding: 20px; display: flex; align-items: center; justify-content: center; background: var(--light-gray); flex-grow: 1; }
-        #preview { font-size: 24px; color: var(--text-color); overflow-x: auto; overflow-y: hidden; width: 100%; text-align: center; }
-        .copy-options-container { margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        .copy-options-container label { font-size: 0.9rem; color: var(--dark-gray); font-weight: 500; }
-        #delimiter-selector { font-family: inherit; padding: 5px 8px; border-radius: 8px; border: 2px solid var(--medium-gray); background-color: white; transition: border-color 0.2s ease-in-out; }
-        #delimiter-selector:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
-        .panel-actions { margin-top: 15px; text-align: center; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; text-decoration: none; display: inline-block; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .btn-sm { padding: 5px 10px; font-size: 0.85rem; }
-        .btn-primary { background: linear-gradient(45deg, var(--primary-color), var(--primary-dark)); color: white; }
-        .btn-secondary { background: linear-gradient(45deg, var(--secondary-color), #495057); color: white; }
-        .btn-danger { background: linear-gradient(45deg, var(--danger-color), var(--danger-dark)); color: white; }
-        .btn-success { background: linear-gradient(45deg, var(--success-color), #1e7e34); color: white; }
-        .btn:hover { transform: translateY(-3px) scale(1.03); box-shadow: 0 6px 15px rgba(0,0,0,0.2); }
-        .copy-feedback { color: var(--primary-color); font-weight: 600; margin-top: 10px; height: 20px; opacity: 0; transition: opacity 0.5s ease; text-align: center; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; padding: 20px; }
-        .modal-overlay.active { opacity: 1; visibility: visible; }
-        .modal-content { background: var(--white); padding: 30px; border-radius: var(--border-radius); box-shadow: 0 10px 30px rgba(0,0,0,0.2); display: flex; flex-direction: column; max-width: 90vw; max-height: 90vh; text-align: left; transform: scale(0.9); transition: transform 0.3s; width: 600px; }
-        .modal-overlay.active .modal-content { transform: scale(1); }
-        .modal-content h2, .modal-content h3 { text-align: center; margin-top: 0; color: var(--text-color); }
-        .modal-content h3 { margin-top: 20px; margin-bottom: 10px; border-top: 1px solid var(--medium-gray); padding-top: 20px; font-size: 1.1rem;}
-        #modal-message { margin: 0 0 20px 0; font-size: 1.1rem; line-height: 1.5; text-align: center; }
-        #modal-message img { display: block; margin: 0 auto; }
-        #alert-modal-message p { margin: 0 0 10px 0; }
-        .modal-buttons { display: flex; justify-content: center; gap: 15px; margin-top: 25px;}
-        .modal-content .form-group { margin-bottom: 20px; }
-        .modal-content .form-group label { display: block; font-weight: 600; margin-bottom: 8px; }
-        .modal-content .form-group input { width: 100%; padding: 10px; border-radius: 8px; border: 2px solid var(--medium-gray); font-size: 1rem; }
-        #modal-feedback { font-size: 0.9em; height: 20px; text-align: center; }
-        .modal-body { overflow-y: auto; padding-right: 15px; margin-right: -15px;}
-        .menu-list { list-style: none; padding: 0; margin: 0; }
-        .menu-list li { display: flex; align-items: center; padding: 8px; border-radius: 8px; transition: background-color 0.2s; }
-        .menu-list li:nth-child(odd) { background-color: var(--light-gray); }
-        .menu-list-item-name { font-weight: 500; margin-left: 10px; }
-        .footer { text-align: center; padding: 30px 20px; color: white; opacity: 0.9; font-size: 0.9rem; }
-        .footer a { color: #ffffff; font-weight: 600; text-decoration: none; }
-        .footer a:hover { text-decoration: underline; }
-        #clear-recents-btn-container { text-align: right; margin-top: 10px; }
-        .matrix-builder {
-            border: 2px solid var(--medium-gray); border-radius: var(--border-radius); padding: 10px; grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px 15px; background-color: var(--light-gray);
-        }
-        .matrix-builder-group { display: flex; align-items: center; gap: 5px; }
-        .matrix-builder-group label { font-size: 0.9em; font-weight: 500; color: var(--dark-gray); white-space: nowrap; }
-        .matrix-builder-group input, .matrix-builder-group select { padding: 6px; border-radius: 8px; border: 2px solid var(--medium-gray); font-size: 0.9rem; width: 65px; }
-        .matrix-builder-group select { width: auto; min-width: 140px; }
-        .matrix-builder-delimiters { display: flex; align-items: center; gap: 8px; }
-        .matrix-builder-delimiters .btn { padding: 6px 14px; font-size: 1.1rem; }
-
-        @media (max-width: 900px) { .main-content { grid-template-columns: 1fr; } }
-        @media (max-width: 600px) {
-            .header h1 { font-size: 2rem; } .tab-btn { padding: 12px 15px; font-size: 14px; } .container { padding: 10px; } .modal-content { padding: 20px; } .matrix-builder { justify-content: flex-start; }
+        .tab:hover .tab-close-btn {
+            display: inline-block;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <header class="header">
-            <h1>Editor LaTeX online</h1>
-            <p>Crea fórmulas matemáticas visualmente, cópialas o descárgalas como imagen.</p>
-        </header>
+<body class="bg-gray-50 text-gray-800">
 
-        <div id="tabs-section" class="tabs-section">
-            <div class="search-wrapper">
-                <div class="search-input-container">
-                    <input type="search" id="search-input" placeholder="Buscar por descripción o código (ej: fracción, \int)..." autocomplete="off">
-                    <button id="clear-search-btn" title="Borrar búsqueda">&times;</button>
-                </div>
-                <button id="settings-btn" title="Personalizar menú">⚙️</button>
-            </div>
-            <div id="tabs-container" class="tabs-container"></div>
-            <div class="toolbar-wrapper">
-                <div id="toolbar"></div>
+    <!-- Cabecera de la aplicación -->
+    <header class="bg-white shadow-md p-4 sticky top-0 z-20 space-y-3">
+        <div class="flex flex-wrap justify-between items-center gap-y-2">
+            <h1 class="text-2xl font-bold text-gray-700">Editor de Fórmulas LaTeX</h1>
+            <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                <button id="ai-creator-btn" class="bg-cyan-500 text-white px-4 py-2 rounded-lg shadow hover:bg-cyan-600 transition">✨ Crear con IA</button>
+                <button id="paste-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition">Pegar</button>
+                <button id="copy-btn" class="bg-teal-500 text-white px-4 py-2 rounded-lg shadow hover:bg-teal-600 transition">Copiar JSON</button>
+                <button id="export-btn" class="bg-purple-500 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-600 transition">Exportar JSON</button>
             </div>
         </div>
-
-        <div class="main-content">
-             <div class="panel">
-                <h2>Código LaTeX</h2>
-                <textarea id="latex-input" placeholder="Escribe aquí tu código... \frac{a}{b}" spellcheck="false"></textarea>
-                <div class="copy-options-container">
-                    <label for="delimiter-selector">Copiar con delimitadores:</label>
-                    <select id="delimiter-selector" class="mathjax_ignore">
-                        <option value="none" selected>Sin delimitadores</option>
-                        <option value="parentheses">\(...\)</option>
-                        <option value="brackets">\[...\]</option>
-                        <option value="double_dollar">$$...$$</option>
-                        <option value="single_dollar">$...$</option>
-                    </select>
-                </div>
-                <div class="panel-actions">
-                      <button id="copy-button" class="btn btn-primary">Copiar código LaTeX</button>
-                      <button id="clear-button" class="btn btn-secondary">Borrar código</button>
-                </div>
-                <div id="copy-code-feedback" class="copy-feedback"></div>
+        <div class="flex items-center space-x-2 border-b border-gray-200">
+            <div id="tabs-container" class="flex items-center space-x-1">
+                <!-- Las pestañas se generarán aquí -->
             </div>
-            <div class="panel">
-                <h2>Previsualización</h2>
-                <div class="preview-container">
-                    <div id="preview"></div>
-                </div>
-                <div class="panel-actions">
-                    <button id="view-image-button" class="btn btn-success">Visualizar imagen</button>
-                </div>
-                 <div id="copy-image-feedback" class="copy-feedback"></div>
-            </div>
+            <button id="add-tab-btn" class="bg-gray-200 hover:bg-gray-300 text-gray-600 font-bold py-1 px-3 rounded-full">+</button>
         </div>
-    </div>
+         <div class="flex items-center space-x-2">
+            <select id="category-navigator" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                <option value="">Ir a categoría...</option>
+            </select>
+            <button id="toggle-all-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg shadow-sm hover:bg-gray-300 transition flex-shrink-0">Plegar/Desplegar</button>
+        </div>
+    </header>
+
+    <!-- Contenedor principal -->
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6">
+        <div id="editor-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-255px)]"></div>
+        <div id="preview-container" class="bg-white p-4 rounded-lg shadow-inner overflow-auto h-[calc(100vh-255px)]"></div>
+    </main>
     
-    <footer id="page-footer" class="footer"></footer>
+    <!-- Pie de página -->
+    <footer class="text-center py-4 bg-gray-100 text-gray-600 text-sm">
+        <p><a href="https://labia.tiddlyhost.com" target="_blank" class="hover:text-blue-600">Laboratorio de aplicaciones educativas</a> - <a href="https://bilateria.org" target="_blank" class="hover:text-blue-600">Aplicación hecha por Juan José de Haro</a></p>
+        <p class="mt-1"><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" class="hover:text-blue-600">Licencia Creative Commons BY-SA</a></p>
+    </footer>
 
-    <div id="image-modal" class="modal-overlay">
-        <div class="modal-content">
-            <div id="modal-message"></div>
-            <div id="modal-buttons" class="modal-buttons"></div>
-        </div>
-    </div>
-    <div id="settings-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2>Gestionar menús</h2>
-            <div class="modal-body">
-                <h3>Menús disponibles</h3>
-                <p style="font-size:0.9em; text-align:center; color: var(--secondary-color); margin-top: -10px;">Los menús se cargan desde <code>./docs/menu_index.json</code></p>
-                <ul id="available-menus-list" class="menu-list"><li>Cargando...</li></ul>
-                <div class="modal-buttons" style="justify-content: flex-end; margin-top: 10px;">
-                    <button id="reload-menus-list-btn" class="btn btn-sm btn-secondary">Recargar lista</button>
-                </div>
-
-                <h3>Carga personalizada</h3>
-                <div class="form-group">
-                    <label for="url-input">Cargar menú desde URL externa</label>
-                    <input type="url" id="url-input" placeholder="https://ejemplo.com/formulas.json">
-                </div>
-                <div class="form-group">
-                    <label for="file-input">Cargar menú desde archivo local</label>
-                    <input type="file" id="file-input" accept=".json,application/json">
-                </div>
-                <h3>Acciones</h3>
-                <div id="modal-feedback" style="margin-bottom: 15px;"></div>
-                <div class="modal-buttons" style="flex-wrap: wrap; justify-content: center;">
-                    <a href="./editor_menu.html" target="_blank" class="btn btn-primary">Crear o editar menús</a>
-                    <button id="clear-cache-btn" class="btn btn-secondary">Limpiar caché y recargar</button>
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button id="close-settings-btn" class="btn btn-primary">Cerrar</button>
-            </div>
-        </div>
-    </div>
-    <div id="alert-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="alert-modal-title" style="text-align: center;"></h2>
-            <div id="alert-modal-message" style="font-size: 1rem; line-height: 1.5;"></div>
-            <div class="modal-buttons">
-                <button id="alert-modal-close-btn" class="btn btn-primary">Entendido</button>
-            </div>
-        </div>
+    <!-- Modales -->
+    <div id="modal-container">
+        <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md"><h2 id="modal-title" class="text-2xl font-bold mb-4"></h2><form id="modal-form"></form><div class="mt-6 flex justify-end space-x-3"><button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Guardar</button></div></div></div>
+        <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-sm"><h2 id="confirm-title" class="text-xl font-bold mb-4"></h2><p id="confirm-message"></p><div class="mt-6 flex justify-end space-x-3"><button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="confirm-delete" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Eliminar</button></div></div></div>
+        <div id="paste-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><h2 class="text-2xl font-bold mb-4">Pegar contenido JSON</h2><div class="space-y-4"><textarea id="paste-textarea" rows="8" class="w-full border-gray-300 rounded-md font-mono text-sm" placeholder="Pega aquí el código JSON..."></textarea><div><label class="block text-sm font-medium text-gray-700">Tipo de contenido a pegar:</label><select id="paste-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full">JSON Completo (en nueva pestaña)</option><option value="category">Categoría (en pestaña actual)</option><option value="element">Elemento(s) (en pestaña actual)</option></select></div><div id="paste-category-selector-div" class="hidden"><label class="block text-sm font-medium text-gray-700">Añadir elemento(s) a la categoría:</label><select id="paste-category-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div></div><div class="mt-6 flex justify-end space-x-3"><button id="paste-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="paste-add" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Añadir Contenido</button></div></div></div>
+        <div id="ai-creator-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]"><h2 class="text-2xl font-bold mb-4 flex-shrink-0">Asistente de Creación con IA</h2><div class="overflow-y-auto -mx-6 px-6"><div class="space-y-4"><div><label for="ai-choice" class="block text-sm font-medium text-gray-700">1. ¿Qué quieres crear?</label><select id="ai-choice" name="ai-choice" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full_json">Archivo JSON completo</option><option value="category">Una sola categoría</option><option value="multiple_elements">Varios elementos</option><option value="element">Un solo elemento</option></select></div><div id="ai-inputs-container" class="mt-4"></div></div><div class="mt-6"><h3 class="text-base font-medium text-gray-900">2. Genera y usa el prompt</h3><p class="text-sm text-gray-600 mt-1">Sigue los pasos para generar un prompt y obtener el código JSON de la IA que prefieras.</p><textarea id="ai-prompt-output" rows="5" class="w-full border-gray-300 rounded-md font-mono text-xs mt-2 bg-gray-50" readonly placeholder="Aquí aparecerá el prompt generado..."></textarea><div class="mt-2 space-y-2"><button id="ai-generate-prompt-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">1. Generar Prompt</button><div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><button id="ai-launch-chatgpt-btn" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition disabled:bg-green-300 disabled:cursor-not-allowed" disabled>2. Lanzar en ChatGPT</button><button id="ai-copy-prompt-btn" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>2a. Copiar (otra IA)</button></div></div></div><div class="mt-6"><h3 class="text-base font-medium text-gray-900">3. Pega el resultado en el editor</h3><p class="text-sm text-gray-600 mt-1">Una vez tengas el código, cierra esta ventana y usa el botón <strong class="text-yellow-600">"Pegar"</strong> de la barra superior para añadir tu nueva creación.</p></div></div><div class="mt-auto pt-6 flex-shrink-0 flex justify-end"><button id="ai-creator-close-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cerrar</button></div></div></div>
+        <div id="add-tab-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4 hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><div class="flex justify-between items-center"><h2 class="text-2xl font-bold mb-4">Añadir conjunto de fórmulas</h2><button id="clear-cache-btn" class="text-sm text-blue-600 hover:underline">Limpiar caché</button></div><div class="space-y-4"><h3 class="text-lg font-medium text-gray-900">Desde GitHub</h3><div id="github-files-list" class="space-y-2 max-h-60 overflow-y-auto">Cargando lista...</div><hr class="my-4"><h3 class="text-lg font-medium text-gray-900">Otras fuentes</h3><div class="flex items-center space-x-2"><input type="url" id="custom-url-input" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" placeholder="Pegar URL de un JSON..."><button id="custom-url-load-btn" class="bg-indigo-500 text-white px-3 py-2 rounded-lg shadow-sm hover:bg-indigo-600 transition flex-shrink-0">Cargar</button></div><div class="mt-2"><label for="custom-file-input" class="w-full cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition text-center block">Abrir archivo local...</label><input type="file" id="custom-file-input" class="hidden" accept=".json"></div></div><div class="mt-6 flex justify-end"><button id="add-tab-close-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cerrar</button></div></div></div>
     </div>
 
-    <script>
-        async function initializeLatexEditor() {
-            // --- REFERENCIAS AL DOM ---
-            const latexInput = document.getElementById('latex-input');
-            const preview = document.getElementById('preview');
-            const copyButton = document.getElementById('copy-button');
-            const clearButton = document.getElementById('clear-button');
-            const viewImageButton = document.getElementById('view-image-button');
-            const delimiterSelector = document.getElementById('delimiter-selector');
-            const copyCodeFeedback = document.getElementById('copy-code-feedback');
-            const tabsContainer = document.getElementById('tabs-container');
-            const toolbar = document.getElementById('toolbar');
-            const searchInput = document.getElementById('search-input');
-            const clearSearchBtn = document.getElementById('clear-search-btn');
-            const settingsBtn = document.getElementById('settings-btn');
-            const settingsModal = document.getElementById('settings-modal');
-            const closeSettingsBtn = document.getElementById('close-settings-btn');
-            const urlInput = document.getElementById('url-input');
-            const fileInput = document.getElementById('file-input');
-            const modalFeedback = document.getElementById('modal-feedback');
-            const alertModal = document.getElementById('alert-modal');
-            const alertModalTitle = document.getElementById('alert-modal-title');
-            const alertModalMessage = document.getElementById('alert-modal-message');
-            const alertModalCloseBtn = document.getElementById('alert-modal-close-btn');
-            const availableMenusList = document.getElementById('available-menus-list');
-            const reloadMenusListBtn = document.getElementById('reload-menus-list-btn');
-            const clearCacheBtn = document.getElementById('clear-cache-btn');
-            
-            // --- CONFIGURACIÓN ---
-            const MENU_INDEX_URL = './docs/menu_index.json';
-            const DEFAULT_MENU_LOCAL_URL = './formulas.json';
-            const MAX_RECENTS = 12;
+    <script type="module">
+        const GITHUB_REPO_URL = 'https://api.github.com/repos/jjdeharo/app/contents/mat/editor_latex/docs';
+        const DEFAULT_BASE_URL = 'https://raw.githubusercontent.com/jjdeharo/app/main/mat/editor_latex/formulas.json';
 
-            // --- ESTADO DE LA APLICACIÓN ---
-            let loadedMenus = new Map();
-            let menuCache = new Map();
-            let menuListCache = null;
-            let recentSymbols = [];
-            
-            // --- GESTIÓN DE DATOS Y ESTADO (Recientes y Menús) ---
-            const loadRecents = () => {
-                recentSymbols = JSON.parse(localStorage.getItem('latexRecents')) || [];
-            };
-            const saveRecents = () => {
-                localStorage.setItem('latexRecents', JSON.stringify(recentSymbols));
-            };
-            const clearRecents = () => {
-                recentSymbols = [];
-                localStorage.removeItem('latexRecents');
-                rebuildToolbarAndUI();
-            };
-            const createRecentsTab = () => {
-                if (document.querySelector('[data-tab="recientes"]')) return;
-                const recentsTabButton = document.createElement('button');
-                recentsTabButton.className = 'tab-btn';
-                recentsTabButton.dataset.tab = 'recientes';
-                recentsTabButton.textContent = 'Recientes';
-                tabsContainer.prepend(recentsTabButton);
-                const recentsContentDiv = document.createElement('div');
-                recentsContentDiv.id = 'tab-recientes';
-                recentsContentDiv.className = 'tab-content';
-                toolbar.prepend(recentsContentDiv);
-            };
-            const trackSymbolUsage = (latexCode) => {
-                const wasEmpty = recentSymbols.length === 0;
-                recentSymbols = recentSymbols.filter(item => item !== latexCode);
-                recentSymbols.unshift(latexCode);
-                if (recentSymbols.length > MAX_RECENTS) recentSymbols = recentSymbols.slice(0, MAX_RECENTS);
-                saveRecents();
-                if (wasEmpty) {
-                    rebuildToolbarAndUI();
-                } else {
-                    const recentsContent = document.getElementById('tab-recientes');
-                    if (recentsContent && recentsContent.classList.contains('active')) {
-                        renderTabContent('recientes', getAllCategories());
-                    }
-                }
-            };
-            const saveAddedMenusToStorage = () => {
-                const added = Array.from(loadedMenus.values())
-                    .filter(m => m.source === 'url' || m.source === 'localfile_user') // Solo guardar los añadidos explícitamente por el usuario
-                    .map(m => ({ id: m.id, url: m.url, source: m.source, name: m.name }));
-                localStorage.setItem('latexAddedMenus', JSON.stringify(added));
-            };
-            const loadAddedMenusFromStorage = () => {
-                return JSON.parse(localStorage.getItem('latexAddedMenus')) || [];
-            };
+        let tabs = [];
+        let activeTabId = null;
 
-            // --- LÓGICA DE CARGA Y GESTIÓN DE MENÚS ---
-            const fetchMenuData = async (url) => {
-                if (menuCache.has(url)) {
-                    return menuCache.get(url);
-                }
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error(`Error HTTP: ${response.status} al intentar cargar ${url}`);
-                    }
-                    const data = await response.json();
-                    menuCache.set(url, data);
-                    return data;
-                } catch (error) {
-                    console.error(`Error al obtener el menú desde ${url}:`, error);
-                    showModalFeedback(`Error al cargar ${url}`, true);
-                    return null;
-                }
-            };
+        // --- DOM Elements ---
+        const ui = {
+            editorContainer: document.getElementById('editor-container'),
+            previewContainer: document.getElementById('preview-container'),
+            copyBtn: document.getElementById('copy-btn'),
+            pasteBtn: document.getElementById('paste-btn'),
+            exportBtn: document.getElementById('export-btn'),
+            categoryNavigator: document.getElementById('category-navigator'),
+            toggleAllBtn: document.getElementById('toggle-all-btn'),
+            aiCreatorBtn: document.getElementById('ai-creator-btn'),
+            tabsContainer: document.getElementById('tabs-container'),
+            addTabBtn: document.getElementById('add-tab-btn'),
+            // Modals
+            modal: document.getElementById('modal'),
+            modalTitle: document.getElementById('modal-title'),
+            modalForm: document.getElementById('modal-form'),
+            modalCancel: document.getElementById('modal-cancel'),
+            modalSave: document.getElementById('modal-save'),
+            confirmModal: document.getElementById('confirm-modal'),
+            confirmTitle: document.getElementById('confirm-title'),
+            confirmMessage: document.getElementById('confirm-message'),
+            confirmCancel: document.getElementById('confirm-cancel'),
+            confirmDelete: document.getElementById('confirm-delete'),
+            pasteModal: document.getElementById('paste-modal'),
+            pasteTextArea: document.getElementById('paste-textarea'),
+            pasteType: document.getElementById('paste-type'),
+            pasteCategorySelectorDiv: document.getElementById('paste-category-selector-div'),
+            pasteCategorySelector: document.getElementById('paste-category-selector'),
+            pasteCancel: document.getElementById('paste-cancel'),
+            pasteAdd: document.getElementById('paste-add'),
+            aiCreatorModal: document.getElementById('ai-creator-modal'),
+            aiCreatorCloseBtn: document.getElementById('ai-creator-close-btn'),
+            aiChoice: document.getElementById('ai-choice'),
+            aiInputsContainer: document.getElementById('ai-inputs-container'),
+            aiPromptOutput: document.getElementById('ai-prompt-output'),
+            aiGeneratePromptBtn: document.getElementById('ai-generate-prompt-btn'),
+            aiCopyPromptBtn: document.getElementById('ai-copy-prompt-btn'),
+            aiLaunchChatGptBtn: document.getElementById('ai-launch-chatgpt-btn'),
+            addTabModal: document.getElementById('add-tab-modal'),
+            addTabCloseBtn: document.getElementById('add-tab-close-btn'),
+            githubFilesList: document.getElementById('github-files-list'),
+            clearCacheBtn: document.getElementById('clear-cache-btn'),
+            customUrlInput: document.getElementById('custom-url-input'),
+            customUrlLoadBtn: document.getElementById('custom-url-load-btn'),
+            customFileInput: document.getElementById('custom-file-input'),
+        };
 
-            const addMenu = async (menuInfo) => {
-                if (loadedMenus.has(menuInfo.id)) return;
-                
-                let data;
-                if (menuInfo.source === 'localfile_user' && menuInfo.data) {
-                    data = menuInfo.data; // Usar datos ya leídos del archivo
-                } else {
-                    data = await fetchMenuData(menuInfo.url);
-                }
-                
-                if (data) {
-                    // Si el menuInfo no tiene 'data', se lo añadimos
-                    const newMenuInfo = { ...menuInfo, data };
-                    loadedMenus.set(menuInfo.id, newMenuInfo);
-                    rebuildToolbarAndUI();
-                    if(menuInfo.source === 'url' || menuInfo.source === 'localfile_user') {
-                        saveAddedMenusToStorage();
-                    }
-                }
-            };
-            const removeMenu = (menuId) => {
-                const menu = loadedMenus.get(menuId);
-                if (menu && menu.source !== 'default') {
-                    loadedMenus.delete(menuId);
-                    rebuildToolbarAndUI();
-                    saveAddedMenusToStorage();
-                }
-            };
-            const getAllCategories = () => {
-                const allCategories = new Map();
-                const menuOrder = ['default', 'docs', 'url', 'localfile_user'];
-                const sortedMenus = Array.from(loadedMenus.values()).sort((a,b) => menuOrder.indexOf(a.source) - menuOrder.indexOf(b.source));
+        // --- Core Functions ---
+        function getActiveTabData() {
+            if (!activeTabId) return null;
+            return tabs.find(t => t.id === activeTabId);
+        }
 
-                for (const menu of sortedMenus) {
-                    if (!menu.data || !menu.data.categorias) continue;
-                    for (const categoria of menu.data.categorias) {
-                        if (!allCategories.has(categoria.id)) {
-                             allCategories.set(categoria.id, { ...categoria, elementos: [...categoria.elementos] });
-                        } else {
-                            const existingCategory = allCategories.get(categoria.id);
-                            existingCategory.elementos.push(...categoria.elementos);
-                        }
-                    }
-                }
-                return allCategories;
-            };
-            const rebuildToolbarAndUI = () => {
-                tabsContainer.innerHTML = '';
-                toolbar.innerHTML = '';
-                const allCategories = getAllCategories();
-                let isFirstTab = true;
-                if (recentSymbols.length > 0) {
-                    createRecentsTab();
-                    tabsContainer.querySelector('[data-tab="recientes"]').classList.add('active');
-                    toolbar.querySelector('#tab-recientes').classList.add('active');
-                    isFirstTab = false;
-                }
-                allCategories.forEach((categoria) => {
-                    const tabButton = document.createElement('button');
-                    tabButton.className = 'tab-btn';
-                    tabButton.dataset.tab = categoria.id;
-                    tabButton.textContent = categoria.nombre;
-                    tabsContainer.appendChild(tabButton);
-                    const contentDiv = document.createElement('div');
-                    contentDiv.id = `tab-${categoria.id}`;
-                    contentDiv.className = 'tab-content';
-                    toolbar.appendChild(contentDiv);
-                    if (isFirstTab) {
-                        tabButton.classList.add('active');
-                        contentDiv.classList.add('active');
-                        isFirstTab = false;
-                    }
-                });
-                const activeTab = tabsContainer.querySelector('.tab-btn.active');
-                if (activeTab) {
-                    renderTabContent(activeTab.dataset.tab, allCategories);
-                }
-                loadAndDisplayAvailableMenus();
-            };
-            const initializeApp = async () => {
-                loadRecents();
-                loadedMenus.clear();
-                menuCache.clear();
-                menuListCache = null;
+        function setActiveTabData(newData) {
+            const tabIndex = tabs.findIndex(t => t.id === activeTabId);
+            if (tabIndex !== -1) {
+                tabs[tabIndex].data = newData;
+            }
+        }
 
-                // Cargar el menú base local. Es fundamental.
-                try {
-                    const baseMenuData = await fetchMenuData(DEFAULT_MENU_LOCAL_URL);
-                    if (baseMenuData) {
-                        loadedMenus.set('formulas.json', { id: 'formulas.json', url: DEFAULT_MENU_LOCAL_URL, source: 'default', name: 'Base', data: baseMenuData });
-                    } else {
-                       throw new Error("El archivo base 'formulas.json' no se pudo cargar o está vacío.");
-                    }
-                } catch(e) {
-                    console.error(e);
-                    showAlert("Error crítico", "No se pudo cargar el archivo base <code>formulas.json</code>. La aplicación no puede funcionar sin él. Asegúrate de que el archivo existe y es accesible.");
-                    return;
+        function render() {
+            const activeTab = getActiveTabData();
+            const currentData = activeTab ? activeTab.data : { categorias: [] };
+            renderEditor(currentData);
+            renderPreview(currentData);
+            renderCategoryNavigator(currentData);
+            initDragAndDrop();
+            renderTabs();
+        }
+
+        // --- Render UI ---
+        function renderEditor(currentData) {
+            ui.editorContainer.innerHTML = '';
+            if (!currentData || !currentData.categorias || currentData.categorias.length === 0) {
+                ui.editorContainer.innerHTML = '<p class="text-gray-500 text-center">Añade o carga un conjunto de fórmulas.</p>';
+                return;
+            }
+            currentData.categorias.forEach((cat, catIndex) => {
+                const isCollapsed = cat.isCollapsed || false;
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = `category-item mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50 ${isCollapsed ? 'collapsed' : ''}`;
+                categoryDiv.dataset.catId = catIndex;
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-center mb-3 pb-2 border-b';
+                header.innerHTML = `<div class="flex items-center"><span class="drag-handle cat-drag-handle">&#9776;</span><span class="toggle-collapse-btn text-gray-500 hover:text-gray-800" data-cat-index="${catIndex}"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></span><h3 class="text-xl font-semibold text-gray-700 ml-1">${cat.nombre}</h3></div><div class="space-x-2"><button data-cat-index="${catIndex}" class="edit-cat-btn text-blue-500 hover:text-blue-700" title="Editar categoría">&#9998;</button><button data-cat-index="${catIndex}" class="delete-cat-btn text-red-500 hover:text-red-700" title="Eliminar categoría">&#10006;</button><button data-cat-index="${catIndex}" class="add-el-btn bg-green-500 text-white text-sm px-3 py-1 rounded hover:bg-green-600" title="Añadir elemento">+</button></div>`;
+                const elementsList = document.createElement('div');
+                elementsList.className = 'elements-list space-y-2 pl-8';
+                if (isCollapsed) elementsList.classList.add('hidden');
+                elementsList.dataset.catIndex = catIndex;
+                if(cat.elementos) {
+                    cat.elementos.forEach((el, elIndex) => {
+                        const elDiv = document.createElement('div');
+                        elDiv.className = 'editor-item flex justify-between items-center p-2 rounded-md bg-white border border-gray-200 transition-colors duration-300';
+                        elDiv.dataset.editorId = `${catIndex}-${elIndex}`;
+                        elDiv.innerHTML = `<div class="flex items-center truncate"><span class="drag-handle el-drag-handle">&#9776;</span><div class="truncate"><strong class="text-sm font-medium">${el.title || el.type || 'Elemento'}</strong><p class="text-xs text-gray-500 truncate font-mono">${el.latex || ''}</p></div></div><div class="flex-shrink-0 space-x-2"><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="edit-el-btn text-blue-500 hover:text-blue-700" title="Editar elemento">&#9998;</button><button data-cat-index="${catIndex}" data-el-index="${elIndex}" class="delete-el-btn text-red-500 hover:text-red-700" title="Eliminar elemento">&#10006;</button></div>`;
+                        elementsList.appendChild(elDiv);
+                    });
                 }
-                
-                // Cargar menús añadidos explícitamente por el usuario (URL/archivo) desde localStorage
-                const previouslyAdded = loadAddedMenusFromStorage();
-                for (const menuInfo of previouslyAdded) {
-                    await addMenu(menuInfo);
-                }
-                rebuildToolbarAndUI();
-                updatePreview();
-                addFooter();
-            };
-
-            // --- LÓGICA DE LA INTERFAZ DE USUARIO (UI) ---
-            const renderAvailableMenus = (menuItemsMap) => {
-                availableMenusList.innerHTML = '';
-                if(menuItemsMap.size === 0 && !Array.from(loadedMenus.values()).some(m => m.source === 'default')) {
-                     availableMenusList.innerHTML = '<li>No se encontraron menús.</li>';
-                     return;
-                }
-
-                menuItemsMap.forEach(menu => {
-                    const li = document.createElement('li');
-                    
-                    if (menu.source === 'error') {
-                        li.innerHTML = `<span style="color: var(--danger-color); font-style: italic; width: 100%; text-align: center;">${menu.name}</span>`;
-                        availableMenusList.appendChild(li);
-                        return;
-                    }
-
-                    const checkbox = document.createElement('input');
-                    checkbox.type = 'checkbox';
-                    checkbox.id = `menu-checkbox-${menu.id}`;
-                    checkbox.checked = loadedMenus.has(menu.id);
-                    checkbox.dataset.id = menu.id;
-                    checkbox.dataset.url = menu.url;
-                    checkbox.dataset.name = menu.name;
-                    checkbox.dataset.source = menu.source;
-
-                    const label = document.createElement('label');
-                    label.htmlFor = `menu-checkbox-${menu.id}`;
-                    label.className = 'menu-list-item-name';
-                    label.textContent = menu.name || menu.id;
-                    
-                    if(menu.source === 'default') {
-                        checkbox.disabled = true;
-                        label.innerHTML += ` <em style="font-weight:normal; font-size:0.9em; color: var(--secondary-color)">(Base)</em>`;
-                    }
-
-                    li.appendChild(checkbox);
-                    li.appendChild(label);
-                    availableMenusList.appendChild(li);
-                });
-            };
-            const loadAndDisplayAvailableMenus = async (forceRefetch = false) => {
-                if (!forceRefetch && menuListCache) {
-                    renderAvailableMenus(menuListCache);
-                    return;
-                }
-                if(forceRefetch) {
-                    menuListCache = null;
-                    menuCache.clear();
-                }
-
-                availableMenusList.innerHTML = '<li>Cargando...</li>';
-                const menuItems = new Map();
-
-                // Siempre mostrar el menú base si está cargado
-                const baseMenu = loadedMenus.get('formulas.json');
-                if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
-
-                // Cargar la lista de menús desde el archivo de índice local
-                try {
-                    const menuIndex = await fetchMenuData(MENU_INDEX_URL);
-                    if (menuIndex && Array.isArray(menuIndex)) {
-                        menuIndex.forEach(menuInfo => {
-                            if(menuInfo.file && menuInfo.name) {
-                                menuItems.set(menuInfo.file, {
-                                    id: menuInfo.file,
-                                    name: menuInfo.name,
-                                    url: `./docs/${menuInfo.file}`,
-                                    source: 'docs'
-                                });
-                            }
-                        });
-                    } else {
-                         throw new Error('Índice de menús no válido.');
-                    }
-                } catch(e) {
-                    console.warn(e.message);
-                    const errorItem = { id: 'error-menu-index', name: `Aviso: No se pudo cargar <code>./docs/menu_index.json</code>.`, source: 'error' };
-                    menuItems.set(errorItem.id, errorItem);
-                }
-                
-                // Añadir los menús cargados por el usuario que no estén ya en la lista
-                for (const menu of loadedMenus.values()){
-                     if (!menuItems.has(menu.id)) {
-                        menuItems.set(menu.id, {...menu});
-                    }
-                }
-                
-                menuListCache = menuItems;
-                renderAvailableMenus(menuItems);
-            };
-
-            availableMenusList.addEventListener('change', (e) => {
-                const checkbox = e.target;
-                if(checkbox.type !== 'checkbox') return;
-                
-                const menuInfo = {
-                    id: checkbox.dataset.id,
-                    url: checkbox.dataset.url,
-                    name: checkbox.dataset.name,
-                    source: checkbox.dataset.source
-                };
-
-                if (checkbox.checked) {
-                    addMenu(menuInfo);
-                } else {
-                    removeMenu(menuInfo.id);
-                }
+                categoryDiv.appendChild(header);
+                categoryDiv.appendChild(elementsList);
+                ui.editorContainer.appendChild(categoryDiv);
             });
+            addEditorEventListeners();
+        }
 
-            function showAlert(title, htmlMessage) {
-                alertModalTitle.textContent = title;
-                alertModalMessage.innerHTML = htmlMessage;
-                alertModal.classList.add('active');
+        function renderPreview(currentData) {
+            ui.previewContainer.innerHTML = '';
+            if (!currentData || !currentData.categorias || currentData.categorias.length === 0) {
+                ui.previewContainer.innerHTML = '<p class="text-gray-500 text-center">Aquí aparecerá la vista previa.</p>';
+                return;
             }
-            function hideAlert() { alertModal.classList.remove('active'); }
-            function showImageModal(message, buttons) {
-                const modalMessage = document.getElementById('modal-message');
-                const modalButtons = document.getElementById('modal-buttons');
-                modalMessage.innerHTML = message;
-                modalButtons.innerHTML = '';
-                buttons.forEach(btnInfo => {
-                    const button = document.createElement('button');
-                    button.textContent = btnInfo.text;
-                    button.className = `btn ${btnInfo.class}`;
-                    button.onclick = () => {
-                        if(btnInfo.action) btnInfo.action();
-                        document.getElementById('image-modal').classList.remove('active');
-                    };
-                    modalButtons.appendChild(button);
-                });
-                document.getElementById('image-modal').classList.add('active');
-            }
-            function openSettingsModal() { 
-                loadAndDisplayAvailableMenus();
-                settingsModal.classList.add('active'); 
-            }
-            function closeSettingsModal() { settingsModal.classList.remove('active'); }
-            function showModalFeedback(message, isError = false) {
-                modalFeedback.textContent = message;
-                modalFeedback.style.color = isError ? 'var(--danger-color)' : 'var(--success-color)';
-                setTimeout(() => modalFeedback.textContent = '', 3000);
-            }
-             function updatePreview() {
-                preview.innerHTML = latexInput.value.trim() === "" ? "" : `$$${latexInput.value.trim()}$$`;
-                MathJax.typesetPromise([preview]).catch(err => {
-                    preview.innerHTML = `<span style="color:red;">Error de sintaxis</span>`;
-                });
-            }
-            function insertAtCursor(textToInsert) {
-                const startPos = latexInput.selectionStart;
-                const endPos = latexInput.selectionEnd;
-                latexInput.value = latexInput.value.substring(0, startPos) + textToInsert + latexInput.value.substring(endPos);
-                let cursorPos = textToInsert.indexOf('{}');
-                latexInput.selectionStart = latexInput.selectionEnd = startPos + (cursorPos !== -1 ? cursorPos + 1 : textToInsert.length);
-                latexInput.focus();
-                updatePreview();
-                if (textToInsert.includes('\\begin{')) return;
-                trackSymbolUsage(textToInsert);
-            }
-            function generateImage(callback) {
-                const svgElement = preview.querySelector('svg');
-                if (!svgElement) {
-                    showImageModal('<p>No hay fórmula para capturar.</p>', [{text: 'OK', class: 'btn-primary'}]);
-                    return;
+            currentData.categorias.forEach((cat, catIndex) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'mb-6 preview-category';
+                categoryDiv.dataset.previewCatId = catIndex;
+                categoryDiv.innerHTML = `<h3 class="text-xl font-semibold text-gray-700 mb-3">${cat.nombre}</h3>`;
+                const gridDiv = document.createElement('div');
+                gridDiv.className = 'grid gap-2';
+                gridDiv.style.gridTemplateColumns = cat.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))';
+                if(cat.elementos){
+                    cat.elementos.forEach((el, elIndex) => {
+                        if (el.type === 'custom_matrix') return;
+                        const button = document.createElement('button');
+                        button.className = 'preview-item preview-button bg-white border border-gray-300 rounded-md shadow-sm';
+                        button.title = el.title || '';
+                        button.dataset.catIndex = catIndex;
+                        button.dataset.elIndex = elIndex;
+                        const contentWrapper = document.createElement('div');
+                        contentWrapper.className = 'math-content-wrapper';
+                        contentWrapper.style.textAlign = 'center';
+                        const latexToRender = el.display || el.latex;
+                        contentWrapper.textContent = `\\(${latexToRender}\\)`;
+                        button.appendChild(contentWrapper);
+                        button.addEventListener('click', handlePreviewClick);
+                        button.addEventListener('dblclick', handlePreviewDblClick);
+                        gridDiv.appendChild(button);
+                    });
                 }
-                const serializer = new XMLSerializer();
-                const svgString = serializer.serializeToString(svgElement);
-                const img = new Image();
-                const svgBlob = new Blob([svgString], {type: "image/svg+xml;charset=utf-8"});
-                const url = URL.createObjectURL(svgBlob);
-                img.onload = function() {
-                    const canvas = document.createElement('canvas');
-                    const padding = 20;
-                    canvas.width = svgElement.width.baseVal.value + padding * 2;
-                    canvas.height = svgElement.height.baseVal.value + padding * 2;
-                    const ctx = canvas.getContext('2d');
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
-                    ctx.drawImage(img, padding, padding, svgElement.width.baseVal.value, svgElement.height.baseVal.value);
-                    URL.revokeObjectURL(url);
-                    callback(canvas);
-                };
-                img.src = url;
-            }
-            function handleViewImage() {
-                generateImage(canvas => {
-                    const imgElement = document.createElement('img');
-                    imgElement.src = canvas.toDataURL('image/png');
-                    imgElement.style.maxWidth = '100%';
-                    imgElement.style.maxHeight = '80vh';
-                    const instruction = document.createElement('p');
-                    instruction.textContent = 'Clic derecho sobre la imagen para guardarla o copiarla.';
-                    const messageContainer = document.createElement('div');
-                    messageContainer.appendChild(imgElement);
-                    messageContainer.appendChild(instruction);
-                    showImageModal(messageContainer.innerHTML, [{text: 'Cerrar', class: 'btn-secondary'}]);
-                });
-            }
-            function createMatrixBuilderUI(elemento) {
-                const container = document.createElement('div');
-                container.className = 'matrix-builder';
-                container.dataset.title = elemento.title || 'Matriz personalizada';
-                container.innerHTML = `
-                    <div class="matrix-builder-group">
-                        <label for="mb-rows">Filas:</label>
-                        <input type="number" id="mb-rows" value="2" min="1" max="20">
-                    </div>
-                    <div class="matrix-builder-group">
-                        <label for="mb-cols">Columnas:</label>
-                        <input type="number" id="mb-cols" value="2" min="1" max="20">
-                    </div>
-                    <div class="matrix-builder-group">
-                        <label for="mb-fill">Rellenar:</label>
-                        <select id="mb-fill">
-                            <option value="subscripts">Subíndices (a, b...)</option>
-                            <option value="zeros">Ceros (0)</option>
-                            <option value="ones">Unos (1)</option>
-                            <option value="vars">Variables (a, b, c...)</option>
-                            <option value="numbers">Números (1, 2, 3...)</option>
-                            <option value="empty">Vacío ({})</option>
-                        </select>
-                    </div>
-                    <div class="matrix-builder-delimiters">
-                        <button class="btn" data-delimiter="pmatrix">()</button>
-                        <button class="btn" data-delimiter="bmatrix">[]</button>
-                        <button class="btn" data-delimiter="vmatrix">||</button>
-                        <button class="btn" data-delimiter="Vmatrix">|||</button>
-                    </div>
-                `;
-                container.querySelector('.matrix-builder-delimiters').addEventListener('click', (e) => {
-                    const button = e.target.closest('button');
-                    if (!button) return;
-                    const rows = parseInt(container.querySelector('#mb-rows').value, 10);
-                    const cols = parseInt(container.querySelector('#mb-cols').value, 10);
-                    const fillType = container.querySelector('#mb-fill').value;
-                    const delimiter = button.dataset.delimiter;
-                    const matrixCode = generateMatrixCode(rows, cols, fillType, delimiter);
-                    insertAtCursor(matrixCode);
-                });
-                return container;
-            }
-            function generateMatrixCode(rows, cols, fillType, delimiter) {
-                if (isNaN(rows) || isNaN(cols) || rows < 1 || cols < 1) return '';
-                let content = '';
-                const alphabet = 'abcdefghijklmnopqrstuvwxyz';
-                let counter = 0;
-                for (let i = 1; i <= rows; i++) {
-                    for (let j = 1; j <= cols; j++) {
-                        let cell;
-                        switch(fillType) {
-                            case 'subscripts': cell = `a_{${i}${j}}`; break;
-                            case 'zeros': cell = '0'; break;
-                            case 'ones': cell = '1'; break;
-                            case 'vars': cell = alphabet[counter % alphabet.length]; counter++; break;
-                            case 'numbers': cell = (counter + 1).toString(); counter++; break;
-                            case 'empty': cell = '{}'; break;
-                            default: cell = '';
-                        }
-                        content += cell + (j < cols ? ' & ' : '');
-                    }
-                    if (i < rows) content += ' \\\\\n  ';
-                }
-                return `\\begin{${delimiter}}\n  ${content}\n\\end{${delimiter}}`;
-            }
-            function normalizeString(str) {
-                if (typeof str !== 'string') return '';
-                return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-            }
-            function renderTabContent(tabId, allCategories) {
-                const contentDiv = document.getElementById(`tab-${tabId}`);
-                if (!contentDiv) return;
-                contentDiv.innerHTML = '';
-
-                let elementsToRender = [];
-                let gridColumns = "repeat(auto-fill, minmax(80px, 1fr))";
-
-                if (tabId === 'recientes') {
-                    if (recentSymbols.length === 0) {
-                         contentDiv.innerHTML = `<p style="color: var(--dark-gray); grid-column: 1 / -1; text-align:center;">Aún no hay símbolos recientes.</p>
-                         <div id="clear-recents-btn-container" style="grid-column: 1 / -1;"><button id="clear-recents-btn" class="btn btn-sm btn-danger">Borrar recientes</button></div>`;
-                         document.getElementById('clear-recents-btn').onclick = clearRecents;
-                         return;
-                    }
-                    recentSymbols.forEach(latexCode => {
-                        let symbolFound = false;
-                        for (const menu of loadedMenus.values()) {
-                            if (symbolFound) break;
-                            if (!menu.data || !menu.data.categorias) continue;
-                            for (const categoria of menu.data.categorias) {
-                                if (symbolFound) break;
-                                const found = categoria.elementos.find(el => el && el.latex === latexCode);
-                                if (found) {
-                                    elementsToRender.push(found);
-                                    symbolFound = true;
+                categoryDiv.appendChild(gridDiv);
+                ui.previewContainer.appendChild(categoryDiv);
+            });
+            
+            if (typeof MathJax !== "undefined" && MathJax.typesetPromise) {
+                ui.previewContainer.classList.add('mathjax-processing');
+                MathJax.typesetPromise([ui.previewContainer])
+                    .catch((err) => console.log('MathJax error: ' + err.message))
+                    .finally(() => {
+                        ui.previewContainer.classList.remove('mathjax-processing');
+                        document.querySelectorAll('.preview-item').forEach(button => {
+                            const mathContainer = button.querySelector('mjx-container');
+                            if (mathContainer) {
+                                const buttonWidth = button.clientWidth - 16;
+                                const mathWidth = mathContainer.scrollWidth;
+                                mathContainer.style.transform = 'scale(1)';
+                                if (mathWidth > buttonWidth) {
+                                    const scale = buttonWidth / mathWidth;
+                                    mathContainer.style.transform = `scale(${scale})`;
+                                    mathContainer.style.transformOrigin = 'center left';
                                 }
                             }
-                        }
+                        });
                     });
-                } else {
-                    const categoria = allCategories.get(tabId);
-                    if (categoria) {
-                        elementsToRender = categoria.elementos;
-                        gridColumns = categoria.grid_template_columns || gridColumns;
-                    }
+            }
+        }
+        
+        function renderCategoryNavigator(currentData) {
+            ui.categoryNavigator.innerHTML = '<option value="">Ir a categoría...</option>';
+            if (!currentData || !currentData.categorias || currentData.categorias.length === 0) {
+                ui.categoryNavigator.disabled = true;
+                return;
+            }
+            ui.categoryNavigator.disabled = false;
+            currentData.categorias.forEach((cat, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                option.textContent = cat.nombre;
+                ui.categoryNavigator.appendChild(option);
+            });
+        }
+        
+        // --- Tabs ---
+        function renderTabs() {
+            ui.tabsContainer.innerHTML = '';
+            tabs.forEach(tab => {
+                const tabEl = document.createElement('button');
+                tabEl.className = `tab px-4 py-2 text-sm font-medium rounded-t-lg border-b-2 ${tab.id === activeTabId ? 'active border-indigo-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`;
+                tabEl.textContent = tab.name;
+                tabEl.dataset.tabId = tab.id;
+                tabEl.addEventListener('click', () => switchTab(tab.id));
+                if (tab.id !== 'base') {
+                    const closeBtn = document.createElement('span');
+                    closeBtn.className = 'tab-close-btn ml-2 text-xs font-bold';
+                    closeBtn.innerHTML = '&times;';
+                    closeBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        closeTab(tab.id);
+                    });
+                    tabEl.appendChild(closeBtn);
                 }
-                
-                contentDiv.style.gridTemplateColumns = gridColumns;
+                ui.tabsContainer.appendChild(tabEl);
+            });
+        }
 
-                elementsToRender.forEach(elemento => {
-                    if (!elemento) return;
-                    if (elemento.type === 'custom_matrix') {
-                        const matrixBuilder = createMatrixBuilderUI(elemento);
-                        contentDiv.appendChild(matrixBuilder);
-                    } else if (elemento.latex) {
-                        const button = document.createElement('button');
-                        button.className = 'toolbar-btn';
-                        button.dataset.latex = elemento.latex;
-                        button.title = elemento.title;
-                        button.innerHTML = `\\(${elemento.display || elemento.latex}\\)`;
-                        contentDiv.appendChild(button);
+        function switchTab(tabId) {
+            activeTabId = tabId;
+            render();
+        }
+
+        async function addTab(name, url, directData = null) {
+            const existingTab = tabs.find(t => t.id === name);
+            if (existingTab) {
+                switchTab(name);
+                return;
+            }
+
+            const tabId = name;
+            const newTab = { id: tabId, name: name, url: url, data: { categorias: [] } };
+            tabs.push(newTab);
+            switchTab(tabId);
+            
+            if(directData){
+                newTab.data = directData;
+                render();
+                return;
+            }
+            
+            try {
+                const cachedData = localStorage.getItem(`formula-cache-${name}`);
+                if (cachedData) {
+                    newTab.data = JSON.parse(cachedData);
+                } else {
+                    const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`);
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    const jsonData = await response.json();
+                    if (!jsonData.categorias) throw new Error('Invalid JSON format');
+                    newTab.data = jsonData;
+                    localStorage.setItem(`formula-cache-${name}`, JSON.stringify(jsonData));
+                }
+            } catch (error) {
+                console.error(`Failed to load tab ${name}:`, error);
+                alert(`No se pudo cargar el archivo para "${name}".`);
+                closeTab(tabId); // Remove tab if loading failed
+            }
+            render();
+        }
+
+        function closeTab(tabId) {
+            tabs = tabs.filter(t => t.id !== tabId);
+            if (activeTabId === tabId) {
+                switchTab('base');
+            }
+            render();
+        }
+        
+        // --- Drag and Drop (FIXED) ---
+        function initDragAndDrop() {
+            // Sort categories
+            new Sortable(ui.editorContainer, {
+                animation: 150,
+                handle: '.cat-drag-handle',
+                ghostClass: 'sortable-ghost',
+                onEnd: (evt) => {
+                    // Use a deep copy to ensure immutability and prevent reference bugs.
+                    const freshData = getActiveTabData()?.data;
+                    if (!freshData || !freshData.categorias) return;
+
+                    const newData = JSON.parse(JSON.stringify(freshData));
+                    const [item] = newData.categorias.splice(evt.oldIndex, 1);
+                    newData.categorias.splice(evt.newIndex, 0, item);
+                    
+                    setActiveTabData(newData);
+                    render();
+                }
+            });
+
+            // Sort elements within each category
+            document.querySelectorAll('.elements-list').forEach(list => {
+                const catIndex = list.dataset.catIndex;
+                new Sortable(list, {
+                    animation: 150,
+                    handle: '.el-drag-handle',
+                    ghostClass: 'sortable-ghost',
+                    onEnd: (evt) => {
+                        const freshData = getActiveTabData()?.data;
+                        if (!freshData || !freshData.categorias || !freshData.categorias[catIndex]) return;
+
+                        // Deep copy is safest for nested arrays.
+                        const newData = JSON.parse(JSON.stringify(freshData));
+                        
+                        const [item] = newData.categorias[catIndex].elementos.splice(evt.oldIndex, 1);
+                        newData.categorias[catIndex].elementos.splice(evt.newIndex, 0, item);
+                        
+                        setActiveTabData(newData);
+                        render();
                     }
                 });
-                
-                if (tabId === 'recientes' && recentSymbols.length > 0) {
-                     const clearBtnContainer = document.createElement('div');
-                     clearBtnContainer.id = 'clear-recents-btn-container';
-                     clearBtnContainer.style.gridColumn = '1 / -1';
-                     const clearBtn = document.createElement('button');
-                     clearBtn.id = 'clear-recents-btn';
-                     clearBtn.className = 'btn btn-sm btn-danger';
-                     clearBtn.textContent = 'Borrar recientes';
-                     clearBtn.onclick = clearRecents;
-                     clearBtnContainer.appendChild(clearBtn);
-                     contentDiv.appendChild(clearBtnContainer);
-                }
-
-                MathJax.typesetPromise(contentDiv.querySelectorAll('.toolbar-btn'));
-            }
-            function handleTabSwitch(event) {
-                const button = event.target.closest('.tab-btn');
-                if (!button) return;
-                tabsContainer.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-                toolbar.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                button.classList.add('active');
-                const tabId = button.dataset.tab;
-                document.getElementById(`tab-${tabId}`).classList.add('active');
-                renderTabContent(tabId, getAllCategories());
-            }
-            let allTabsRenderedForSearch = false;
-            searchInput.addEventListener('input', (e) => {
-                const hasText = e.target.value.length > 0;
-                clearSearchBtn.style.display = hasText ? 'block' : 'none';
-                const query = normalizeString(e.target.value.trim());
-                tabsContainer.parentElement.classList.toggle('search-results-view', query.length > 0);
-                
-                if (query.length > 0) {
-                    if (!allTabsRenderedForSearch) {
-                        const allCategories = getAllCategories();
-                        allCategories.forEach(cat => renderTabContent(cat.id, allCategories));
-                        allTabsRenderedForSearch = true;
-                    }
-                    toolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
-                        const title = normalizeString(btn.title);
-                        const latex = normalizeString(btn.dataset.latex);
-                        const isVisible = title.includes(query) || latex.includes(query);
-                        btn.style.display = isVisible ? 'flex' : 'none';
-                    });
-                     toolbar.querySelectorAll('.matrix-builder').forEach(builder => {
-                        const title = normalizeString(builder.dataset.title);
-                        builder.style.display = title.includes(query) ? 'flex' : 'none';
-                    });
-                } else {
-                     allTabsRenderedForSearch = false;
-                    toolbar.querySelectorAll('.toolbar-btn').forEach(btn => { btn.style.display = 'flex'; });
-                    toolbar.querySelectorAll('.matrix-builder').forEach(builder => { builder.style.display = 'flex'; });
-                    rebuildToolbarAndUI();
-                }
             });
-            function addFooter() {
-                const footer = document.getElementById('page-footer');
-                footer.innerHTML = `
-                    <p style="margin-bottom: 10px;">
-                        <a href="https://labia.tiddlyhost.com" target="_blank" rel="noopener noreferrer">Laboratorio de aplicaciones educativas</a> | 
-                        <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Aplicación hecha por Juan José de Haro</a>
-                    </p>
-                    <p style="margin-bottom: 10px;">
-                        <a href="https://github.com/jjdeharo/app/tree/main/mat/editor_latex" target="_blank" rel="noopener noreferrer">Código del proyecto en GitHub</a>
-                    </p>
-                    <p style="margin-bottom: 10px;">
-                        <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
-                    </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v5.0</p>
-                `;
-            }
-
-            // --- EVENT LISTENERS ---
-            latexInput.addEventListener('input', updatePreview);
-            toolbar.addEventListener('click', (event) => {
-                const button = event.target.closest('.toolbar-btn');
-                if (button && button.dataset.latex) insertAtCursor(button.dataset.latex);
-            });
-            tabsContainer.addEventListener('click', handleTabSwitch);
-            clearSearchBtn.addEventListener('click', () => {
-                searchInput.value = '';
-                searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-                searchInput.focus();
-            });
-            copyButton.addEventListener('click', () => {
-                const rawLatex = latexInput.value.trim();
-                if (!rawLatex) return;
-                let textToCopy;
-                switch (delimiterSelector.value) {
-                    case 'parentheses': textToCopy = `\\(${rawLatex}\\)`; break;
-                    case 'brackets': textToCopy = `\\[\n${rawLatex}\n\\]`; break;
-                    case 'double_dollar': textToCopy = `$$\n${rawLatex}\n$$`; break;
-                    case 'single_dollar': textToCopy = `$${rawLatex}$`; break;
-                    default: textToCopy = rawLatex;
-                }
-                navigator.clipboard.writeText(textToCopy);
-                copyCodeFeedback.textContent = '¡Código copiado!';
-                copyCodeFeedback.style.opacity = '1';
-                setTimeout(() => { copyCodeFeedback.style.opacity = '0'; }, 2000);
-            });
-            clearButton.addEventListener('click', () => {
-                latexInput.value = '';
-                latexInput.focus();
-                updatePreview();
-            });
-            viewImageButton.addEventListener('click', handleViewImage);
-            document.getElementById('image-modal').addEventListener('click', (e) => { if (e.target.id === 'image-modal') document.getElementById('image-modal').classList.remove('active'); });
-            settingsBtn.addEventListener('click', openSettingsModal);
-            closeSettingsBtn.addEventListener('click', closeSettingsModal);
-            settingsModal.addEventListener('click', (e) => { if(e.target === settingsModal) closeSettingsModal(); });
-            urlInput.addEventListener('change', async () => {
-                if(urlInput.value) {
-                    const menuInfo = {id: urlInput.value, url: urlInput.value, source: 'url', name: urlInput.value};
-                    await addMenu(menuInfo);
-                    loadAndDisplayAvailableMenus();
-                    urlInput.value = '';
-                }
-            });
-            fileInput.addEventListener('change', () => { 
-                if(fileInput.files.length > 0) {
-                     const file = fileInput.files[0];
-                     const reader = new FileReader();
-                     reader.onload = (event) => {
-                        try {
-                            const data = JSON.parse(event.target.result);
-                            const menuInfo = {id: file.name, url: file.name, source: 'localfile_user', name: file.name, data: data };
-                            addMenu(menuInfo);
-                        } catch (error) {
-                             showModalFeedback('El archivo no es un JSON válido.', true);
-                        }
-                    };
-                    reader.readAsText(file);
-                    fileInput.value = '';
-                }
-            });
-            reloadMenusListBtn.addEventListener('click', () => loadAndDisplayAvailableMenus(true));
-            clearCacheBtn.addEventListener('click', () => {
-                localStorage.removeItem('latexAddedMenus');
-                localStorage.removeItem('latexRecents');
-                showModalFeedback('Caché y menús añadidos limpiados.');
-                initializeApp();
-            });
-            alertModalCloseBtn.addEventListener('click', hideAlert);
-            alertModal.addEventListener('click', (e) => { if (e.target === alertModal) hideAlert(); });
-
-            initializeApp();
         }
+        
+        // --- Event Listeners & Handlers ---
+        function addEditorEventListeners() {
+            document.querySelectorAll('.toggle-collapse-btn').forEach(b => b.addEventListener('click', handleToggleCollapse));
+            document.querySelectorAll('.edit-cat-btn').forEach(b => b.addEventListener('click', handleEditCategory));
+            document.querySelectorAll('.delete-cat-btn').forEach(b => b.addEventListener('click', handleDeleteCategory));
+            document.querySelectorAll('.add-el-btn').forEach(b => b.addEventListener('click', handleAddElement));
+            document.querySelectorAll('.edit-el-btn').forEach(b => b.addEventListener('click', handleEditElement));
+            document.querySelectorAll('.delete-el-btn').forEach(b => b.addEventListener('click', handleDeleteElement));
+            document.querySelectorAll('.editor-item').forEach(item => item.addEventListener('click', handleEditorClick));
+        }
+        
+        function handleToggleCollapse(e) {
+            const catIndex = e.currentTarget.dataset.catIndex;
+            const freshData = getActiveTabData().data;
+            const newData = JSON.parse(JSON.stringify(freshData));
+            newData.categorias[catIndex].isCollapsed = !newData.categorias[catIndex].isCollapsed;
+            setActiveTabData(newData);
+            render();
+        }
+
+        function highlightElements(editorItem, previewItem) {
+            document.querySelectorAll('.highlight').forEach(el => el.classList.remove('highlight'));
+            if(editorItem) editorItem.classList.add('highlight');
+            if(previewItem) previewItem.classList.add('highlight');
+            setTimeout(() => { if(editorItem) editorItem.classList.remove('highlight'); if(previewItem) previewItem.classList.remove('highlight'); }, 1500);
+        }
+
+        function handleEditorClick(e) {
+            if (e.target.closest('button, .drag-handle, .toggle-collapse-btn')) return;
+            const editorItem = e.currentTarget.closest('.editor-item');
+            if (!editorItem) return;
+            const { editorId } = editorItem.dataset;
+            const [catIndex, elIndex] = editorId.split('-');
+            const previewItem = document.querySelector(`.preview-item[data-cat-index="${catIndex}"][data-el-index="${elIndex}"]`);
+            if (previewItem) { previewItem.scrollIntoView({ behavior: 'smooth', block: 'center' }); highlightElements(editorItem, previewItem); }
+        }
+        
+        function handlePreviewClick(e) {
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            const freshData = getActiveTabData().data;
+            const category = freshData.categorias[catIndex];
+
+            if (category.isCollapsed) {
+                const newData = JSON.parse(JSON.stringify(freshData));
+                newData.categorias[catIndex].isCollapsed = false;
+                setActiveTabData(newData);
+                render();
+                setTimeout(() => {
+                    const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
+                     if (editorItem) {
+                        editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        highlightElements(editorItem, e.currentTarget);
+                    }
+                }, 0);
+            } else {
+                 const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
+                 if (editorItem) {
+                    editorItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    highlightElements(editorItem, e.currentTarget);
+                }
+            }
+        }
+
+        function handlePreviewDblClick(e) {
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            handleEditElement({ currentTarget: { dataset: { catIndex, elIndex } } });
+        }
+        
+        // CRUD Handlers (FIXED with immutable pattern)
+        function handleEditCategory(e) { const { catIndex } = e.currentTarget.dataset; showCategoryModal('Editar Categoría', getActiveTabData().data.categorias[catIndex], (formData) => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias[catIndex] = {...newData.categorias[catIndex], ...formData}; setActiveTabData(newData); render(); }); }
+        function handleDeleteCategory(e) { const { catIndex } = e.currentTarget.dataset; showConfirmModal(`Eliminar "${getActiveTabData().data.categorias[catIndex].nombre}"`, `¿Seguro?`, () => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias.splice(catIndex, 1); setActiveTabData(newData); render(); }); }
+        function handleAddElement(e) { const { catIndex } = e.currentTarget.dataset; showElementModal('Añadir Elemento', {}, (formData) => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); if (!newData.categorias[catIndex].elementos) { newData.categorias[catIndex].elementos = []; } newData.categorias[catIndex].elementos.push({ type: "button", ...formData }); setActiveTabData(newData); render(); }); }
+        function handleEditElement(e) { 
+            const { catIndex, elIndex } = e.currentTarget.dataset;
+            showElementModal('Editar Elemento', getActiveTabData().data.categorias[catIndex].elementos[elIndex], (formData) => {
+                const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                newData.categorias[catIndex].elementos[elIndex] = {...newData.categorias[catIndex].elementos[elIndex], ...formData};
+                setActiveTabData(newData);
+                render();
+            }, catIndex, elIndex);
+        }
+        function handleDeleteElement(e) { const { catIndex, elIndex } = e.currentTarget.dataset; const el = getActiveTabData().data.categorias[catIndex].elementos[elIndex]; showConfirmModal(`Eliminar "${el.title || el.latex}"`, `¿Seguro?`, () => { const newData = JSON.parse(JSON.stringify(getActiveTabData().data)); newData.categorias[catIndex].elementos.splice(elIndex, 1); setActiveTabData(newData); render(); }); }
+        
+        // Other Event Listeners
+        ui.addTabBtn.addEventListener('click', async () => {
+            ui.githubFilesList.innerHTML = 'Cargando lista...';
+            ui.addTabModal.classList.remove('hidden');
+            try {
+                const response = await fetch(GITHUB_REPO_URL);
+                const files = await response.json();
+                if (!Array.isArray(files)) {
+                    ui.githubFilesList.innerHTML = `<p class="text-red-500">Error: No se pudo obtener la lista de archivos.</p>`;
+                    return;
+                }
+                const jsonFiles = files.filter(file => file.name.endsWith('.json'));
+                ui.githubFilesList.innerHTML = '';
+                if (jsonFiles.length === 0) {
+                     ui.githubFilesList.innerHTML = `<p>No se encontraron archivos .json en la carpeta 'docs'.</p>`;
+                }
+                jsonFiles.forEach(file => {
+                    const fileEl = document.createElement('button');
+                    fileEl.className = 'w-full text-left p-2 rounded hover:bg-gray-100';
+                    fileEl.textContent = file.name;
+                    fileEl.addEventListener('click', () => {
+                        addTab(file.name, file.download_url);
+                        ui.addTabModal.classList.add('hidden');
+                    });
+                    ui.githubFilesList.appendChild(fileEl);
+                });
+            } catch (error) {
+                console.error("Error fetching GitHub files:", error);
+                ui.githubFilesList.innerHTML = `<p class="text-red-500">Error al cargar la lista desde GitHub.</p>`;
+            }
+        });
+        ui.addTabCloseBtn.addEventListener('click', () => ui.addTabModal.classList.add('hidden'));
+        ui.clearCacheBtn.addEventListener('click', () => {
+            let clearedCount = 0;
+            for (const key in localStorage) {
+                if (key.startsWith('formula-cache-')) {
+                    localStorage.removeItem(key);
+                    clearedCount++;
+                }
+            }
+            alert(`Caché de ${clearedCount} archivo(s) de fórmulas limpiada.`);
+        });
+        ui.customUrlLoadBtn.addEventListener('click', () => {
+            const url = ui.customUrlInput.value.trim();
+            if (url) {
+                const name = url.substring(url.lastIndexOf('/') + 1) || 'URL Personalizada';
+                addTab(name, url);
+                ui.addTabModal.classList.add('hidden');
+            } else {
+                alert("Por favor, introduce una URL válida.");
+            }
+        });
+        ui.customFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const loadedData = JSON.parse(event.target.result);
+                    if (loadedData.categorias && Array.isArray(loadedData.categorias)) {
+                        addTab(file.name, null, loadedData);
+                        ui.addTabModal.classList.add('hidden');
+                    } else {
+                        alert("El archivo JSON no tiene el formato esperado.");
+                    }
+                } catch (error) {
+                    alert("Error al procesar el archivo JSON.");
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // Reset for same-file uploads
+        });
+
+
+        ui.categoryNavigator.addEventListener('change', (e) => {
+            const catIndex = e.target.value;
+            if (catIndex === "") return;
+
+            const editorCategoryDiv = ui.editorContainer.querySelector(`[data-cat-id='${catIndex}']`);
+            const previewCategoryDiv = ui.previewContainer.querySelector(`[data-preview-cat-id='${catIndex}']`);
+
+            if (editorCategoryDiv) {
+                editorCategoryDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                editorCategoryDiv.classList.add('highlight');
+                setTimeout(() => editorCategoryDiv.classList.remove('highlight'), 1500);
+            }
+            if (previewCategoryDiv) {
+                previewCategoryDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                previewCategoryDiv.classList.add('highlight');
+                setTimeout(() => previewCategoryDiv.classList.remove('highlight'), 1500);
+            }
+            e.target.value = ""; // Reset dropdown
+        });
+
+        ui.toggleAllBtn.addEventListener('click', () => {
+            const freshData = getActiveTabData().data;
+            if (!freshData.categorias || freshData.categorias.length === 0) return;
+
+            const newData = JSON.parse(JSON.stringify(freshData));
+            const shouldCollapse = newData.categorias.some(cat => !cat.isCollapsed);
+            newData.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
+            setActiveTabData(newData);
+            render();
+        });
+        
+        ui.copyBtn.addEventListener('click', () => {
+            const currentData = getActiveTabData().data;
+            if (currentData.categorias.length === 0) { alert("No hay nada que copiar."); return; }
+            const jsonString = JSON.stringify(currentData, null, 2);
+            navigator.clipboard.writeText(jsonString).then(() => {
+                const originalText = ui.copyBtn.textContent;
+                ui.copyBtn.textContent = '¡Copiado!';
+                ui.copyBtn.classList.replace('bg-teal-500', 'bg-green-600');
+                setTimeout(() => { ui.copyBtn.textContent = originalText; ui.copyBtn.classList.replace('bg-green-600', 'bg-teal-500'); }, 2000);
+            }).catch(err => console.error('Error al copiar: ', err));
+        });
+
+        ui.exportBtn.addEventListener('click', () => {
+            const currentData = getActiveTabData().data;
+            if (currentData.categorias.length === 0) { alert("No hay nada que exportar."); return; }
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([JSON.stringify(currentData, null, 2)], { type: 'application/json' }));
+            a.download = `${activeTabId.replace('.json', '') || 'formulas'}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+        });
+
+        // --- Paste Logic ---
+        ui.pasteBtn.addEventListener('click', () => {
+            const currentData = getActiveTabData()?.data;
+            ui.pasteTextArea.value = '';
+            ui.pasteCategorySelector.innerHTML = '';
+            if (currentData && currentData.categorias) {
+                currentData.categorias.forEach((cat, index) => { const option = document.createElement('option'); option.value = index; option.textContent = cat.nombre; ui.pasteCategorySelector.appendChild(option); });
+            }
+            ui.pasteType.value = 'full';
+            ui.pasteCategorySelectorDiv.classList.add('hidden');
+            ui.pasteModal.classList.remove('hidden');
+        });
+        
+        ui.pasteType.addEventListener('change', (e) => { 
+            const isElement = e.target.value === 'element';
+            ui.pasteCategorySelectorDiv.classList.toggle('hidden', !isElement);
+        });
+
+        ui.pasteCancel.addEventListener('click', () => ui.pasteModal.classList.add('hidden'));
+        
+        ui.pasteAdd.addEventListener('click', () => {
+            const jsonText = ui.pasteTextArea.value.trim();
+            if (!jsonText) { alert("El área de texto está vacía."); return; }
+            
+            try {
+                const type = ui.pasteType.value;
+                if (type === 'full') {
+                    const pastedData = JSON.parse(jsonText);
+                    if (pastedData.categorias && Array.isArray(pastedData.categorias)) {
+                        addTab(`Pegado-${Date.now().toString().slice(-5)}`, null, pastedData);
+                    } else { throw new Error("JSON completo inválido."); }
+                } else {
+                    // For category and element, we modify the current tab's data
+                    const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                    if (type === 'category') {
+                        const pastedData = JSON.parse(jsonText);
+                        if (pastedData.nombre && pastedData.elementos) {
+                            newData.categorias.push(pastedData);
+                        } else { throw new Error("JSON de categoría inválido."); }
+                    } else if (type === 'element') {
+                        const catIndex = ui.pasteCategorySelector.value;
+                        if (catIndex === '') { alert("Selecciona una categoría."); return; }
+                        
+                        let itemsToPaste = [];
+                        try {
+                            itemsToPaste = JSON.parse(`[${jsonText}]`);
+                        } catch (e) {
+                            throw new Error("El formato del elemento o de la lista de elementos es inválido. Asegúrate de que son objetos JSON válidos separados por comas.");
+                        }
+
+                        const validItems = itemsToPaste.filter(item => item.type && item.latex);
+                        if (validItems.length > 0) {
+                            if(!newData.categorias[catIndex].elementos) {
+                               newData.categorias[catIndex].elementos = [];
+                            }
+                            newData.categorias[catIndex].elementos.push(...validItems);
+                        } else {
+                            throw new Error("Ningún elemento válido encontrado en el texto pegado.");
+                        }
+                    }
+                    setActiveTabData(newData);
+                    render();
+                }
+                ui.pasteModal.classList.add('hidden');
+            } catch (error) {
+                alert("Error al procesar el JSON: " + error.message);
+            }
+        });
+
+        // --- AI Creator Modal Logic ---
+        const PROMPTS = {
+            full_json: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un ARCHIVO JSON COMPLETO que contenga una lista de categorías de comandos LaTeX sobre un tema específico.\n\n**Estructura del Archivo JSON:**\nEl archivo debe empezar con \`{"categorias": [ ... ]}\` y contener un array de objetos de categoría.\n\n**Estructura de cada Categoría:**\n\`\`\`json\n{\n  "nombre": "string",  // El nombre visible de la categoría (ej. "Vectores").\n  "id": "string",        // Un identificador único en minúsculas (ej. "vectores").\n  "grid_template_columns": "string", // Valor CSS para la rejilla. Usa un valor de minmax adecuado a la anchura de las fórmulas. Para fórmulas anchas como integrales o estadística, usa "repeat(auto-fit, minmax(180px, 1fr))". Para letras griegas, "repeat(auto-fit, minmax(50px, 1fr))" es suficiente.\n  "isCollapsed": false, // Siempre 'false' para que aparezca desplegada.\n  "elementos": [       // Lista de los botones de la categoría.\n    {\n      "type": "button",          // Siempre "button".\n      "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n      "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n      "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n    }\n  ]\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema general y las instrucciones adicionales, crea una estructura de categorías y elementos coherente.\n2. Genera el JSON completo, empezando por \`{"categorias": [ ... ]}\`.\n3. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Tema General:**\n{THEME}\n\n**Instrucciones Adicionales:**\n{INSTRUCTIONS}`,
+            category: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente una categoría de comandos LaTeX.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "nombre": "string",  // El nombre visible de la categoría (ej. "Vectores").\n  "id": "string",        // Un identificador único en minúsculas (ej. "vectores").\n  "grid_template_columns": "string", // Valor CSS para la rejilla. Usa un valor de minmax adecuado a la anchura de las fórmulas. Para fórmulas anchas como integrales o estadística, usa "repeat(auto-fit, minmax(180px, 1fr))". Para letras griegas, "repeat(auto-fit, minmax(50px, 1fr))" es suficiente.\n  "isCollapsed": false, // Siempre 'false' para que aparezca desplegada.\n  "elementos": [       // Lista de los botones de la categoría.\n    {\n      "type": "button",          // Siempre "button".\n      "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n      "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n      "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n    }\n  ]\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te doy a continuación, crea una lista de EXACTAMENTE {ELEMENT_COUNT} comandos LaTeX relevantes.\n2. Genera un único objeto JSON que siga la estructura y las reglas anteriores.\n3. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Tema de la categoría:**\n{THEME}`,
+            multiple_elements: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar una lista de objetos JSON que representen comandos LaTeX para botones.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te proporciono, crea una lista de EXACTAMENTE {ELEMENT_COUNT} objetos JSON de comandos LaTeX relevantes.\n2. Los objetos deben estar separados por comas.\n3. Tu respuesta debe ser únicamente la lista de objetos JSON, sin envolverla en un array \`[]\` y sin texto adicional.\n\n**Tema de los elementos:**\n{THEME}`,
+            element: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente un comando LaTeX para un botón.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en la descripción de la fórmula LaTeX que te proporciono a continuación, genera un único objeto JSON que siga la estructura y las reglas anteriores.\n2. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Descripción de la fórmula LaTeX:**\n{FORMULA}`
+        };
+        
+        function resetAiModal() { ui.aiPromptOutput.value = ''; ui.aiLaunchChatGptBtn.disabled = true; ui.aiCopyPromptBtn.disabled = true; }
+        ui.aiCreatorBtn.addEventListener('click', () => { renderAiCreatorInputs('full_json'); resetAiModal(); ui.aiCreatorModal.classList.remove('hidden'); });
+        ui.aiCreatorCloseBtn.addEventListener('click', () => ui.aiCreatorModal.classList.add('hidden'));
+        ui.aiChoice.addEventListener('change', (e) => { renderAiCreatorInputs(e.target.value); resetAiModal(); });
+        function renderAiCreatorInputs(choice) { let html = ''; switch(choice) { case 'full_json': html = `<div><label for="ai-full-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema general:</label><input type="text" id="ai-full-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Estadística, Álgebra Lineal..."></div><div><label for="ai-full-instructions" class="block text-sm font-medium text-gray-700 mt-2">Instrucciones adicionales (opcional):</label><textarea id="ai-full-instructions" rows="3" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Crear 3 categorías (básica, distribuciones, regresión) con 5 fórmulas cada una."></textarea></div>`; break; case 'category': html = `<div><label for="ai-category-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de la categoría:</label><input type="text" id="ai-category-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Vectores, Química Orgánica..."><label for="ai-category-count" class="block text-sm font-medium text-gray-700 mt-2">Número de elementos:</label><input type="number" id="ai-category-count" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"></div>`; break; case 'multiple_elements': html = `<div><label for="ai-multi-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de los elementos:</label><input type="text" id="ai-multi-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Identidades trigonométricas"><label for="ai-multi-count" class="block text-sm font-medium text-gray-700 mt-2">Número de elementos:</label><input type="number" id="ai-multi-count" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"></div>`; break; case 'element': html = `<div><label for="ai-element-formula" class="block text-sm font-medium text-gray-700 mt-2">Descripción de la fórmula LaTeX:</label><input type="text" id="ai-element-formula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Fórmula de la distribución normal"></div>`; break; } ui.aiInputsContainer.innerHTML = html; }
+        function generatePromptText() { let prompt = ''; const choice = ui.aiChoice.value; switch(choice) { case 'full_json': const fullTheme = document.getElementById('ai-full-theme').value.trim(); const instructions = document.getElementById('ai-full-instructions').value.trim(); if (!fullTheme) { alert("Por favor, introduce un tema general."); return null; } prompt = PROMPTS.full_json.replace('{THEME}', fullTheme).replace('{INSTRUCTIONS}', instructions || 'Ninguna'); break; case 'category': const catTheme = document.getElementById('ai-category-theme').value.trim(); const catCount = document.getElementById('ai-category-count').value; if (!catTheme) { alert("Por favor, introduce un tema para la categoría."); return null; } prompt = PROMPTS.category.replace('{THEME}', catTheme).replace('{ELEMENT_COUNT}', catCount); break; case 'multiple_elements': const multiTheme = document.getElementById('ai-multi-theme').value.trim(); const multiCount = document.getElementById('ai-multi-count').value; if (!multiTheme) { alert("Por favor, introduce un tema para los elementos."); return null; } prompt = PROMPTS.multiple_elements.replace('{THEME}', multiTheme).replace('{ELEMENT_COUNT}', multiCount); break; case 'element': const formula = document.getElementById('ai-element-formula').value.trim(); if (!formula) { alert("Por favor, introduce una fórmula o comando LaTeX."); return null; } prompt = PROMPTS.element.replace('{FORMULA}', formula); break; } return prompt; }
+        ui.aiGeneratePromptBtn.addEventListener('click', () => { const promptText = generatePromptText(); if (promptText) { ui.aiPromptOutput.value = promptText; ui.aiLaunchChatGptBtn.disabled = false; ui.aiCopyPromptBtn.disabled = false; } });
+        ui.aiCopyPromptBtn.addEventListener('click', () => { const promptText = ui.aiPromptOutput.value; if (!promptText) { return; } navigator.clipboard.writeText(promptText).then(() => { const originalText = ui.aiCopyPromptBtn.textContent; const originalClasses = [...ui.aiCopyPromptBtn.classList]; ui.aiCopyPromptBtn.textContent = "¡Copiado!"; ui.aiCopyPromptBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600'); ui.aiCopyPromptBtn.classList.add('bg-green-600'); setTimeout(() => { ui.aiCopyPromptBtn.textContent = originalText; ui.aiCopyPromptBtn.className = ''; originalClasses.forEach(c => ui.aiCopyPromptBtn.classList.add(c)); }, 2000); }).catch(err => { console.error('Error al copiar: ', err); alert("No se pudo copiar el prompt."); }); });
+        ui.aiLaunchChatGptBtn.addEventListener('click', () => { const promptText = ui.aiPromptOutput.value; if (!promptText) { return; } const chatGptUrl = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`; window.open(chatGptUrl, '_blank'); });
+
+        // --- Modals Generic Handlers ---
+        let onSaveCallback = null;
+        function showCategoryModal(title, categoryData = {}, onSave) { ui.modalTitle.textContent = title; ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="cat-nombre" class="block text-sm font-medium text-gray-700">Nombre</label><input type="text" id="cat-nombre" value="${categoryData.nombre || ''}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required></div><div><label for="cat-grid" class="block text-sm font-medium text-gray-700">CSS Grid Template</label><input type="text" id="cat-grid" value="${categoryData.grid_template_columns || 'repeat(auto-fit, minmax(80px, 1fr))'}" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm" required></div></div>`; onSaveCallback = () => { const formData = { nombre: document.getElementById('cat-nombre').value, grid_template_columns: document.getElementById('cat-grid').value }; if (!formData.nombre) { alert('El nombre es obligatorio.'); return; } onSave(formData); hideModal(); }; ui.modal.classList.remove('hidden'); }
+        
+        function showElementModal(title, elementData = {}, onSave, catIndex, elIndex) {
+            ui.modalTitle.textContent = title;
+            ui.modalForm.innerHTML = `<div class="space-y-4"><div><label for="el-title" class="block text-sm font-medium">Título</label><input type="text" id="el-title" value="${elementData.title || ''}" class="mt-1 block w-full px-3 py-2 border rounded-md" required></div><div><label for="el-latex" class="block text-sm font-medium">LaTeX (insertar)</label><textarea id="el-latex" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-md font-mono" required>${elementData.latex || ''}</textarea></div><div><label for="el-display" class="block text-sm font-medium">LaTeX (visualizar)</label><textarea id="el-display" rows="3" class="mt-1 block w-full px-3 py-2 border rounded-md font-mono">${elementData.display || ''}</textarea><p class="text-xs text-gray-500 mt-1">Opcional. Si se deja en blanco, se usa el de insertar.</p></div></div>`;
+            
+            if (catIndex !== undefined && elIndex !== undefined) {
+                const moveContainer = document.createElement('div');
+                moveContainer.className = 'mt-6 pt-4 border-t border-gray-200 space-y-2';
+                moveContainer.innerHTML = `<label for="move-el-category" class="block text-sm font-medium text-gray-700">Mover a otra categoría</label>`;
+
+                const moveControls = document.createElement('div');
+                moveControls.className = 'flex items-center space-x-2';
+
+                const selectEl = document.createElement('select');
+                selectEl.id = 'move-el-category';
+                selectEl.className = 'block w-full rounded-md border-gray-300 shadow-sm';
+                getActiveTabData().data.categorias.forEach((cat, index) => {
+                    const option = document.createElement('option');
+                    option.value = index;
+                    option.textContent = cat.nombre;
+                    if (index === parseInt(catIndex)) {
+                        option.selected = true;
+                    }
+                    selectEl.appendChild(option);
+                });
+
+                const moveBtn = document.createElement('button');
+                moveBtn.type = 'button';
+                moveBtn.textContent = 'Mover';
+                moveBtn.className = 'bg-orange-500 text-white px-3 py-2 rounded-lg shadow-sm hover:bg-orange-600 transition text-sm';
+
+                moveBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const newCatIndex = parseInt(selectEl.value, 10);
+                    if (newCatIndex !== parseInt(catIndex, 10)) {
+                        const newData = JSON.parse(JSON.stringify(getActiveTabData().data));
+                        const [elementToMove] = newData.categorias[catIndex].elementos.splice(elIndex, 1);
+                        newData.categorias[newCatIndex].elementos.push(elementToMove);
+                        setActiveTabData(newData);
+                        hideModal();
+                        render();
+                    } else {
+                        alert("Ya se encuentra en esta categoría.");
+                    }
+                });
+
+                moveControls.appendChild(selectEl);
+                moveControls.appendChild(moveBtn);
+                moveContainer.appendChild(moveControls);
+                ui.modalForm.appendChild(moveContainer);
+            }
+
+            onSaveCallback = () => {
+                const formData = { title: document.getElementById('el-title').value, latex: document.getElementById('el-latex').value, display: document.getElementById('el-display').value };
+                if (!formData.title || !formData.latex) { alert('Título y LaTeX son obligatorios.'); return; }
+                onSave(formData);
+                hideModal();
+            };
+            ui.modal.classList.remove('hidden');
+        }
+
+        function hideModal() { ui.modal.classList.add('hidden'); onSaveCallback = null; }
+        ui.modalSave.addEventListener('click', () => { if (onSaveCallback) onSaveCallback(); });
+        ui.modalCancel.addEventListener('click', hideModal);
+        
+        let onDeleteCallback = null;
+        function showConfirmModal(title, message, onDelete) { ui.confirmTitle.textContent = title; ui.confirmMessage.textContent = message; onDeleteCallback = onDelete; ui.confirmModal.classList.remove('hidden'); }
+        function hideConfirmModal() { ui.confirmModal.classList.add('hidden'); onDeleteCallback = null; }
+        ui.confirmDelete.addEventListener('click', () => { if(onDeleteCallback) onDeleteCallback(); hideConfirmModal(); });
+        ui.confirmCancel.addEventListener('click', hideConfirmModal);
+
+        // --- Initial Load ---
+        async function init() {
+            const baseTab = { id: 'base', name: 'Base', url: DEFAULT_BASE_URL, data: { categorias: [] } };
+            tabs.push(baseTab);
+            activeTabId = 'base';
+            try {
+                const response = await fetch(`https://corsproxy.io/?${encodeURIComponent(DEFAULT_BASE_URL)}`);
+                if (!response.ok) throw new Error('Failed to load base formulas');
+                const jsonData = await response.json();
+                if (jsonData && jsonData.categorias) {
+                    baseTab.data = jsonData;
+                }
+            } catch(error) {
+                console.error("Could not load base formulas:", error);
+                alert("No se pudieron cargar las fórmulas base por defecto.");
+            }
+            render();
+            renderAiCreatorInputs('full_json'); // Render initial inputs for AI creator
+        }
+
+        init();
     </script>
 </body>
 </html>
