@@ -26,7 +26,7 @@
       ]
     },
     {
-      "nombre": "Medidas de dispersión",
+      "nombre": "Dispersión",
       "id": "dispersion",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
       "isCollapsed": false,
