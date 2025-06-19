@@ -4,7 +4,7 @@
       "nombre": "Centralización",
       "id": "centralizacion",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
-      "isCollapsed": false,
+      "isCollapsed": true,
       "elementos": [
         {
           "type": "button",
@@ -29,7 +29,7 @@
       "nombre": "Dispersión",
       "id": "dispersion",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
-      "isCollapsed": false,
+      "isCollapsed": true,
       "elementos": [
         {
           "type": "button",
@@ -57,7 +57,7 @@
       "nombre": "Frecuencias",
       "id": "frecuencias",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
-      "isCollapsed": false,
+      "isCollapsed": true,
       "elementos": [
         {
           "type": "button",
@@ -80,7 +80,7 @@
       "nombre": "Intervalos",
       "id": "intervalos",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
-      "isCollapsed": false,
+      "isCollapsed": true,
       "elementos": [
         {
           "type": "button",
@@ -95,10 +95,43 @@
       ]
     },
     {
+      "nombre": "Intervalos de confianza",
+      "id": "intervalos_confianza",
+      "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
+      "isCollapsed": false,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\bar{x} \\pm z \\cdot \\frac{\\sigma}{\\sqrt{n}}",
+          "title": "Intervalo con desviación estándar poblacional"
+        },
+        {
+          "type": "button",
+          "latex": "\\bar{x} \\pm t \\cdot \\frac{s}{\\sqrt{n}}",
+          "title": "Intervalo con desviación muestral"
+        },
+        {
+          "type": "button",
+          "latex": "CI = (\\bar{x} - E, \\bar{x} + E)",
+          "title": "Fórmula general del intervalo"
+        },
+        {
+          "type": "button",
+          "latex": "E = z \\cdot \\frac{\\sigma}{\\sqrt{n}}",
+          "title": "Error estándar con z"
+        },
+        {
+          "type": "button",
+          "latex": "E = t \\cdot \\frac{s}{\\sqrt{n}}",
+          "title": "Error estándar con t"
+        }
+      ]
+    },
+    {
       "nombre": "Otras fórmulas",
       "id": "otras",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
-      "isCollapsed": false,
+      "isCollapsed": true,
       "elementos": [
         {
           "type": "button",
