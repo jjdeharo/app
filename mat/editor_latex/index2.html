@@ -307,14 +307,15 @@
             const clearCacheBtn = document.getElementById('clear-cache-btn');
             
             // --- CONFIGURACIÓN ---
+            const GITHUB_API_URL = 'https://api.github.com/repos/jjdeharo/app/contents/mat/editor_latex/docs';
             const DEFAULT_MENU_GITHUB_URL = 'https://raw.githubusercontent.com/jjdeharo/app/main/mat/editor_latex/formulas.json';
             const DEFAULT_MENU_LOCAL_URL = './formulas.json';
-            const MENU_INDEX_URL = './docs/menu_index.json';
             const MAX_RECENTS = 12;
 
             // --- ESTADO DE LA APLICACIÓN ---
             let loadedMenus = new Map();
             let menuCache = new Map();
+            let githubMenuListCache = null;
             let recentSymbols = [];
             
             // --- GESTIÓN DE DATOS Y ESTADO (Recientes y Menús) ---
@@ -399,7 +400,7 @@
             };
             const getAllCategories = () => {
                 const allCategories = new Map();
-                const menuOrder = ['default', 'docs', 'url', 'localfile'];
+                const menuOrder = ['default', 'github', 'url', 'localfile'];
                 const sortedMenus = Array.from(loadedMenus.values()).sort((a,b) => menuOrder.indexOf(a.source) - menuOrder.indexOf(b.source));
 
                 for (const menu of sortedMenus) {
@@ -452,6 +453,7 @@
                 loadRecents();
                 loadedMenus.clear();
                 menuCache.clear();
+                githubMenuListCache = null;
                 let baseMenuData;
                 try {
                     const response = await fetch(DEFAULT_MENU_LOCAL_URL);
@@ -478,49 +480,19 @@
             };
 
             // --- LÓGICA DE LA INTERFAZ DE USUARIO (UI) ---
-            const loadAndDisplayAvailableMenus = async () => {
-                availableMenusList.innerHTML = '<li>Cargando...</li>';
-                const menuItems = new Map();
-
-                const baseMenu = loadedMenus.get('formulas.json');
-                if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
-
-                try {
-                    const response = await fetch(MENU_INDEX_URL);
-                    if (!response.ok) throw new Error(`El archivo de índice de menús (menu_index.json) no se encontró en la carpeta /docs.`);
-                    const localIndex = await response.json();
-                    if (!Array.isArray(localIndex)) throw new Error('menu_index.json no contiene un array válido.');
-                    localIndex.forEach(item => menuItems.set(item.id, {...item, url: `./docs/${item.id}`, source: 'docs'}));
-                } catch(e) {
-                    console.warn(e.message);
-                    const errorItem = {
-                        id: 'error-no-index',
-                        name: `No se encontró 'menu_index.json' en /docs.`,
-                        source: 'error'
-                    };
-                    menuItems.set(errorItem.id, errorItem);
-                }
-                
-                for (const menu of loadedMenus.values()){
-                     if (!menuItems.has(menu.id)) {
-                        menuItems.set(menu.id, {...menu});
-                    }
-                }
-
+            const renderAvailableMenus = (menuItemsMap) => {
                 availableMenusList.innerHTML = '';
-                if(menuItems.size === 0) {
+                if(menuItemsMap.size === 0) {
                      availableMenusList.innerHTML = '<li>No se encontraron menús.</li>';
                      return;
                 }
 
-                menuItems.forEach(menu => {
+                menuItemsMap.forEach(menu => {
                     const li = document.createElement('li');
                     
                     if (menu.source === 'error') {
                         li.textContent = menu.name;
-                        li.style.color = 'var(--danger-color)';
-                        li.style.justifyContent = 'center';
-                        li.style.fontStyle = 'italic';
+                        li.style.color = 'var(--danger-color)'; li.style.justifyContent = 'center'; li.style.fontStyle = 'italic';
                         availableMenusList.appendChild(li);
                         return;
                     }
@@ -549,6 +521,48 @@
                     availableMenusList.appendChild(li);
                 });
             };
+            const loadAndDisplayAvailableMenus = async (forceRefetch = false) => {
+                if (!forceRefetch && githubMenuListCache) {
+                    renderAvailableMenus(githubMenuListCache);
+                    return;
+                }
+
+                availableMenusList.innerHTML = '<li>Cargando...</li>';
+                const menuItems = new Map();
+
+                const baseMenu = loadedMenus.get('formulas.json');
+                if(baseMenu) menuItems.set(baseMenu.id, { ...baseMenu });
+
+                try {
+                    const response = await fetch(GITHUB_API_URL);
+                    if (!response.ok) throw new Error(`Error al contactar con GitHub: ${response.statusText}`);
+                    const files = await response.json();
+                    if (!Array.isArray(files)) throw new Error('La respuesta de la API de GitHub no es válida.');
+                    
+                    const jsonFiles = files.filter(file => file.name.endsWith('.json') && file.type === 'file');
+                    jsonFiles.forEach(file => {
+                         menuItems.set(file.name, {
+                             id: file.name,
+                             name: file.name.replace('.json', '').replace(/_/g, ' ').replace(/^\w/, c => c.toUpperCase()),
+                             url: file.download_url,
+                             source: 'github'
+                         });
+                    });
+                } catch(e) {
+                    console.error(e.message);
+                    const errorItem = { id: 'error-github-api', name: `No se pudo cargar la lista de menús.`, source: 'error' };
+                    menuItems.set(errorItem.id, errorItem);
+                }
+                
+                for (const menu of loadedMenus.values()){
+                     if (!menuItems.has(menu.id)) {
+                        menuItems.set(menu.id, {...menu});
+                    }
+                }
+                
+                githubMenuListCache = menuItems;
+                renderAvailableMenus(githubMenuListCache);
+            };
 
             availableMenusList.addEventListener('change', (e) => {
                 const checkbox = e.target;
@@ -567,7 +581,6 @@
                     removeMenu(menuInfo.id);
                 }
             });
-
 
             function showAlert(title, htmlMessage) {
                 alertModalTitle.textContent = title;
@@ -848,7 +861,7 @@
                     <p style="margin-bottom: 10px;">
                         <a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" rel="noopener noreferrer">Licencia Creative Commons BY-SA</a>
                     </p>
-                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.3</p>
+                    <p style="margin-top: 20px; font-size: 0.8em; opacity: 0.7;">v4.4</p>
                 `;
             }
 
@@ -915,9 +928,10 @@
                     fileInput.value = '';
                 }
             });
-            reloadMenusListBtn.addEventListener('click', loadAndDisplayAvailableMenus);
+            reloadMenusListBtn.addEventListener('click', () => loadAndDisplayAvailableMenus(true));
             clearCacheBtn.addEventListener('click', () => {
                 menuCache.clear();
+                githubMenuListCache = null;
                 showModalFeedback('Caché limpiada. Los menús se recargarán desde su origen.');
                 initializeApp();
             });
