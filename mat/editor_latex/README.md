@@ -45,11 +45,6 @@ Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crea
 3. Previsualiza cómo se verán los botones.
 4. Copia o exporta el archivo JSON generado para integrarlo en tu editor LaTeX.
 
----
-
-
-
-Aquí tienes el texto corregido incluyendo que el archivo base es `formulas.json` y que siempre se carga:
 
 ---
 
