@@ -2,84 +2,113 @@
 
 ## ¿Qué es esto?
 
-Este proyecto es una herramienta gratuita pensada para que docentes puedan crear y editar fórmulas matemáticas fácilmente, sin necesidad de conocer a fondo el lenguaje LaTeX. Permite generar materiales educativos con notación matemática clara, profesional y bien presentada.
+Este proyecto es una herramienta gratuita pensada para que docentes puedan crear y editar fórmulas matemáticas fácilmente, sin necesidad de conocer a fondo el lenguaje LaTeX. Permite generar materiales educativos con notación matemática clara, profesional y bien presentada. Se puede utilizar en programas que admitan LaTeX como eXeLearning.
 
-## ¿Qué incluye?
+## 1. index.html → El editor de fórmulas
 
-### 1. index.html → El editor de fórmulas
 
-* Escribes el código LaTeX o eliges fórmulas del menú.
-* Ves la previsualización en tiempo real.
-* Puedes copiar el código para usarlo en otras plataformas.
-* También puedes descargar la fórmula como imagen PNG para presentaciones o documentos.
+### ¿Para qué sirve?
 
-### 2. editor\_menu.html → El editor del menú de botones
+* Escribir fórmulas fácilmente usando un menú visual de botones con símbolos matemáticos y estructuras comunes (fracciones, raíces, sumatorios, matrices, etc.).
+* Ver en tiempo real cómo queda la fórmula, gracias a MathJax, sin necesidad de compilar.
+* Copiar el código LaTeX ya listo para pegarlo en documentos, Moodle, Overleaf u otros entornos.
+* Exportar la fórmula como imagen PNG para usar en presentaciones, apuntes, webs, etc.
+* Buscar comandos por nombre o por código (por ejemplo, “raíz” o `\sqrt`).
+* Cargar menús personalizados de fórmulas desde archivos locales o desde URLs externas.
+* Acceder rápidamente a los últimos comandos usados desde una pestaña de "Recientes".
 
-* Permite modificar el menú que aparece en el editor.
-* Puedes añadir, cambiar o quitar categorías y botones.
-* Admite copiar y pegar contenido generado por una IA, como ChatGPT.
-* Vista previa instantánea de cada cambio.
-* Todo se guarda en el archivo `formulas.json`.
+### ¿Cómo se usa?
 
-### 3. formulas.json → El archivo de configuración
+1. Escribe o selecciona una fórmula usando los botones.
+2. Visualiza el resultado al instante.
+3. Copia el código o descarga la imagen.
 
-* Contiene todas las categorías y botones del menú.
-* Cada botón tiene un título, un código LaTeX para insertar y otro para mostrar (opcional).
-* Se puede editar visualmente desde `editor_menu.html`.
+---
 
-## ¿Cómo empiezo?
+## 2. editor_menu.html
 
-Para poder personalizar el menú del editor online y adaptarlo a tus necesidades como docente, sigue estos pasos:
+Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crear, editar, organizar y exportar colecciones de botones que insertan fórmulas matemáticas en LaTeX, todo de manera visual y sin necesidad de escribir código a mano.
 
-1. Descarga los tres archivos: `index.html`, `editor_menu.html` y `formulas.json`.
-2. Ábrelos desde tu ordenador o súbelos a un servidor web (por ejemplo, GitHub Pages).
-3. Abre `index.html` para escribir fórmulas.
-4. Si quieres modificar el menú de botones, abre `editor_menu.html`.
+### ¿Para qué sirve?
 
-## ¿Puedo personalizarlo?
+* Crear categorías de botones que contienen fórmulas LaTeX.
+* Editar y reorganizar las fórmulas con solo arrastrar y soltar.
+* Copiar el resultado como archivo JSON estructurado para integrarlo en otros editores.
+* Exportar el archivo completo para su uso en proyectos compatibles.
+* Cargar fácilmente archivos `.json` alojados en GitHub o pegarlos desde el portapapeles.
+* Usar un asistente con inteligencia artificial que genera automáticamente categorías, elementos o archivos JSON completos con fórmulas.
 
-Sí, puedes hacerlo de dos maneras:
+### ¿Cómo se usa?
 
-### Opción 1: Con ayuda de una IA (como ChatGPT)
+1. Añade una categoría o carga un archivo de ejemplo.
+2. Dentro de cada categoría, añade elementos con su código LaTeX.
+3. Previsualiza cómo se verán los botones.
+4. Copia o exporta el archivo JSON generado para integrarlo en tu editor LaTeX.
 
-Puedes pedirle a una IA que genere comandos o categorías en formato JSON. Por ejemplo:
+---
+
+
+
+Aquí tienes el texto corregido incluyendo que el archivo base es `formulas.json` y que siempre se carga:
+
+---
+
+## Archivos de menús de fórmulas
+
+Los archivos de menús están en formato JSON y definen colecciones de botones con fórmulas LaTeX organizadas por categorías. Estos archivos pueden ser cargados por el editor de menús (`editor_menu.html`) o por el editor de fórmulas (`index.html`).
+
+Permiten al usuario trabajar con expresiones matemáticas sin necesidad de memorizar la sintaxis LaTeX, seleccionándolas directamente desde menús visuales.
+
+## Archivo base
+
+El archivo `formulas.json` actúa como menú base. Se carga siempre por defecto al iniciar el editor, y contiene una selección general de fórmulas organizadas por temas. A partir de este archivo se puede ampliar o modificar el contenido utilizando el editor visual.
+
+## Estructura general de los archivos
+
+Cada archivo contiene un objeto con una única propiedad `categorias`, que es una lista de categorías temáticas. Cada categoría incluye un conjunto de botones que representan fórmulas.
 
 ```json
 {
-  "nombre": "Trigonometría",
-  "id": "trigonometria",
-  "grid_template_columns": "repeat(auto-fit, minmax(120px, 1fr))",
-  "elementos": [
+  "categorias": [
     {
-      "type": "button",
-      "latex": "\\sin",
-      "title": "Seno"
+      "nombre": "string",
+      "id": "string",
+      "grid_template_columns": "string",
+      "isCollapsed": false,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "string",
+          "display": "string",
+          "title": "string"
+        }
+      ]
     }
   ]
 }
 ```
 
-Después, lo pegas en `editor_menu.html` con el botón "Pegar" y seleccionas si es una categoría o un elemento. A partir de ahí, puedes ajustarlo visualmente igual que en la opción 2.
+### Descripción de los campos
 
-### Opción 2: Usar el editor visual
+* `categorias`: Lista de categorías temáticas (por ejemplo, fracciones, límites, álgebra...).
 
-1. Abre `editor_menu.html`.
-2. Carga o pega el archivo `formulas.json`.
-3. Añade, edita o borra lo que necesites.
-4. Exporta o copia el resultado final.
+  * `nombre`: Nombre visible de la categoría.
+  * `id`: Identificador único de la categoría (en minúsculas y sin espacios).
+  * `grid_template_columns`: Valor CSS para organizar la rejilla de botones.
+  * `isCollapsed`: Si es `false`, la categoría se muestra desplegada; si es `true`, aparece plegada al cargar.
+  * `elementos`: Lista de botones de la categoría.
 
-## ¿Dónde puedo alojar mis archivos?
+    * `type`: Siempre `"button"`.
+    * `latex`: Código LaTeX que se insertará al hacer clic.
+    * `display`: Fórmula que se muestra en el botón (puede coincidir con `latex`).
+    * `title`: Descripción breve de la fórmula.
 
-### Recomendado: GitHub Pages
+## Ubicación de los archivos
 
-1. Crea una cuenta en [GitHub](https://github.com).
-2. Sube los archivos a un repositorio público.
-3. Copia el enlace "raw" de tu `formulas.json`.
-4. Sustituye la línea correspondiente en `index.html`:
+Los archivos de menús adicionales están ubicados en la carpeta `docs`. Pueden cargarse desde el editor visual o utilizarse directamente mediante URL para integrarlos en otros proyectos o editores personalizados.
 
-```js
-const url = 'https://raw.githubusercontent.com/usuario/repositorio/ruta/formulas.json';
-```
+
+
 
 ## Licencia
 
