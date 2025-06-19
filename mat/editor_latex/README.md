@@ -2,7 +2,8 @@
 
 ## ¿Qué es esto?
 
-Este proyecto es una herramienta gratuita pensada para que docentes puedan crear y editar fórmulas matemáticas fácilmente, sin necesidad de conocer a fondo el lenguaje LaTeX. Permite generar materiales educativos con notación matemática clara, profesional y bien presentada. Se puede utilizar en programas que admitan LaTeX como eXeLearning.
+Este proyecto es una herramienta gratuita pensada para que docentes puedan crear y editar fórmulas matemáticas fácilmente, sin necesidad de conocer a fondo el lenguaje LaTeX. Permite generar materiales educativos con notación matemática clara, profesional y bien presentada. Se puede utilizar en programas que admitan LaTeX como [eXeLearning](https://exelearning.net/)
+.
 
 ## 1. index.html → El editor de fórmulas
 
@@ -14,7 +15,7 @@ Este proyecto es una herramienta gratuita pensada para que docentes puedan crear
 * Copiar el código LaTeX ya listo para pegarlo en documentos, Moodle, Overleaf u otros entornos.
 * Exportar la fórmula como imagen PNG para usar en presentaciones, apuntes, webs, etc.
 * Buscar comandos por nombre o por código (por ejemplo, “raíz” o `\sqrt`).
-* Cargar menús personalizados de fórmulas desde archivos locales o desde URLs externas.
+* Cargar **menús personalizados** de fórmulas desde archivos locales o desde URLs externas.
 * Acceder rápidamente a los últimos comandos usados desde una pestaña de "Recientes".
 
 ### ¿Cómo se usa?
@@ -25,7 +26,7 @@ Este proyecto es una herramienta gratuita pensada para que docentes puedan crear
 
 ---
 
-## 2. editor_menu.html → Editor del menú del Editor $\LaTeX$ online
+## 2. editor_menu.html → Editor del menú del _Editor LaTeX online_ para crear menús personalizados
 
 Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crear, editar, organizar y exportar colecciones de botones que insertan fórmulas matemáticas en LaTeX, todo de manera visual y sin necesidad de escribir código a mano.
 
@@ -43,7 +44,7 @@ Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crea
 1. Añade una categoría o carga un archivo de ejemplo.
 2. Dentro de cada categoría, añade elementos con su código LaTeX.
 3. Previsualiza cómo se verán los botones.
-4. Copia o exporta el archivo JSON generado para integrarlo en tu editor LaTeX.
+4. Copia o exporta el archivo JSON generado para integrarlo en tu editor LaTeX. Puedes cargarlo desde tu ordenador o si lo colocas en Internet (por ejemplo en un repositorio de GitHub, usando el acceso raw) podrás escribir su dirección.
 
 
 ---
@@ -101,8 +102,6 @@ Cada archivo contiene un objeto con una única propiedad `categorias`, que es un
 ## Ubicación de los archivos
 
 Los archivos de menús adicionales están ubicados en la carpeta `docs`. Pueden cargarse desde el editor visual o utilizarse directamente mediante URL para integrarlos en otros proyectos o editores personalizados.
-
-
 
 
 ## Licencia
