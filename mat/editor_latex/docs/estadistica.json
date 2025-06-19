@@ -1,7 +1,7 @@
 {
   "categorias": [
     {
-      "nombre": "Medidas de centralización",
+      "nombre": "Centralización",
       "id": "centralizacion",
       "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
       "isCollapsed": false,
