@@ -60,7 +60,8 @@
     <header class="bg-white shadow-md p-4 sticky top-0 z-20 space-y-3">
         <div class="flex flex-wrap justify-between items-center gap-y-2">
             <h1 class="text-2xl font-bold text-gray-700">Editor de Fórmulas LaTeX</h1>
-            <div class="flex items-center space-x-2 flex-wrap">
+            <div class="flex items-center space-x-2 flex-wrap gap-y-2">
+                <button id="ai-creator-btn" class="bg-cyan-500 text-white px-4 py-2 rounded-lg shadow hover:bg-cyan-600 transition">✨ Crear con IA</button>
                 <label for="file-upload" class="cursor-pointer bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600 transition">Cargar Fichero</label>
                 <input id="file-upload" type="file" class="hidden" accept=".json">
                 <button id="paste-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg shadow hover:bg-yellow-600 transition">Pegar</button>
@@ -95,12 +96,10 @@
 
     <!-- Modales -->
     <div id="modal-container">
-        <!-- Modal de Edición -->
         <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 z-30 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-md"><h2 id="modal-title" class="text-2xl font-bold mb-4"></h2><form id="modal-form"></form><div class="mt-6 flex justify-end space-x-3"><button id="modal-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="modal-save" class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition">Guardar</button></div></div></div>
-        <!-- Modal de Confirmación -->
         <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-50 z-40 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-sm"><h2 id="confirm-title" class="text-xl font-bold mb-4"></h2><p id="confirm-message"></p><div class="mt-6 flex justify-end space-x-3"><button id="confirm-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="confirm-delete" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition">Eliminar</button></div></div></div>
-        <!-- Modal de Pegado -->
-        <div id="paste-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><h2 class="text-2xl font-bold mb-4">Pegar contenido JSON</h2><div class="space-y-4"><textarea id="paste-textarea" rows="8" class="w-full border-gray-300 rounded-md font-mono text-sm" placeholder="Pega aquí el código JSON..."></textarea><div><label class="block text-sm font-medium text-gray-700">Tipo de contenido a pegar:</label><select id="paste-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full">JSON Completo</option><option value="category">Categoría</option><option value="element">Elemento</option></select></div><div id="paste-category-selector-div" class="hidden"><label class="block text-sm font-medium text-gray-700">Añadir elemento a la categoría:</label><select id="paste-category-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div></div><div class="mt-6 flex justify-end space-x-3"><button id="paste-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="paste-add" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Añadir Contenido</button></div></div></div>
+        <div id="paste-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-lg"><h2 class="text-2xl font-bold mb-4">Pegar contenido JSON</h2><div class="space-y-4"><textarea id="paste-textarea" rows="8" class="w-full border-gray-300 rounded-md font-mono text-sm" placeholder="Pega aquí el código JSON..."></textarea><div><label class="block text-sm font-medium text-gray-700">Tipo de contenido a pegar:</label><select id="paste-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"><option value="full">JSON Completo</option><option value="category">Categoría</option><option value="element">Elemento(s)</option></select></div><div id="paste-category-selector-div" class="hidden"><label class="block text-sm font-medium text-gray-700">Añadir elemento(s) a la categoría:</label><select id="paste-category-selector" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div></div><div class="mt-6 flex justify-end space-x-3"><button id="paste-cancel" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cancelar</button><button id="paste-add" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">Añadir Contenido</button></div></div></div>
+        <div id="ai-creator-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center hidden"><div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-2xl"><h2 class="text-2xl font-bold mb-4">Asistente de Creación con IA</h2><div class="space-y-4"><fieldset><legend class="text-base font-medium text-gray-900">1. ¿Qué quieres crear?</legend><div class="mt-4 space-y-4"><div class="flex items-center"><input id="ai-choice-category" name="ai-choice" type="radio" value="category" checked class="h-4 w-4 text-indigo-600 border-gray-300"><label for="ai-choice-category" class="ml-3 block text-sm font-medium text-gray-700">Una categoría nueva</label></div><div class="flex items-center"><input id="ai-choice-multiple-elements" name="ai-choice" value="multiple_elements" type="radio" class="h-4 w-4 text-indigo-600 border-gray-300"><label for="ai-choice-multiple-elements" class="ml-3 block text-sm font-medium text-gray-700">Varios elementos para una categoría</label></div><div class="flex items-center"><input id="ai-choice-element" name="ai-choice" value="element" type="radio" class="h-4 w-4 text-indigo-600 border-gray-300"><label for="ai-choice-element" class="ml-3 block text-sm font-medium text-gray-700">Un solo elemento</label></div></div></fieldset><div id="ai-category-inputs"><label for="ai-category-theme" class="block text-sm font-medium text-gray-700 mt-2">Tema de la categoría:</label><input type="text" id="ai-category-theme" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Vectores, Química Orgánica..."><label for="ai-category-count" class="block text-sm font-medium text-gray-700 mt-2">Número de elementos:</label><input type="number" id="ai-category-count" value="5" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md"></div><div id="ai-element-inputs" class="hidden"><label for="ai-element-formula" class="block text-sm font-medium text-gray-700 mt-2">Descripción de la fórmula LaTeX:</label><input type="text" id="ai-element-formula" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md" placeholder="Ej: Fórmula de la distibución normal"></div></div><div class="mt-6"><h3 class="text-base font-medium text-gray-900">2. Genera y usa el prompt</h3><p class="text-sm text-gray-600 mt-1">Sigue los pasos para generar un prompt y obtener el código JSON de la IA que prefieras.</p><textarea id="ai-prompt-output" rows="5" class="w-full border-gray-300 rounded-md font-mono text-xs mt-2 bg-gray-50" readonly placeholder="Aquí aparecerá el prompt generado..."></textarea><div class="mt-2 space-y-2"><button id="ai-generate-prompt-btn" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">1. Generar Prompt</button><div class="grid grid-cols-1 sm:grid-cols-2 gap-2"><button id="ai-launch-chatgpt-btn" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition disabled:bg-green-300 disabled:cursor-not-allowed" disabled>2. Lanzar en ChatGPT</button><button id="ai-copy-prompt-btn" class="w-full bg-gray-500 text-white px-4 py-2 rounded-lg shadow hover:bg-gray-600 transition disabled:bg-gray-300 disabled:cursor-not-allowed" disabled>2a. Copiar (otra IA)</button></div></div></div><div class="mt-6"><h3 class="text-base font-medium text-gray-900">3. Pega el resultado en el editor</h3><p class="text-sm text-gray-600 mt-1">Una vez tengas el código, cierra esta ventana y usa el botón <strong class="text-yellow-600">"Pegar"</strong> de la barra superior para añadir tu nueva creación.</p></div><div class="mt-8 flex justify-end"><button id="ai-creator-close-btn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400 transition">Cerrar</button></div></div></div>
     </div>
 
     <script type="module">
@@ -123,6 +122,8 @@
             loadUrlBtn: document.getElementById('load-url-btn'),
             categoryNavigator: document.getElementById('category-navigator'),
             toggleAllBtn: document.getElementById('toggle-all-btn'),
+            aiCreatorBtn: document.getElementById('ai-creator-btn'),
+            // Modals
             modal: document.getElementById('modal'),
             modalTitle: document.getElementById('modal-title'),
             modalForm: document.getElementById('modal-form'),
@@ -140,6 +141,20 @@
             pasteCategorySelector: document.getElementById('paste-category-selector'),
             pasteCancel: document.getElementById('paste-cancel'),
             pasteAdd: document.getElementById('paste-add'),
+            aiCreatorModal: document.getElementById('ai-creator-modal'),
+            aiCreatorCloseBtn: document.getElementById('ai-creator-close-btn'),
+            aiChoiceCategory: document.getElementById('ai-choice-category'),
+            aiChoiceElement: document.getElementById('ai-choice-element'),
+            aiChoiceMultipleElements: document.getElementById('ai-choice-multiple-elements'),
+            aiCategoryInputs: document.getElementById('ai-category-inputs'),
+            aiElementInputs: document.getElementById('ai-element-inputs'),
+            aiCategoryTheme: document.getElementById('ai-category-theme'),
+            aiCategoryCount: document.getElementById('ai-category-count'),
+            aiElementFormula: document.getElementById('ai-element-formula'),
+            aiPromptOutput: document.getElementById('ai-prompt-output'),
+            aiGeneratePromptBtn: document.getElementById('ai-generate-prompt-btn'),
+            aiCopyPromptBtn: document.getElementById('ai-copy-prompt-btn'),
+            aiLaunchChatGptBtn: document.getElementById('ai-launch-chatgpt-btn'),
         };
 
         // --- Render Functions ---
@@ -332,7 +347,6 @@
             if (category.isCollapsed) {
                 category.isCollapsed = false;
                 render();
-                 // We need to wait a tick for the DOM to update after render()
                 setTimeout(() => {
                     const editorItem = document.querySelector(`.editor-item[data-editor-id="${catIndex}-${elIndex}"]`);
                      if (editorItem) {
@@ -427,7 +441,6 @@
 
         ui.toggleAllBtn.addEventListener('click', () => {
             if (!data.categorias || data.categorias.length === 0) return;
-            // Si alguna está sin colapsar, las colapsamos todas. Si no, las desplegamos.
             const shouldCollapse = data.categorias.some(cat => !cat.isCollapsed);
             data.categorias.forEach(cat => cat.isCollapsed = shouldCollapse);
             render();
@@ -478,20 +491,142 @@
             ui.pasteCategorySelectorDiv.classList.add('hidden');
             ui.pasteModal.classList.remove('hidden');
         });
-        ui.pasteType.addEventListener('change', (e) => { ui.pasteCategorySelectorDiv.classList.toggle('hidden', e.target.value !== 'element'); });
+        
+        ui.pasteType.addEventListener('change', (e) => { 
+            const isElement = e.target.value === 'element';
+            ui.pasteCategorySelectorDiv.classList.toggle('hidden', !isElement);
+        });
+
         ui.pasteCancel.addEventListener('click', () => ui.pasteModal.classList.add('hidden'));
+        
         ui.pasteAdd.addEventListener('click', () => {
-            const jsonText = ui.pasteTextArea.value;
+            const jsonText = ui.pasteTextArea.value.trim();
             if (!jsonText) { alert("El área de texto está vacía."); return; }
             try {
-                const pastedData = JSON.parse(jsonText);
                 const type = ui.pasteType.value;
-                if (type === 'full') { if (pastedData.categorias && Array.isArray(pastedData.categorias)) { data = pastedData; } else { throw new Error("JSON completo inválido."); } }
-                else if (type === 'category') { if (pastedData.nombre && pastedData.elementos) { data.categorias.push(pastedData); } else { throw new Error("JSON de categoría inválido."); } }
-                else if (type === 'element') { const catIndex = ui.pasteCategorySelector.value; if (catIndex === '') { alert("Selecciona una categoría."); return; } if (pastedData.type && pastedData.latex) { data.categorias[catIndex].elementos.push(pastedData); } else { throw new Error("JSON de elemento inválido."); } }
+                if (type === 'full') {
+                    const pastedData = JSON.parse(jsonText);
+                    if (pastedData.categorias && Array.isArray(pastedData.categorias)) {
+                        data = pastedData;
+                    } else { throw new Error("JSON completo inválido."); }
+                } else if (type === 'category') {
+                    const pastedData = JSON.parse(jsonText);
+                    if (pastedData.nombre && pastedData.elementos) {
+                        data.categorias.push(pastedData);
+                    } else { throw new Error("JSON de categoría inválido."); }
+                } else if (type === 'element') {
+                    const catIndex = ui.pasteCategorySelector.value;
+                    if (catIndex === '') { alert("Selecciona una categoría."); return; }
+                    
+                    let itemsToPaste = [];
+                    try {
+                        itemsToPaste = JSON.parse(`[${jsonText}]`);
+                    } catch (e) {
+                        throw new Error("El formato del elemento o de la lista de elementos es inválido. Asegúrate de que son objetos JSON válidos separados por comas.");
+                    }
+
+                    const validItems = itemsToPaste.filter(item => item.type && item.latex);
+                    if (validItems.length > 0) {
+                        data.categorias[catIndex].elementos.push(...validItems);
+                    } else {
+                        throw new Error("Ningún elemento válido encontrado en el texto pegado.");
+                    }
+                }
                 ui.pasteModal.classList.add('hidden');
                 render();
-            } catch (error) { alert("Error al procesar el JSON: " + error.message); }
+            } catch (error) {
+                alert("Error al procesar el JSON: " + error.message);
+            }
+        });
+
+        // --- AI Creator Modal Logic ---
+        const PROMPTS = {
+            category: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente una categoría de comandos LaTeX.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "nombre": "string",  // El nombre visible de la categoría (ej. "Vectores").\n  "id": "string",        // Un identificador único en minúsculas (ej. "vectores").\n  "grid_template_columns": "string", // Valor CSS para la rejilla. Usa un valor de minmax adecuado a la anchura de las fórmulas. Para fórmulas anchas como integrales o estadística, usa "repeat(auto-fit, minmax(180px, 1fr))". Para letras griegas, "repeat(auto-fit, minmax(50px, 1fr))" es suficiente.\n  "isCollapsed": false, // Siempre 'false' para que aparezca desplegada.\n  "elementos": [       // Lista de los botones de la categoría.\n    {\n      "type": "button",          // Siempre "button".\n      "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n      "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n      "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n    }\n  ]\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te doy a continuación, crea una lista de EXACTAMENTE {ELEMENT_COUNT} comandos LaTeX relevantes.\n2. Genera un único objeto JSON que siga la estructura y las reglas anteriores.\n3. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Tema de la categoría:**\n{THEME}`,
+            multiple_elements: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar una lista de objetos JSON que representen comandos LaTeX para botones.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el tema que te proporciono, crea una lista de EXACTAMENTE {ELEMENT_COUNT} objetos JSON de comandos LaTeX relevantes.\n2. Los objetos deben estar separados por comas.\n3. Tu respuesta debe ser únicamente la lista de objetos JSON, sin envolverla en un array \`[]\` y sin texto adicional.\n\n**Tema de los elementos:**\n{THEME}`,
+            element: `Actúa como un experto en la creación de datos JSON estructurados para aplicaciones web. Tu tarea es generar un único objeto JSON que represente un comando LaTeX para un botón.\n\n**Estructura y campos del JSON (explicación):**\n\`\`\`json\n{\n  "type": "button",          // Siempre "button".\n  "latex": "string",         // El código LaTeX real que se inserta (ej. "\\\\vec{}").\n  "display": "string",       // Código LaTeX para mostrar en el botón, debe ser un ejemplo válido (ej. "\\\\vec{a}"). Si se omite, se usa "latex".\n  "title": "string"          // Un texto corto que describe la fórmula (ej. "Vector").\n}\n\`\`\`\n\n**REGLA VITAL:** Dentro del JSON, cada barra invertida \`\\\` del código LaTeX original debe ser representada como UNA DOBLE BARRA INVERTIDA \`\\\\\`. Por ejemplo, si el comando es \`\\frac\`, en el JSON debe escribirse como \`"latex": "\\\\frac{}{}"\`. NUNCA uses CUATRO barras invertidas.\n\n**Instrucciones:**\n1. Basándote en el comando LaTeX que te proporciono a continuación, genera un único objeto JSON que siga la estructura y las reglas anteriores.\n2. Tu respuesta debe ser únicamente el bloque de código JSON, sin añadir ninguna explicación o texto adicional.\n\n**Comando LaTeX:**\n{FORMULA}`
+        };
+        
+        function resetAiModal() {
+            ui.aiPromptOutput.value = '';
+            ui.aiLaunchChatGptBtn.disabled = true;
+            ui.aiCopyPromptBtn.disabled = true;
+        }
+
+        ui.aiCreatorBtn.addEventListener('click', () => {
+            resetAiModal();
+            ui.aiCreatorModal.classList.remove('hidden');
+        });
+        ui.aiCreatorCloseBtn.addEventListener('click', () => ui.aiCreatorModal.classList.add('hidden'));
+        
+        document.querySelectorAll('input[name="ai-choice"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const choice = e.target.value;
+                ui.aiCategoryInputs.classList.toggle('hidden', choice === 'element');
+                ui.aiElementInputs.classList.toggle('hidden', choice !== 'element');
+                // Mostrar u ocultar el campo de cantidad según la elección
+                ui.aiCategoryCount.parentElement.style.display = (choice === 'category' || choice === 'multiple_elements') ? 'block' : 'none';
+                resetAiModal();
+            });
+        });
+        
+        function generatePromptText() {
+            let prompt = '';
+            const choice = document.querySelector('input[name="ai-choice"]:checked').value;
+            const theme = ui.aiCategoryTheme.value.trim();
+            const count = ui.aiCategoryCount.value;
+
+            switch(choice) {
+                case 'category':
+                    if (!theme) { alert("Por favor, introduce un tema para la categoría."); return null; }
+                    prompt = PROMPTS.category.replace('{THEME}', theme).replace('{ELEMENT_COUNT}', count);
+                    break;
+                case 'multiple_elements':
+                     if (!theme) { alert("Por favor, introduce un tema para los elementos."); return null; }
+                    prompt = PROMPTS.multiple_elements.replace('{THEME}', theme).replace('{ELEMENT_COUNT}', count);
+                    break;
+                case 'element':
+                    const formula = ui.aiElementFormula.value.trim();
+                    if (!formula) { alert("Por favor, introduce una fórmula o comando LaTeX."); return null; }
+                    prompt = PROMPTS.element.replace('{FORMULA}', formula);
+                    break;
+            }
+            return prompt;
+        }
+
+        ui.aiGeneratePromptBtn.addEventListener('click', () => {
+            const promptText = generatePromptText();
+            if (promptText) {
+                ui.aiPromptOutput.value = promptText;
+                ui.aiLaunchChatGptBtn.disabled = false;
+                ui.aiCopyPromptBtn.disabled = false;
+            }
+        });
+
+        ui.aiCopyPromptBtn.addEventListener('click', () => {
+            const promptText = ui.aiPromptOutput.value;
+            if (!promptText) { return; }
+            navigator.clipboard.writeText(promptText).then(() => {
+                const originalText = ui.aiCopyPromptBtn.textContent;
+                const originalClasses = [...ui.aiCopyPromptBtn.classList];
+                ui.aiCopyPromptBtn.textContent = "¡Copiado!";
+                ui.aiCopyPromptBtn.classList.remove('bg-gray-500', 'hover:bg-gray-600');
+                ui.aiCopyPromptBtn.classList.add('bg-green-600');
+                setTimeout(() => {
+                    ui.aiCopyPromptBtn.textContent = originalText;
+                    ui.aiCopyPromptBtn.className = '';
+                    originalClasses.forEach(c => ui.aiCopyPromptBtn.classList.add(c));
+                }, 2000);
+            }).catch(err => {
+                console.error('Error al copiar: ', err);
+                alert("No se pudo copiar el prompt.");
+            });
+        });
+
+        ui.aiLaunchChatGptBtn.addEventListener('click', () => {
+            const promptText = ui.aiPromptOutput.value;
+            if (!promptText) { return; }
+            const chatGptUrl = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
+            window.open(chatGptUrl, '_blank');
         });
 
         // --- Modals Generic Handlers ---
