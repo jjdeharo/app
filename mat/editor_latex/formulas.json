@@ -43,6 +43,24 @@
         },
         {
           "type": "button",
+          "latex": "\\alpha",
+          "display": "\\alpha",
+          "title": "Letra griega alpha minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\beta",
+          "display": "\\beta",
+          "title": "Letra griega beta minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\pi",
+          "display": "\\pi",
+          "title": "Letra griega pi minúscula"
+        },
+        {
+          "type": "button",
           "latex": "\\displaystyle ",
           "display": "\\text{Display}",
           "title": "Modo display"
@@ -54,7 +72,7 @@
           "display": ""
         }
       ],
-      "isCollapsed": false
+      "isCollapsed": true
     },
     {
       "nombre": "Delimitadores",
@@ -643,6 +661,52 @@
       "isCollapsed": true
     },
     {
+      "nombre": "Anotaciones",
+      "id": "anotaciones",
+      "grid_template_columns": "repeat(auto-fit, minmax(160px, 1fr))",
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\cancel{x}",
+          "title": "Tachar término"
+        },
+        {
+          "type": "button",
+          "latex": "\\bcancel{x}",
+          "title": "Tachar en cruz"
+        },
+        {
+          "type": "button",
+          "latex": "\\xcancel{x}",
+          "title": "Tachar con X"
+        },
+        {
+          "type": "button",
+          "latex": "\\cancelto{0}{x}",
+          "title": "Tachar y anotar"
+        },
+        {
+          "type": "button",
+          "latex": " \\overset{}{} \n",
+          "title": "Texto encima",
+          "display": "a \\overset{?}{=} b\n"
+        },
+        {
+          "type": "button",
+          "latex": "\\underset{}{}",
+          "title": "Texto debajo",
+          "display": "a \\underset{?}{=} b"
+        },
+        {
+          "type": "button",
+          "latex": "\\text{texto}",
+          "title": "Insertar texto",
+          "display": ""
+        }
+      ],
+      "isCollapsed": true
+    },
+    {
       "nombre": "Formato de texto",
       "id": "formato",
       "grid_template_columns": "repeat(auto-fit, minmax(120px, 1fr))",
@@ -714,102 +778,158 @@
           "display": ""
         }
       ],
-      "isCollapsed": false
+      "isCollapsed": true
     },
     {
       "nombre": "Griego",
       "id": "griego",
       "grid_template_columns": "repeat(auto-fit, minmax(50px, 1fr))",
+      "isCollapsed": true,
       "elementos": [
         {
           "type": "button",
           "latex": "\\alpha",
-          "title": "Alpha"
+          "title": "Alfa minúscula"
         },
         {
           "type": "button",
           "latex": "\\beta",
-          "title": "Beta"
+          "title": "Beta minúscula"
         },
         {
           "type": "button",
           "latex": "\\gamma",
-          "title": "Gamma"
+          "title": "Gamma minúscula"
         },
         {
           "type": "button",
           "latex": "\\delta",
-          "title": "Delta"
+          "title": "Delta minúscula"
         },
         {
           "type": "button",
           "latex": "\\epsilon",
-          "title": "Epsilon"
+          "title": "Épsilon minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\varepsilon",
+          "title": "Épsilon variante"
         },
         {
           "type": "button",
           "latex": "\\zeta",
-          "title": "Zeta"
+          "title": "Zeta minúscula"
         },
         {
           "type": "button",
           "latex": "\\eta",
-          "title": "Eta"
+          "title": "Eta minúscula"
         },
         {
           "type": "button",
           "latex": "\\theta",
-          "title": "Theta"
+          "title": "Theta minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\vartheta",
+          "title": "Theta variante"
         },
         {
           "type": "button",
           "latex": "\\iota",
-          "title": "Iota"
+          "title": "Iota minúscula"
         },
         {
           "type": "button",
           "latex": "\\kappa",
-          "title": "Kappa"
+          "title": "Kappa minúscula"
         },
         {
           "type": "button",
           "latex": "\\lambda",
-          "title": "Lambda"
+          "title": "Lambda minúscula"
         },
         {
           "type": "button",
           "latex": "\\mu",
-          "title": "Mu"
+          "title": "Mu minúscula"
         },
         {
           "type": "button",
           "latex": "\\nu",
-          "title": "Nu"
+          "title": "Nu minúscula"
         },
         {
           "type": "button",
           "latex": "\\xi",
-          "title": "Xi"
+          "title": "Xi minúscula"
         },
         {
           "type": "button",
           "latex": "\\pi",
-          "title": "Pi"
+          "title": "Pi minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\varpi",
+          "title": "Pi variante"
         },
         {
           "type": "button",
           "latex": "\\rho",
-          "title": "Rho"
+          "title": "Rho minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\varrho",
+          "title": "Rho variante"
         },
         {
           "type": "button",
           "latex": "\\sigma",
-          "title": "Sigma"
+          "title": "Sigma minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\varsigma",
+          "title": "Sigma final"
         },
         {
           "type": "button",
           "latex": "\\tau",
-          "title": "Tau"
+          "title": "Tau minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\upsilon",
+          "title": "Upsilon minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\phi",
+          "title": "Phi minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\varphi",
+          "title": "Phi variante"
+        },
+        {
+          "type": "button",
+          "latex": "\\chi",
+          "title": "Chi minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\psi",
+          "title": "Psi minúscula"
+        },
+        {
+          "type": "button",
+          "latex": "\\omega",
+          "title": "Omega minúscula"
         },
         {
           "type": "button",
@@ -866,54 +986,7 @@
           "latex": "\\Omega",
           "title": "Omega mayúscula"
         }
-      ],
-      "isCollapsed": true
-    },
-    {
-      "nombre": "Anotaciones",
-      "id": "anotaciones",
-      "grid_template_columns": "repeat(auto-fit, minmax(160px, 1fr))",
-      "elementos": [
-        {
-          "type": "button",
-          "latex": "\\cancel{x}",
-          "title": "Tachar término"
-        },
-        {
-          "type": "button",
-          "latex": "\\bcancel{x}",
-          "title": "Tachar en cruz"
-        },
-        {
-          "type": "button",
-          "latex": "\\xcancel{x}",
-          "title": "Tachar con X"
-        },
-        {
-          "type": "button",
-          "latex": "\\cancelto{0}{x}",
-          "title": "Tachar y anotar"
-        },
-        {
-          "type": "button",
-          "latex": " \\overset{}{} \n",
-          "title": "Texto encima",
-          "display": "a \\overset{?}{=} b\n"
-        },
-        {
-          "type": "button",
-          "latex": "\\underset{}{}",
-          "title": "Texto debajo",
-          "display": "a \\underset{?}{=} b"
-        },
-        {
-          "type": "button",
-          "latex": "\\text{texto}",
-          "title": "Insertar texto",
-          "display": ""
-        }
-      ],
-      "isCollapsed": true
+      ]
     }
   ]
 }
