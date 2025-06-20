@@ -1,6 +1,6 @@
 # Editor $\LaTeX$ online
 
-## ¿Qué es esto?
+## Descripción
 
 Este proyecto es una herramienta gratuita pensada para que docentes puedan crear y editar fórmulas matemáticas fácilmente, sin necesidad de conocer a fondo el lenguaje LaTeX. Permite generar materiales educativos con notación matemática clara, profesional y bien presentada. Se puede utilizar en programas que admitan LaTeX como eXeLearning, Moodle, etc.
 .
@@ -8,7 +8,7 @@ Este proyecto es una herramienta gratuita pensada para que docentes puedan crear
 ## 1. index.html → El editor de fórmulas
 
 
-### ¿Para qué sirve?
+### Para qué sirve
 
 * Escribir fórmulas fácilmente usando un menú visual de botones con símbolos matemáticos y estructuras comunes (fracciones, raíces, sumatorios, matrices, etc.).
 * Ver en tiempo real cómo queda la fórmula, gracias a MathJax, sin necesidad de compilar.
@@ -18,7 +18,7 @@ Este proyecto es una herramienta gratuita pensada para que docentes puedan crear
 * Cargar **menús personalizados** de fórmulas desde archivos locales o desde URLs externas.
 * Acceder rápidamente a los últimos comandos usados desde una pestaña de "Recientes".
 
-### ¿Cómo se usa?
+### Cómo se usa
 
 1. Escribe o selecciona una fórmula usando los botones.
 2. Visualiza el resultado al instante.
@@ -30,7 +30,7 @@ Este proyecto es una herramienta gratuita pensada para que docentes puedan crear
 
 Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crear, editar, organizar y exportar colecciones de botones que insertan fórmulas matemáticas en LaTeX, todo de manera visual y sin necesidad de escribir código a mano.
 
-### ¿Para qué sirve?
+### Para qué sirve
 
 * Crear categorías de botones que contienen fórmulas LaTeX.
 * Editar y reorganizar las fórmulas con solo arrastrar y soltar.
@@ -39,7 +39,7 @@ Este programa es un **editor visual de menús de fórmulas LaTeX**. Permite crea
 * Cargar fácilmente archivos `.json` alojados en GitHub o pegarlos desde el portapapeles.
 * Usar un asistente con inteligencia artificial que genera automáticamente categorías, elementos o archivos JSON completos con fórmulas.
 
-### ¿Cómo se usa?
+### Cómo se usa
 
 1. Añade una categoría o carga un archivo de ejemplo.
 2. Dentro de cada categoría, añade elementos con su código LaTeX.
