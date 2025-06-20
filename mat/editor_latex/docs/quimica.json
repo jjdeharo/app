@@ -1,0 +1,188 @@
+{
+  "categorias": [
+    {
+      "nombre": "Fórmulas químicas",
+      "id": "formulas-quimicas",
+      "grid_template_columns": "repeat(auto-fit, minmax(120px, 1fr))",
+      "isCollapsed": true,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\ce{H2O}",
+          "display": "\\ce{H2O}",
+          "title": "Agua"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{CO2}",
+          "display": "\\ce{CO2}",
+          "title": "Dióxido de carbono"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{NaCl}",
+          "display": "\\ce{NaCl}",
+          "title": "Cloruro de sodio"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{O2}",
+          "display": "\\ce{O2}",
+          "title": "Oxígeno molecular"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{CH4}",
+          "display": "\\ce{CH4}",
+          "title": "Metano"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{C6H12O6}",
+          "display": "\\ce{C6H12O6}",
+          "title": "Glucosa"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{HCl}",
+          "display": "\\ce{HCl}",
+          "title": "Ácido clorhídrico"
+        }
+      ]
+    },
+    {
+      "nombre": "Reacciones químicas",
+      "id": "reacciones-quimicas",
+      "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
+      "isCollapsed": true,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\ce{2H2 + O2 -> 2H2O}",
+          "display": "\\ce{2H2 + O2 -> 2H2O}",
+          "title": "Síntesis del agua"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{C + O2 -> CO2}",
+          "display": "\\ce{C + O2 -> CO2}",
+          "title": "Combustión del carbono"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{CaCO3 ->[\\Delta] CaO + CO2}",
+          "display": "\\ce{CaCO3 ->[\\Delta] CaO + CO2}",
+          "title": "Descomposición del carbonato de calcio"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{NaOH + HCl -> NaCl + H2O}",
+          "display": "\\ce{NaOH + HCl -> NaCl + H2O}",
+          "title": "Neutralización ácido-base"
+        }
+      ]
+    },
+    {
+      "nombre": "Estados y símbolos",
+      "id": "estados-simbolos",
+      "grid_template_columns": "repeat(auto-fit, minmax(90px, 1fr))",
+      "isCollapsed": true,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "\\ce{(s)}",
+          "display": "\\ce{(s)}",
+          "title": "Estado sólido"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{(l)}",
+          "display": "\\ce{(l)}",
+          "title": "Estado líquido"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{(g)}",
+          "display": "\\ce{(g)}",
+          "title": "Estado gaseoso"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{(aq)}",
+          "display": "\\ce{(aq)}",
+          "title": "Disuelto en agua"
+        },
+        {
+          "type": "button",
+          "latex": "\\rightarrow",
+          "display": "\\rightarrow",
+          "title": "Flecha de reacción"
+        },
+        {
+          "type": "button",
+          "latex": "\\ce{<=>}",
+          "display": "\\ce{<=>}",
+          "title": "Equilibrio químico"
+        }
+      ]
+    },
+    {
+      "nombre": "Estequiometría",
+      "id": "estequiometria",
+      "grid_template_columns": "repeat(auto-fit, minmax(180px, 1fr))",
+      "isCollapsed": true,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "n = \\frac{m}{M}",
+          "display": "n = \\frac{m}{M}",
+          "title": "Moles a partir de masa"
+        },
+        {
+          "type": "button",
+          "latex": "m = n \\cdot M",
+          "display": "m = n \\cdot M",
+          "title": "Masa a partir de moles"
+        },
+        {
+          "type": "button",
+          "latex": "n = \\frac{V}{V_m}",
+          "display": "n = \\frac{V}{V_m}",
+          "title": "Moles a partir de volumen"
+        },
+        {
+          "type": "button",
+          "latex": "C = \\frac{n}{V}",
+          "display": "C = \\frac{n}{V}",
+          "title": "Concentración molar"
+        }
+      ]
+    },
+    {
+      "nombre": "Unidades y constantes",
+      "id": "unidades-constantes",
+      "grid_template_columns": "repeat(auto-fit, minmax(150px, 1fr))",
+      "isCollapsed": true,
+      "elementos": [
+        {
+          "type": "button",
+          "latex": "R = 0.0821\\ \\mathrm{L\\cdot atm\\cdot mol^{-1}\\cdot K^{-1}}",
+          "display": "R = 0.0821\\ \\mathrm{L\\cdot atm\\cdot mol^{-1}\\cdot K^{-1}}",
+          "title": "Constante de los gases"
+        },
+        {
+          "type": "button",
+          "latex": "V_m = 22.4\\ \\mathrm{L/mol}",
+          "display": "V_m = 22.4\\ \\mathrm{L/mol}",
+          "title": "Volumen molar"
+        },
+        {
+          "type": "button",
+          "latex": "1\\ \\mathrm{mol} = 6.022 \\times 10^{23}\\ \\mathrm{part\\acute{\\i}culas}",
+          "display": "1\\ \\mathrm{mol} = 6.022 \\times 10^{23}",
+          "title": "Número de Avogadro"
+        }
+      ]
+    }
+  ]
+}
