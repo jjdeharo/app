@@ -25,9 +25,33 @@
         },
         {
           "type": "button",
+          "title": "Paréntesis",
+          "latex": "\\left(...\\right)",
+          "display": "(\\,)"
+        },
+        {
+          "type": "button",
+          "title": "Infinito",
+          "latex": "\\infty",
+          "display": ""
+        },
+        {
+          "type": "button",
+          "latex": "\\sqrt{}",
+          "display": "\\sqrt{x}",
+          "title": "Raíz"
+        },
+        {
+          "type": "button",
           "latex": "\\displaystyle ",
-          "display": "\\text{Modo display}",
+          "display": "\\text{Display}",
           "title": "Modo display"
+        },
+        {
+          "type": "button",
+          "title": "Texto",
+          "latex": "\\text{texto}",
+          "display": ""
         }
       ],
       "isCollapsed": true
@@ -256,12 +280,6 @@
           "latex": "e^{\\,}",
           "display": "e^{x}",
           "title": "Exponencial"
-        },
-        {
-          "type": "button",
-          "latex": "\\sqrt{}",
-          "display": "\\sqrt{x}",
-          "title": "Raíz"
         },
         {
           "type": "button",
@@ -650,7 +668,7 @@
         {
           "type": "button",
           "latex": "\\text{}",
-          "display": "\\text{texto plano}",
+          "display": "\\text{texto}",
           "title": "Texto plano"
         },
         {
@@ -880,7 +898,7 @@
           "type": "button",
           "latex": "\\underset{}{}",
           "title": "Texto debajo",
-          "display": "x \\underset{\\text{t=0}}{\\longrightarrow} 0\n"
+          "display": "a \\underset{?}{=} b"
         },
         {
           "type": "button",
