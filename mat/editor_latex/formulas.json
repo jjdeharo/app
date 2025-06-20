@@ -714,8 +714,8 @@
         {
           "type": "button",
           "latex": "\\textbf{}",
-          "display": "\\textbf{negrita}",
-          "title": "Negrita"
+          "display": "\\textbf{negrita t}",
+          "title": "Negrita tipográfica"
         },
         {
           "type": "button",
@@ -750,7 +750,7 @@
         {
           "type": "button",
           "latex": "\\mathbf{}",
-          "display": "\\mathbf{negrita}",
+          "display": "\\mathbf{\\text{negrita m}}",
           "title": "Negrita matemática"
         },
         {
