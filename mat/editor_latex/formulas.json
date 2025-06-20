@@ -54,7 +54,7 @@
           "display": ""
         }
       ],
-      "isCollapsed": true
+      "isCollapsed": false
     },
     {
       "nombre": "Delimitadores",
@@ -706,9 +706,15 @@
           "latex": "\\mathfrak{}",
           "display": "\\mathfrak{abc}",
           "title": "Gótico"
+        },
+        {
+          "type": "button",
+          "title": "Color",
+          "latex": "{\\color{red}x}",
+          "display": ""
         }
       ],
-      "isCollapsed": true
+      "isCollapsed": false
     },
     {
       "nombre": "Griego",
