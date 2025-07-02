@@ -103,18 +103,29 @@
                     <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2" data-lang-key="transport_mode">Modo de Transporte</h3>
                     <div id="transport-options" class="grid grid-cols-3 gap-2">
                         <button class="transport-btn flex flex-col items-center p-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors active" data-profile="car">
-                            <!-- Icono Coche -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C20.7 10.1 21 9.1 21 8c0-1.7-1.3-3-3-3h-1c-.6 0-1.1.2-1.5.5L14 7.8c-.4.4-.8.7-1.3.9l-1.4.6c-.5.2-1.1.3-1.6.3H3c-1.1 0-2 .9-2 2v6c0 1.1.9 2 2 2h2.5"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mb-1 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <path d="M5 11l1-5h12l1 5" />
+                              <rect x="3" y="11" width="18" height="8" rx="2" />
+                              <circle cx="7.5" cy="17.5" r="1.5" />
+                              <circle cx="16.5" cy="17.5" r="1.5" />
+                            </svg>
                             <span data-lang-key="transport_car" class="pointer-events-none">Coche</span>
                         </button>
                         <button class="transport-btn flex flex-col items-center p-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" data-profile="bike">
-                           <!-- Icono Bicicleta -->
-                           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 18a6 6 0 100-12 6 6 0 000 12z"/><path d="M12 12a2 2 0 100-4 2 2 0 000 4z"/><path d="M12 12a8 8 0 008 8"/><path d="M12 12a8 8 0 00-8 8"/></svg>
+                           <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mb-1 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="5"  cy="18" r="3" />
+                              <circle cx="19" cy="18" r="3" />
+                              <path d="M5 18l4-8h4l2 3" />
+                              <path d="M13 6h3" />
+                            </svg>
                             <span data-lang-key="transport_bike" class="pointer-events-none">Bicicleta</span>
                         </button>
                         <button class="transport-btn flex flex-col items-center p-2 rounded-lg bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors" data-profile="foot">
-                            <!-- Icono A pie -->
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M12 22V12h-4a4 4 0 01-4-4v0a4 4 0 014-4h8a4 4 0 014 4v0a4 4 0 01-4 4h-4"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 mb-1 pointer-events-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                              <circle cx="13" cy="5" r="2" />
+                              <path d="M7 22l3-6l4 2l1-5l3 1" />
+                              <path d="M12 7v4l3 3" />
+                            </svg>
                             <span data-lang-key="transport_foot" class="pointer-events-none">A pie</span>
                         </button>
                     </div>
