@@ -14,23 +14,49 @@
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <!-- Estils personalitzats -->
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .location-item { animation: fadeIn 0.3s ease-in-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; } /* light: gray-100 */
-        .dark ::-webkit-scrollbar-track { background: #1f2937; } /* dark: gray-800 */
-        ::-webkit-scrollbar-thumb { background: #94a3b8; } /* light: slate-400 */
-        .dark ::-webkit-scrollbar-thumb { background: #4b5563; } /* dark: gray-600 */
-        ::-webkit-scrollbar-thumb:hover { background: #64748b; } /* light: slate-500 */
-        .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; } /* dark: gray-500 */
-        .lang-btn.active { background-color: #2563eb; color: white; }
-        /* Estils per a arrossegar */
-        .drag-handle { cursor: grab; }
-        .drag-handle:active { cursor: grabbing; }
+        body { 
+            font-family: 'Inter', sans-serif; 
+        }
+        .location-item { 
+            animation: fadeIn 0.3s ease-in-out; 
+        }
+        @keyframes fadeIn { 
+            from { opacity: 0; transform: translateY(-10px); } 
+            to { opacity: 1; transform: translateY(0); } 
+        }
+        ::-webkit-scrollbar { 
+            width: 8px; 
+        }
+        ::-webkit-scrollbar-track { 
+            background: #e2e8f0; /* light: slate-200 */
+        }
+        .dark ::-webkit-scrollbar-track { 
+            background: #1e293b; /* dark: slate-800 */
+        }
+        ::-webkit-scrollbar-thumb { 
+            background: #94a3b8; /* light: slate-400 */
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb { 
+            background: #475569; /* dark: slate-600 */
+        }
+        ::-webkit-scrollbar-thumb:hover { 
+            background: #64748b; /* light: slate-500 */
+        }
+        .dark ::-webkit-scrollbar-thumb:hover { 
+            background: #334155; /* dark: slate-700 */
+        }
+        .lang-btn.active { 
+            background-color: #1e293b; /* dark: slate-800 */
+            color: white;
+        }
+        .dark .lang-btn.active {
+            background-color: #f1f5f9; /* light: slate-100 */
+            color: #1e293b; /* dark: slate-800 */
+        }
         .sortable-ghost {
             opacity: 0.4;
-            background-color: #4f46e5;
+            background-color: #fb923c; /* orange-400 */
         }
         .spinner {
             border: 2px solid rgba(255, 255, 255, 0.3);
@@ -53,61 +79,61 @@
         }
     </script>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+<body class="bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200 transition-colors duration-300 p-4">
 
-    <div class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 transition-colors duration-300">
+    <div class="w-full max-w-lg mx-auto bg-white/70 dark:bg-slate-800/50 backdrop-blur-sm rounded-xl border border-slate-200 dark:border-slate-700 shadow-lg transition-colors duration-300">
         
-        <!-- Capçalera, canvi d'idioma i tema -->
-        <div class="flex justify-between items-start mb-8">
-            <div class="text-left">
-                <h1 class="text-3xl font-bold text-gray-900 dark:text-white" data-lang-key="title">Planificador de Rutes</h1>
-                <p class="text-gray-500 dark:text-gray-400 mt-2" data-lang-key="subtitle">Afegeix, edita i reordena llocs per crear la teva ruta</p>
-            </div>
-            <!-- Controls a la dreta -->
-            <div class="flex items-center space-x-3">
-                <div class="flex space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1">
-                    <button id="lang-es-btn" class="lang-btn px-3 py-1 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">ES</button>
-                    <button id="lang-ca-btn" class="lang-btn px-3 py-1 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">CAT</button>
+        <div class="p-6 md:p-8">
+            <!-- Capçalera, canvi d'idioma i tema -->
+            <div class="flex justify-between items-center mb-6">
+                <div class="text-left">
+                    <h1 class="text-2xl font-bold text-slate-900 dark:text-white" data-lang-key="title">Planificador de Rutes</h1>
+                    <p class="text-slate-500 dark:text-slate-400 text-sm mt-1" data-lang-key="subtitle">Afegeix, edita i reordena llocs per crear la teva ruta</p>
                 </div>
-                <button id="theme-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
-                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                <!-- Controls a la dreta -->
+                <div class="flex items-center space-x-2">
+                    <div class="flex space-x-1 bg-slate-200 dark:bg-slate-700 rounded-lg p-1">
+                        <button id="lang-es-btn" class="lang-btn px-2 py-1 rounded-md text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50 transition">ES</button>
+                        <button id="lang-ca-btn" class="lang-btn px-2 py-1 rounded-md text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-white/50 dark:hover:bg-slate-600/50 transition">CAT</button>
+                    </div>
+                    <button id="theme-toggle" class="p-2 rounded-lg text-slate-500 dark:text-slate-400 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors">
+                        <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                        <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Formulari d'entrada -->
+            <div class="flex space-x-2 mb-4">
+                <input type="text" id="location-input" data-lang-key-placeholder="input_placeholder" placeholder="Ex: Sagrada Família, Barcelona" class="flex-grow bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg px-4 py-3 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition">
+                <button id="add-location-btn" class="bg-orange-500 hover:bg-orange-600 text-white font-bold p-3 rounded-lg transition-colors transform hover:scale-105 flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
                 </button>
             </div>
-        </div>
 
-        <!-- Formulari d'entrada -->
-        <div class="flex space-x-2 mb-6">
-            <input type="text" id="location-input" data-lang-key-placeholder="input_placeholder" placeholder="Ex: Sagrada Família, Barcelona" class="flex-grow bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
-            <button id="add-location-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition-transform transform hover:scale-105 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-            </button>
-        </div>
-
-        <!-- Llista de localitzacions -->
-        <div class="space-y-3">
-            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 pb-2" data-lang-key="stops_header">Parades de la Ruta</h2>
-            <div id="locations-list" class="space-y-2 max-h-72 overflow-y-auto pr-2">
-                 <p id="empty-list-message" class="text-gray-500 text-center py-4" data-lang-key="empty_list">Encara no has afegit cap lloc.</p>
+            <!-- Llista de localitzacions -->
+            <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                <h2 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2" data-lang-key="stops_header">Parades de la Ruta</h2>
+                <div id="locations-list" class="space-y-1 max-h-72 overflow-y-auto pr-2">
+                     <p id="empty-list-message" class="text-slate-500 text-center py-4" data-lang-key="empty_list">Encara no has afegit cap lloc.</p>
+                </div>
             </div>
         </div>
 
-        <!-- Botó d'acció -->
-        <div class="mt-8">
-            <button id="generate-route-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 disabled:bg-gray-500 disabled:dark:bg-gray-600 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center space-x-2">
+        <!-- Botó d'acció i peu de pàgina -->
+        <div class="bg-slate-50 dark:bg-slate-800/50 p-6 md:p-8 rounded-b-xl border-t border-slate-200 dark:border-slate-700">
+            <button id="generate-route-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 disabled:bg-slate-400 disabled:dark:bg-slate-600 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center space-x-2">
                 <span id="generate-btn-text" data-lang-key="generate_button">Generar Ruta a OpenStreetMap</span>
                 <div id="generate-spinner" class="spinner hidden"></div>
             </button>
+
+            <footer class="text-center text-slate-500 dark:text-slate-400 text-xs mt-6 space-y-1">
+                <p><a href="https://labia.tiddlyhost.com" target="_blank" class="underline hover:text-slate-800 dark:hover:text-slate-200" data-lang-key="footer_lab">Laboratori d'aplicacions educatives</a></p>
+                <p><a href="https://bilateria.org" target="_blank" class="underline hover:text-slate-800 dark:hover:text-slate-200" data-lang-key="footer_author">Aplicació feta per Juan José de Haro</a></p>
+                <p><a href="https://raultorres-ia.github.io/apps/rutes/rutes.html" target="_blank" class="underline hover:text-slate-800 dark:hover:text-slate-200" data-lang-key="footer_based_on">Basat en el projecte de Raül Torres</a></p>
+                <p><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" class="underline hover:text-slate-800 dark:hover:text-slate-200" data-lang-key="footer_license">Llicència Creative Commons BY-SA</a></p>
+            </footer>
         </div>
-
-        <!-- Peu de pàgina -->
-        <footer class="text-center text-gray-500 dark:text-gray-400 text-xs mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
-            <p><a href="https://labia.tiddlyhost.com" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_lab">Laboratori d'aplicacions educatives</a></p>
-            <p><a href="https://bilateria.org" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_author">Aplicació feta per Juan José de Haro</a></p>
-            <p><a href="https://raultorres-ia.github.io/apps/rutes/rutes.html" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_based_on">Basat en el projecte de Raül Torres</a></p>
-            <p><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_license">Llicència Creative Commons BY-SA</a></p>
-        </footer>
-
     </div>
 
     <!-- Modal simple per a notificacions -->
@@ -179,27 +205,27 @@
             locationsList.innerHTML = '';
             if (locations.length === 0) {
                 const emptyMsgEl = document.createElement('p');
-                emptyMsgEl.className = 'text-gray-500 text-center py-4';
+                emptyMsgEl.className = 'text-slate-500 text-center py-4';
                 emptyMsgEl.setAttribute('data-lang-key', 'empty_list');
                 emptyMsgEl.innerText = translations.empty_list[currentLang];
                 locationsList.appendChild(emptyMsgEl);
             } else {
                 locations.forEach((location, index) => {
                     const listItem = document.createElement('div');
-                    listItem.className = 'location-item flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-3 rounded-lg group';
+                    listItem.className = 'location-item flex items-center justify-between bg-white/50 dark:bg-slate-700/50 p-2 rounded-lg group';
                     listItem.dataset.id = index;
                     
                     listItem.innerHTML = `
                         <div class="flex items-center flex-grow min-w-0 mr-2">
-                            <span class="drag-handle text-gray-400 mr-3 cursor-grab" title="Arrossega per reordenar">⠿</span>
-                            <span class="location-text text-gray-800 dark:text-gray-200 truncate">${location}</span>
+                            <span class="drag-handle text-slate-400 mr-3 cursor-grab" title="Arrossega per reordenar">⠿</span>
+                            <span class="location-text text-slate-800 dark:text-slate-200 truncate">${location}</span>
                         </div>
-                        <div class="flex items-center space-x-2 flex-shrink-0">
-                            <button class="edit-btn text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors" data-index="${index}" title="Editar">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                        <div class="flex items-center space-x-1 flex-shrink-0">
+                            <button class="edit-btn p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-blue-500 transition-colors" data-index="${index}" title="Editar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
                             </button>
-                            <button class="delete-btn text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors" data-index="${index}" title="Eliminar">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            <button class="delete-btn p-2 rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-600 hover:text-red-500 transition-colors" data-index="${index}" title="Eliminar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                             </button>
                         </div>
                     `;
@@ -231,7 +257,7 @@
             const locationTextSpan = listItem.querySelector('.location-text');
             const currentText = locations[index];
             
-            locationTextSpan.innerHTML = `<input type="text" value="${currentText}" class="edit-input bg-gray-200 dark:bg-gray-600 rounded px-2 py-1 w-full text-gray-800 dark:text-gray-200">`;
+            locationTextSpan.innerHTML = `<input type="text" value="${currentText}" class="edit-input bg-slate-200 dark:bg-slate-600 rounded px-2 py-1 w-full text-slate-800 dark:text-slate-200">`;
             
             const input = locationTextSpan.querySelector('.edit-input');
             input.focus();
@@ -255,9 +281,6 @@
             input.addEventListener('blur', saveChanges);
         }
 
-        /**
-         * ✨ FUNCIÓ CORREGIDA: Genera la ruta amb l'interfície d'OSRM per a múltiples parades.
-         */
         async function generateRoute() {
             if (locations.length < 2) {
                 showNotification(translations.notification_min[currentLang]);
@@ -286,7 +309,6 @@
                     }
                 }
 
-                // Construeix l'URL per a l'interfície d'OSRM, que accepta múltiples punts.
                 const base = 'https://map.project-osrm.org/';
                 let url = `${base}?hl=${currentLang}&profile=car`;
                 coordinates.forEach(c => { url += `&loc=${c}`; });
