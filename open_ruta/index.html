@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ca">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-lang-key="window_title">Planificador de Rutes amb OpenStreetMap</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SortableJS per arrossegar i deixar anar -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <!-- Estils personalitzats -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .location-item { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; } /* light: gray-100 */
+        .dark ::-webkit-scrollbar-track { background: #1f2937; } /* dark: gray-800 */
+        ::-webkit-scrollbar-thumb { background: #94a3b8; } /* light: slate-400 */
+        .dark ::-webkit-scrollbar-thumb { background: #4b5563; } /* dark: gray-600 */
+        ::-webkit-scrollbar-thumb:hover { background: #64748b; } /* light: slate-500 */
+        .dark ::-webkit-scrollbar-thumb:hover { background: #6b7280; } /* dark: gray-500 */
+        .lang-btn.active { background-color: #2563eb; color: white; }
+        /* Estils per a arrossegar */
+        .drag-handle { cursor: grab; }
+        .drag-handle:active { cursor: grabbing; }
+        .sortable-ghost {
+            opacity: 0.4;
+            background-color: #4f46e5;
+        }
+        .spinner {
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+    <!-- Script per evitar el flaix de canvi de tema (FOUC) -->
+    <script>
+        if (localStorage.getItem('theme') === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    </script>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300">
+
+    <div class="w-full max-w-md mx-auto bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8 transition-colors duration-300">
+        
+        <!-- Capçalera, canvi d'idioma i tema -->
+        <div class="flex justify-between items-start mb-8">
+            <div class="text-left">
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white" data-lang-key="title">Planificador de Rutes</h1>
+                <p class="text-gray-500 dark:text-gray-400 mt-2" data-lang-key="subtitle">Afegeix, edita i reordena llocs per crear la teva ruta</p>
+            </div>
+            <!-- Controls a la dreta -->
+            <div class="flex items-center space-x-3">
+                <div class="flex space-x-1 border border-gray-300 dark:border-gray-600 rounded-lg p-1">
+                    <button id="lang-es-btn" class="lang-btn px-3 py-1 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">ES</button>
+                    <button id="lang-ca-btn" class="lang-btn px-3 py-1 rounded-md text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition">CAT</button>
+                </div>
+                <button id="theme-toggle" class="p-2 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors">
+                    <svg id="theme-icon-light" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <svg id="theme-icon-dark" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Formulari d'entrada -->
+        <div class="flex space-x-2 mb-6">
+            <input type="text" id="location-input" data-lang-key-placeholder="input_placeholder" placeholder="Ex: Sagrada Família, Barcelona" class="flex-grow bg-gray-100 dark:bg-gray-700 border-2 border-gray-300 dark:border-gray-600 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+            <button id="add-location-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-5 rounded-lg transition-transform transform hover:scale-105 flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
+            </button>
+        </div>
+
+        <!-- Llista de localitzacions -->
+        <div class="space-y-3">
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-300 border-b-2 border-gray-200 dark:border-gray-700 pb-2" data-lang-key="stops_header">Parades de la Ruta</h2>
+            <div id="locations-list" class="space-y-2 max-h-72 overflow-y-auto pr-2">
+                 <p id="empty-list-message" class="text-gray-500 text-center py-4" data-lang-key="empty_list">Encara no has afegit cap lloc.</p>
+            </div>
+        </div>
+
+        <!-- Botó d'acció -->
+        <div class="mt-8">
+            <button id="generate-route-btn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105 disabled:bg-gray-500 disabled:dark:bg-gray-600 disabled:cursor-not-allowed disabled:scale-100 flex items-center justify-center space-x-2">
+                <span id="generate-btn-text" data-lang-key="generate_button">Generar Ruta a OpenStreetMap</span>
+                <div id="generate-spinner" class="spinner hidden"></div>
+            </button>
+        </div>
+
+        <!-- Peu de pàgina -->
+        <footer class="text-center text-gray-500 dark:text-gray-400 text-xs mt-8 pt-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
+            <p><a href="https://labia.tiddlyhost.com" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_lab">Laboratori d'aplicacions educatives</a></p>
+            <p><a href="https://bilateria.org" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_author">Aplicació feta per Juan José de Haro</a></p>
+            <p><a href="https://raultorres-ia.github.io/apps/rutes/rutes.html" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_based_on">Basat en el projecte de Raül Torres</a></p>
+            <p><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.ca" target="_blank" class="underline hover:text-gray-800 dark:hover:text-gray-200" data-lang-key="footer_license">Llicència Creative Commons BY-SA</a></p>
+        </footer>
+
+    </div>
+
+    <!-- Modal simple per a notificacions -->
+    <div id="notification-modal" class="fixed top-5 right-5 bg-red-500 text-white py-2 px-4 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300">
+        <p id="notification-message"></p>
+    </div>
+
+    <script>
+        // --- Referències a elements del DOM ---
+        const locationInput = document.getElementById('location-input');
+        const addLocationBtn = document.getElementById('add-location-btn');
+        const locationsList = document.getElementById('locations-list');
+        const generateRouteBtn = document.getElementById('generate-route-btn');
+        const generateBtnText = document.getElementById('generate-btn-text');
+        const generateSpinner = document.getElementById('generate-spinner');
+        const langEsBtn = document.getElementById('lang-es-btn');
+        const langCaBtn = document.getElementById('lang-ca-btn');
+        const notificationModal = document.getElementById('notification-modal');
+        const notificationMessage = document.getElementById('notification-message');
+        const licenseLink = document.querySelector('[data-lang-key="footer_license"]');
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIconLight = document.getElementById('theme-icon-light');
+        const themeIconDark = document.getElementById('theme-icon-dark');
+
+        // --- Estat de l'aplicació ---
+        let locations = [];
+        let currentLang;
+        let sortable;
+
+        // --- Diccionari de traduccions ---
+        const translations = {
+            window_title: { es: "Planificador de Rutas con OpenStreetMap", ca: "Planificador de Rutes amb OpenStreetMap" },
+            title: { es: "Planificador de Rutas", ca: "Planificador de Rutes" },
+            subtitle: { es: "Añade, edita y reordena lugares para crear tu ruta", ca: "Afegeix, edita i reordena llocs per crear la teva ruta" },
+            input_placeholder: { es: "Ej: Puerta del Sol, Madrid", ca: "Ex: Sagrada Família, Barcelona" },
+            stops_header: { es: "Paradas de la Ruta", ca: "Parades de la Ruta" },
+            empty_list: { es: "Aún no has añadido ningún lugar.", ca: "Encara no has afegit cap lloc." },
+            generate_button: { es: "Generar Ruta en OpenStreetMap", ca: "Generar Ruta a OpenStreetMap" },
+            notification_add: { es: "Por favor, introduce un nombre de lugar válido.", ca: "Si us plau, introdueix un nom de lloc vàlid." },
+            notification_min: { es: "Necesitas al menos 2 lugares para generar una ruta.", ca: "Necessites almenys 2 llocs per generar una ruta." },
+            notification_geocode_fail: { es: "No se pudo encontrar la ubicación: ", ca: "No s'ha pogut trobar la ubicació: " },
+            footer_lab: { es: "Laboratorio de aplicaciones educativas", ca: "Laboratori d'aplicacions educatives" },
+            footer_author: { es: "Aplicación hecha por Juan José de Haro", ca: "Aplicació feta per Juan José de Haro" },
+            footer_based_on: { es: "Basado en el proyecto de Raül Torres", ca: "Basat en el projecte de Raül Torres" },
+            footer_license: { es: "Licencia Creative Commons BY-SA", ca: "Llicència Creative Commons BY-SA" }
+        };
+
+        // --- Funcions ---
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            localStorage.setItem('preferredLang', lang);
+            document.documentElement.lang = lang;
+            document.querySelectorAll('[data-lang-key]').forEach(el => {
+                const key = el.getAttribute('data-lang-key');
+                if (translations[key]?.[lang]) el.innerText = translations[key][lang];
+            });
+            document.querySelectorAll('[data-lang-key-placeholder]').forEach(el => {
+                const key = el.getAttribute('data-lang-key-placeholder');
+                if (translations[key]?.[lang]) el.placeholder = translations[key][lang];
+            });
+            const licenseUrl = `https://creativecommons.org/licenses/by-sa/4.0/deed.${lang}`;
+            if(licenseLink) licenseLink.href = licenseUrl;
+            langEsBtn.classList.toggle('active', lang === 'es');
+            langCaBtn.classList.toggle('active', lang === 'ca');
+        }
+
+        function renderLocations() {
+            locationsList.innerHTML = '';
+            if (locations.length === 0) {
+                const emptyMsgEl = document.createElement('p');
+                emptyMsgEl.className = 'text-gray-500 text-center py-4';
+                emptyMsgEl.setAttribute('data-lang-key', 'empty_list');
+                emptyMsgEl.innerText = translations.empty_list[currentLang];
+                locationsList.appendChild(emptyMsgEl);
+            } else {
+                locations.forEach((location, index) => {
+                    const listItem = document.createElement('div');
+                    listItem.className = 'location-item flex items-center justify-between bg-gray-100 dark:bg-gray-700 p-3 rounded-lg group';
+                    listItem.dataset.id = index;
+                    
+                    listItem.innerHTML = `
+                        <div class="flex items-center flex-grow min-w-0 mr-2">
+                            <span class="drag-handle text-gray-400 mr-3 cursor-grab" title="Arrossega per reordenar">⠿</span>
+                            <span class="location-text text-gray-800 dark:text-gray-200 truncate">${location}</span>
+                        </div>
+                        <div class="flex items-center space-x-2 flex-shrink-0">
+                            <button class="edit-btn text-gray-500 dark:text-gray-400 hover:text-blue-500 transition-colors" data-index="${index}" title="Editar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                            </button>
+                            <button class="delete-btn text-gray-500 dark:text-gray-400 hover:text-red-500 transition-colors" data-index="${index}" title="Eliminar">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    `;
+                    locationsList.appendChild(listItem);
+                });
+            }
+            generateRouteBtn.disabled = locations.length < 2;
+        }
+
+        function addLocation() {
+            const locationName = locationInput.value.trim();
+            if (locationName) {
+                locations.push(locationName);
+                locationInput.value = '';
+                renderLocations();
+            } else {
+                showNotification(translations.notification_add[currentLang]);
+            }
+            locationInput.focus();
+        }
+
+        function deleteLocation(index) {
+            locations.splice(index, 1);
+            renderLocations();
+        }
+
+        function toggleEditMode(index) {
+            const listItem = locationsList.querySelector(`[data-id='${index}']`);
+            const locationTextSpan = listItem.querySelector('.location-text');
+            const currentText = locations[index];
+            
+            locationTextSpan.innerHTML = `<input type="text" value="${currentText}" class="edit-input bg-gray-200 dark:bg-gray-600 rounded px-2 py-1 w-full text-gray-800 dark:text-gray-200">`;
+            
+            const input = locationTextSpan.querySelector('.edit-input');
+            input.focus();
+            input.select();
+
+            const saveChanges = () => {
+                const newText = input.value.trim();
+                if (newText) {
+                    locations[index] = newText;
+                }
+                renderLocations();
+            };
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    saveChanges();
+                } else if (e.key === 'Escape') {
+                    renderLocations();
+                }
+            });
+            input.addEventListener('blur', saveChanges);
+        }
+
+        /**
+         * ✨ FUNCIÓ CORREGIDA: Genera la ruta fent geocodificació amb l'API de Nominatim
+         * de manera robusta, respectant el límit de peticions.
+         */
+        async function generateRoute() {
+            if (locations.length < 2) {
+                showNotification(translations.notification_min[currentLang]);
+                return;
+            }
+
+            generateBtnText.classList.add('hidden');
+            generateSpinner.classList.remove('hidden');
+            generateRouteBtn.disabled = true;
+
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            try {
+                const coordinatePromises = locations.map(async (location, index) => {
+                    // Pausa d'1 segon abans de cada petició (excepte la primera) per respectar el límit de l'API.
+                    if (index > 0) {
+                        await delay(1000);
+                    }
+                    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+
+                    if (data && data.length > 0) {
+                        return `${data[0].lat},${data[0].lon}`;
+                    } else {
+                        // Llança un error específic per al lloc que ha fallat.
+                        throw new Error(location);
+                    }
+                });
+
+                const coordinates = await Promise.all(coordinatePromises);
+                
+                const baseUrl = 'https://www.openstreetmap.org/directions';
+                const engine = 'fossgis_osrm_car';
+                const routeString = coordinates.join(';');
+                const finalUrl = `${baseUrl}?engine=${engine}&route=${routeString}`;
+                
+                window.open(finalUrl, '_blank');
+
+            } catch (error) {
+                // L'error contindrà el nom del lloc que ha fallat.
+                showNotification(`${translations.notification_geocode_fail[currentLang]} "${error.message}"`);
+            } finally {
+                // Aquest bloc s'executa sempre, tant si hi ha hagut èxit com si no.
+                generateBtnText.classList.remove('hidden');
+                generateSpinner.classList.add('hidden');
+                generateRouteBtn.disabled = locations.length < 2;
+            }
+        }
+
+        function showNotification(message) {
+            notificationMessage.textContent = message;
+            notificationModal.classList.remove('translate-x-full');
+            setTimeout(() => {
+                notificationModal.classList.add('translate-x-full');
+            }, 4000);
+        }
+        
+        function initializeLanguage() {
+            const savedLang = localStorage.getItem('preferredLang');
+            const browserLang = navigator.language.split('-')[0];
+            const initialLang = savedLang || (['es', 'ca'].includes(browserLang) ? browserLang : 'ca');
+            setLanguage(initialLang);
+        }
+
+        function setTheme(theme) {
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeIconLight.classList.remove('hidden');
+                themeIconDark.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeIconLight.classList.add('hidden');
+                themeIconDark.classList.remove('hidden');
+            }
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (savedTheme) {
+                setTheme(savedTheme);
+            } else {
+                setTheme(systemPrefersDark ? 'dark' : 'light');
+            }
+        }
+        
+        function initializeSortable() {
+            if (sortable) {
+                sortable.destroy();
+            }
+            sortable = new Sortable(locationsList, {
+                handle: '.drag-handle',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function (evt) {
+                    const [reorderedItem] = locations.splice(evt.oldIndex, 1);
+                    locations.splice(evt.newIndex, 0, reorderedItem);
+                    renderLocations();
+                },
+            });
+        }
+
+        // --- Esdeveniments ---
+        addLocationBtn.addEventListener('click', addLocation);
+        locationInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') addLocation(); });
+        generateRouteBtn.addEventListener('click', generateRoute);
+        
+        locationsList.addEventListener('click', (event) => {
+            const editButton = event.target.closest('.edit-btn');
+            const deleteButton = event.target.closest('.delete-btn');
+            
+            if (editButton) {
+                const index = parseInt(editButton.dataset.index, 10);
+                toggleEditMode(index);
+            } else if (deleteButton) {
+                const index = parseInt(deleteButton.dataset.index, 10);
+                deleteLocation(index);
+            }
+        });
+
+        langEsBtn.addEventListener('click', () => setLanguage('es'));
+        langCaBtn.addEventListener('click', () => setLanguage('ca'));
+        themeToggleBtn.addEventListener('click', () => {
+            const newTheme = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+            setTheme(newTheme);
+        });
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (!localStorage.getItem('theme')) {
+                setTheme(event.matches ? 'dark' : 'light');
+            }
+        });
+
+        // --- Configuració inicial ---
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
+            initializeLanguage();
+            renderLocations();
+            initializeSortable();
+        });
+    </script>
+</body>
+</html>
