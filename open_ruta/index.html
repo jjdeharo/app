@@ -256,8 +256,7 @@
         }
 
         /**
-         * ✨ FUNCIÓ CORREGIDA: Genera la ruta fent geocodificació amb l'API de Nominatim
-         * de manera robusta, respectant el límit de peticions.
+         * ✨ FUNCIÓ CORREGIDA: Genera la ruta amb l'interfície d'OSRM per a múltiples parades.
          */
         async function generateRoute() {
             if (locations.length < 2) {
@@ -270,39 +269,33 @@
             generateRouteBtn.disabled = true;
 
             const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+            const coordinates = [];
 
             try {
-                const coordinatePromises = locations.map(async (location, index) => {
-                    // Pausa d'1 segon abans de cada petició (excepte la primera) per respectar el límit de l'API.
-                    if (index > 0) {
-                        await delay(1000);
-                    }
+                for (const [index, location] of locations.entries()) {
+                    if (index > 0) await delay(1000); // Pausa per no saturar l'API
+                    
                     const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(location)}&format=json&limit=1`);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    if (!response.ok) throw new Error(location); 
                     const data = await response.json();
 
                     if (data && data.length > 0) {
-                        return `${data[0].lat},${data[0].lon}`;
+                        coordinates.push(`${data[0].lat},${data[0].lon}`);
                     } else {
-                        // Llança un error específic per al lloc que ha fallat.
-                        throw new Error(location);
+                        throw new Error(location); // Llança error si no es troba el lloc
                     }
-                });
+                }
 
-                const coordinates = await Promise.all(coordinatePromises);
+                // Construeix l'URL per a l'interfície d'OSRM, que accepta múltiples punts.
+                const base = 'https://map.project-osrm.org/';
+                let url = `${base}?hl=${currentLang}&profile=car`;
+                coordinates.forEach(c => { url += `&loc=${c}`; });
                 
-                const baseUrl = 'https://www.openstreetmap.org/directions';
-                const engine = 'fossgis_osrm_car';
-                const routeString = coordinates.join(';');
-                const finalUrl = `${baseUrl}?engine=${engine}&route=${routeString}`;
-                
-                window.open(finalUrl, '_blank');
+                window.open(url, '_blank');
 
             } catch (error) {
-                // L'error contindrà el nom del lloc que ha fallat.
                 showNotification(`${translations.notification_geocode_fail[currentLang]} "${error.message}"`);
             } finally {
-                // Aquest bloc s'executa sempre, tant si hi ha hagut èxit com si no.
                 generateBtnText.classList.remove('hidden');
                 generateSpinner.classList.add('hidden');
                 generateRouteBtn.disabled = locations.length < 2;
