@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCD y mcm | GCD & LCM Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Estilo para resaltar los factores del MCD */
+        .mcd-factor {
+            background-color: #34D399; /* Verde */
+            color: white;
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .mcd-factor:hover {
+            transform: scale(1.1);
+        }
+        #help-modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+        /* Estilo para los tooltips (ayuda contextual) */
+        .divisor-item {
+            cursor: help;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="container mx-auto p-4 md:p-8 max-w-4xl">
+        
+        <!-- Controles de Idioma -->
+        <div class="flex justify-end space-x-2 mb-4">
+            <button onclick="setLanguage('es')" class="px-3 py-1 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 text-sm">Español</button>
+            <button onclick="setLanguage('en')" class="px-3 py-1 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 text-sm">English</button>
+            <button onclick="setLanguage('ca')" class="px-3 py-1 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 text-sm">Català</button>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-lg">
+            
+            <h1 id="title" class="text-2xl md:text-3xl font-bold text-center text-gray-700 mb-2"></h1>
+            <p id="subtitle" class="text-center text-gray-500 mb-6"></p>
+
+            <!-- Área de Entrada -->
+            <div class="flex flex-col sm:flex-row items-center gap-3 mb-6">
+                <input type="text" id="numbers-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-150" placeholder="e.g., 36, 18, 24">
+                <button id="calculate-btn" onclick="calculate()" class="w-full sm:w-auto px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 whitespace-nowrap"></button>
+                <button id="reset-btn" onclick="resetApp()" class="w-full sm:w-auto px-6 py-3 bg-gray-500 text-white font-semibold rounded-lg shadow-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition duration-150 whitespace-nowrap"></button>
+                <button id="help-btn" onclick="openModal()" class="w-full sm:w-auto px-6 py-3 bg-teal-500 text-white font-semibold rounded-lg shadow-md hover:bg-teal-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-teal-400 transition duration-150 whitespace-nowrap"></button>
+            </div>
+
+            <!-- Área de Resultados y Proceso -->
+            <div id="results-area" class="hidden">
+                
+                <h2 id="process-title" class="text-xl font-bold mb-4 text-gray-700"></h2>
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <div id="process-steps" class="flex flex-col items-center">
+                        <!-- Las filas del proceso se insertarán aquí -->
+                    </div>
+                </div>
+
+                <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+                    <div class="bg-green-100 p-4 rounded-lg">
+                        <h3 id="gcd-title" class="text-lg font-semibold text-green-800"></h3>
+                        <p id="gcd-result" class="text-2xl font-bold text-green-900 mt-1"></p>
+                        <p id="gcd-explanation" class="text-sm text-green-700 mt-2"></p>
+                    </div>
+                    <div class="bg-indigo-100 p-4 rounded-lg">
+                        <h3 id="lcm-title" class="text-lg font-semibold text-indigo-800"></h3>
+                        <p id="lcm-result" class="text-2xl font-bold text-indigo-900 mt-1"></p>
+                        <p id="lcm-explanation" class="text-sm text-indigo-700 mt-2"></p>
+                    </div>
+                </div>
+            </div>
+            
+             <div id="error-message" class="hidden mt-4 text-center text-red-600 font-semibold bg-red-100 p-3 rounded-lg"></div>
+        </div>
+        
+        <footer class="text-center mt-8 text-xs text-gray-500">
+            <p><a href="https://labia.tiddlyhost.com" target="_blank" class="hover:underline">Laboratorio de aplicaciones educativas</a></p>
+            <p><a href="https://bilateria.org" target="_blank" class="hover:underline">Aplicación hecha por Juan José de Haro</a></p>
+            <p><a href="https://creativecommons.org/licenses/by-sa/4.0/deed.es" target="_blank" class="hover:underline">Licencia Creative Commons BY-SA</a></p>
+        </footer>
+    </div>
+
+    <!-- Modal de Ayuda -->
+    <div id="help-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 max-w-2xl w-full transform transition-all duration-300 ease-out scale-95 opacity-0" id="modal-content-area">
+            <div class="flex justify-between items-center">
+                <h2 id="modal-title" class="text-2xl font-bold text-gray-800"></h2>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">&times;</button>
+            </div>
+            <div id="modal-content" class="mt-4 space-y-4 text-gray-600">
+                <!-- Contenido del modal se inyecta aquí -->
+            </div>
+            <div class="mt-6 text-right">
+                <button id="modal-close-btn" onclick="closeModal()" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const translations = {
+            es: {
+                title: "Calculadora de MCD y mcm",
+                subtitle: "Aprende el método de descomposición simultánea en factores primos.",
+                input_placeholder: "Ej: 36, 18, 24",
+                calculate_btn: "Calcular",
+                reset_btn: "Nuevo",
+                help_btn: "Ayuda",
+                process_title: "Proceso de descomposición",
+                gcd_title: "Máximo Común Divisor (MCD)",
+                lcm_title: "Mínimo Común Múltiplo (mcm)",
+                gcd_explanation: "El MCD es el producto de los divisores comunes (círculos verdes).",
+                lcm_explanation: "El mcm es el producto de TODOS los divisores de la columna derecha.",
+                error_message: "Por favor, introduce al menos dos números válidos separados por comas.",
+                modal_title: "Cómo usar la calculadora",
+                modal_content: `
+                    <p>Esta herramienta descompone números en sus factores primos para encontrar el MCD y el mcm.</p>
+                    <h4 class="font-bold mt-2">1. Factores comunes (MCD)</h4>
+                    <p>La aplicación primero busca divisores primos que dividan a <strong>todos</strong> los números de la fila actual. Estos son los <strong>factores comunes</strong>.</p>
+                    <p>✅ Estos factores se marcan con un <strong>círculo verde</strong>. El MCD es el resultado de multiplicar solo estos factores.</p>
+                    <h4 class="font-bold mt-2">2. Factores no comunes (mcm)</h4>
+                    <p>A continuación, la aplicación continúa dividiendo por factores primos que dividan al menos a <strong>uno</strong> de los números de la fila hasta que todos lleguen a 1.</p>
+                    <p>✅ El mcm se obtiene multiplicando <strong>TODOS</strong> los divisores de la columna derecha (los que tienen círculo verde y los que no).</p>
+                `,
+                modal_close_btn: "Entendido",
+                tooltip_mcd: "Factor común: divide a todos los números. Cuenta para el MCD y el mcm.",
+                tooltip_mcm: "Factor no común: no divide a todos. Cuenta solo para el mcm."
+            },
+            en: {
+                title: "GCD & LCM Calculator",
+                subtitle: "Learn the simultaneous prime factorization method.",
+                input_placeholder: "e.g., 36, 18, 24",
+                calculate_btn: "Calculate",
+                reset_btn: "New",
+                help_btn: "Help",
+                process_title: "Factorization Process",
+                gcd_title: "Greatest Common Divisor (GCD)",
+                lcm_title: "Least Common Multiple (LCM)",
+                gcd_explanation: "The GCD is the product of the common divisors (green circles).",
+                lcm_explanation: "The LCM is the product of ALL divisors in the right column.",
+                error_message: "Please enter at least two valid numbers separated by commas.",
+                modal_title: "How to Use the Calculator",
+                modal_content: `
+                    <p>This tool breaks down numbers into their prime factors to find the GCD and LCM.</p>
+                    <h4 class="font-bold mt-2">1. Common Factors (GCD)</h4>
+                    <p>The application first looks for prime divisors that divide <strong>all</strong> numbers in the current row. These are the <strong>common factors</strong>.</p>
+                    <p>✅ These factors are marked with a <strong>green circle</strong>. The GCD is the result of multiplying only these factors.</p>
+                    <h4 class="font-bold mt-2">2. Non-Common Factors (LCM)</h4>
+                    <p>Next, the application continues to divide by prime factors that divide at least <strong>one</strong> of the numbers in the row until all become 1.</p>
+                    <p>✅ The LCM is obtained by multiplying <strong>ALL</strong> the divisors in the right column (both those with green circles and those without).</p>
+                `,
+                modal_close_btn: "Got it",
+                tooltip_mcd: "Common factor: divides all numbers. Counts for GCD and LCM.",
+                tooltip_mcm: "Non-common factor: does not divide all. Counts only for LCM."
+            },
+            ca: {
+                title: "Calculadora de MCD i mcm",
+                subtitle: "Aprèn el mètode de descomposició simultània en factors primers.",
+                input_placeholder: "Ex: 36, 18, 24",
+                calculate_btn: "Calcula",
+                reset_btn: "Nou",
+                help_btn: "Ajuda",
+                process_title: "Procés de descomposició",
+                gcd_title: "Màxim Comú Divisor (MCD)",
+                lcm_title: "Mínim Comú Múltiple (mcm)",
+                gcd_explanation: "El MCD és el producte dels divisors comuns (cercles verds).",
+                lcm_explanation: "El mcm és el producte de TOTS els divisors de la columna dreta.",
+                error_message: "Si us plau, introdueix almenys dos nombres vàlids separats per comes.",
+                modal_title: "Com fer servir la calculadora",
+                modal_content: `
+                    <p>Aquesta eina descompon nombres en els seus factors primers per trobar el MCD i el mcm.</p>
+                    <h4 class="font-bold mt-2">1. Factors comuns (MCD)</h4>
+                    <p>L'aplicació primer busca divisors primers que divideixin a <strong>tots</strong> els nombres de la fila actual. Aquests són els <strong>factors comuns</strong>.</p>
+                    <p>✅ Aquests factors es marquen amb un <strong>cercle verd</strong>. El MCD és el resultat de multiplicar només aquests factors.</p>
+                    <h4 class="font-bold mt-2">2. Factors no comuns (mcm)</h4>
+                    <p>A continuació, l'aplicació continua dividint per factors primers que divideixin almenys a <strong>un</strong> dels nombres de la fila fins que tots arribin a 1.</p>
+                    <p>✅ El mcm s'obté multiplicant <strong>TOTS</strong> els divisors de la columna dreta (els que tenen cercle verd i els que no).</p>
+                `,
+                modal_close_btn: "Entesos",
+                tooltip_mcd: "Factor comú: divideix tots els nombres. Compta per al MCD i el mcm.",
+                tooltip_mcm: "Factor no comú: no divideix a tots. Compta només per al mcm."
+            }
+        };
+
+        let currentLanguage = 'es';
+
+        function setLanguage(lang) {
+            currentLanguage = lang;
+            const t = translations[lang];
+            document.documentElement.lang = lang;
+            document.getElementById('title').textContent = t.title;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('numbers-input').placeholder = t.input_placeholder;
+            document.getElementById('calculate-btn').textContent = t.calculate_btn;
+            document.getElementById('reset-btn').textContent = t.reset_btn;
+            document.getElementById('help-btn').textContent = t.help_btn;
+            
+            if (!document.getElementById('results-area').classList.contains('hidden')) {
+                document.getElementById('process-title').textContent = t.process_title;
+                document.getElementById('gcd-title').textContent = t.gcd_title;
+                document.getElementById('lcm-title').textContent = t.lcm_title;
+                document.getElementById('gcd-explanation').textContent = t.gcd_explanation;
+                document.getElementById('lcm-explanation').textContent = t.lcm_explanation;
+            }
+            const errorDiv = document.getElementById('error-message');
+            if (!errorDiv.classList.contains('hidden')) {
+                errorDiv.textContent = t.error_message;
+            }
+            
+            document.querySelectorAll('.divisor-item').forEach(item => {
+                if (item.dataset.type === 'mcd') {
+                    item.title = t.tooltip_mcd;
+                } else if (item.dataset.type === 'lcm') {
+                    item.title = t.tooltip_mcm;
+                }
+            });
+        }
+
+        function openModal() {
+            const t = translations[currentLanguage];
+            document.getElementById('modal-title').textContent = t.modal_title;
+            document.getElementById('modal-content').innerHTML = t.modal_content;
+            document.getElementById('modal-close-btn').textContent = t.modal_close_btn;
+            
+            const modal = document.getElementById('help-modal');
+            const modalContentArea = document.getElementById('modal-content-area');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContentArea.classList.remove('scale-95', 'opacity-0');
+                modalContentArea.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('help-modal');
+            const modalContentArea = document.getElementById('modal-content-area');
+            modalContentArea.classList.add('scale-95', 'opacity-0');
+            modalContentArea.classList.remove('scale-100', 'opacity-100');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        function resetApp() {
+            document.getElementById('numbers-input').value = '';
+            document.getElementById('results-area').classList.add('hidden');
+            document.getElementById('process-steps').innerHTML = '';
+            document.getElementById('gcd-result').textContent = '';
+            document.getElementById('lcm-result').textContent = '';
+            document.getElementById('error-message').classList.add('hidden');
+        }
+
+        function calculate() {
+            const inputStr = document.getElementById('numbers-input').value;
+            const numbers = inputStr.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n) && n > 0);
+
+            const errorDiv = document.getElementById('error-message');
+            if (numbers.length < 2) {
+                errorDiv.textContent = translations[currentLanguage].error_message;
+                errorDiv.classList.remove('hidden');
+                document.getElementById('results-area').classList.add('hidden');
+                return;
+            }
+            errorDiv.classList.add('hidden');
+
+            let currentNumbers = [...numbers];
+            const processStepsDiv = document.getElementById('process-steps');
+            processStepsDiv.innerHTML = '';
+
+            let gcd = 1;
+            let lcm = 1;
+            let divisor = 2;
+            
+            addProcessStep(null, currentNumbers);
+            addTopHorizontalLine(); // Añadir línea debajo de la primera fila
+
+            while (currentNumbers.some(n => n > 1)) {
+                let divisible = currentNumbers.some(n => n % divisor === 0);
+                
+                if (divisible) {
+                    // *** FIX STARTS HERE ***
+                    // Un factor es común si divide a TODOS los números de la fila actual.
+                    const isCommonFactor = currentNumbers.every(n => n % divisor === 0);
+                    // *** FIX ENDS HERE ***
+
+                    if (isCommonFactor) { 
+                        gcd *= divisor; 
+                    }
+                    lcm *= divisor;
+
+                    const nextNumbers = currentNumbers.map(n => (n % divisor === 0) ? n / divisor : n);
+                    addProcessStep(divisor, nextNumbers, isCommonFactor);
+                    currentNumbers = nextNumbers;
+                } else {
+                    divisor++;
+                }
+            }
+
+            document.getElementById('gcd-result').textContent = `${gcd}`;
+            document.getElementById('lcm-result').textContent = `${lcm}`;
+            document.getElementById('results-area').classList.remove('hidden');
+            setLanguage(currentLanguage);
+        }
+
+        function addProcessStep(divisor, numbers, isMcdFactor = false) {
+            const stepRow = document.createElement('div');
+            stepRow.className = 'flex items-center w-full max-w-md my-1';
+
+            const numbersDiv = document.createElement('div');
+            numbersDiv.className = 'flex-grow flex justify-around font-mono text-lg p-2';
+            numbersDiv.textContent = numbers.join('\t');
+
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'w-px bg-gray-300 h-8 mx-4';
+
+            const divisorDiv = document.createElement('div');
+            divisorDiv.className = 'divisor-item w-16 text-center font-mono text-lg p-2 flex justify-center items-center';
+
+            if (divisor) {
+                if (isMcdFactor) {
+                    const span = document.createElement('span');
+                    span.className = 'mcd-factor';
+                    span.textContent = divisor;
+                    divisorDiv.appendChild(span);
+                    divisorDiv.title = translations[currentLanguage].tooltip_mcd;
+                    divisorDiv.dataset.type = 'mcd';
+                } else {
+                    divisorDiv.textContent = divisor;
+                    divisorDiv.title = translations[currentLanguage].tooltip_mcm;
+                    divisorDiv.dataset.type = 'lcm';
+                }
+            }
+            
+            stepRow.appendChild(numbersDiv);
+            stepRow.appendChild(lineDiv);
+            stepRow.appendChild(divisorDiv);
+            document.getElementById('process-steps').appendChild(stepRow);
+        }
+        
+        // Función para añadir la línea horizontal debajo de la primera fila
+        function addTopHorizontalLine() {
+            const lineRow = document.createElement('div');
+            lineRow.className = 'w-full max-w-md';
+            const hr = document.createElement('hr');
+            hr.className = 'border-t-2 border-gray-300 my-1';
+            lineRow.appendChild(hr);
+            document.getElementById('process-steps').appendChild(lineRow);
+        }
+
+        window.onload = () => {
+            setLanguage('es');
+            document.getElementById('help-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'help-modal') {
+                    closeModal();
+                }
+            });
+        };
+    </script>
+
+</body>
+</html>
