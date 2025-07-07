@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escritorio para el Aula</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+    <style>
+        :root {
+            --color-bg: #F4F8D3;
+            --color-widget-bg: #F7CFD8;
+            --color-widget-header: #8E7DBE;
+            --color-accent: #A6D6D6;
+            --color-text-light: #F4F8D3;
+            --color-text-dark: #493e6a; /* Derivado oscuro de #8E7DBE para accesibilidad */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-color: var(--color-bg);
+        }
+
+        #screen {
+            width: 100vw;
+            height: 100vh;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        .widget {
+            position: absolute;
+            width: 400px;
+            min-height: 200px;
+            background-color: var(--color-widget-bg);
+            color: var(--color-text-dark);
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border: 2px solid var(--color-widget-header);
+            resize: both;
+        }
+
+        .widget-header {
+            background-color: var(--color-widget-header);
+            padding: 8px 12px;
+            cursor: move;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            color: var(--color-text-light);
+            flex-shrink: 0;
+        }
+
+        .widget-close-btn {
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--color-text-light);
+            font-size: 20px;
+            line-height: 1;
+        }
+        
+        .widget-body {
+            padding: 16px;
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+        
+        #toolbar {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 10px;
+            border-radius: 16px;
+            display: flex;
+            gap: 16px;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            z-index: 10000;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+            position: relative;
+            padding: 0 8px;
+        }
+
+        .toolbar-group:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 2px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tool-btn {
+            background-color: var(--color-widget-header);
+            color: var(--color-text-light);
+            border: none;
+            border-radius: 8px;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.2s;
+        }
+        .tool-btn:hover {
+            background-color: #7b69b1;
+            transform: translateY(-3px);
+        }
+
+        /* Estilo para el tooltip personalizado */
+        .custom-tooltip {
+            position: fixed;
+            background-color: var(--color-text-dark);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            z-index: 10001; /* Encima de todo */
+            pointer-events: none; /* Para que no interfiera con el ratón */
+            display: none;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        /* Estilos específicos de widgets */
+        .widget input, .widget textarea {
+            background-color: var(--color-bg);
+            color: var(--color-text-dark);
+            border: 2px solid var(--color-accent);
+            border-radius: 6px;
+            padding: 8px;
+            width: 100%;
+        }
+        .widget input:focus, .widget textarea:focus {
+            outline: none;
+            border-color: var(--color-widget-header);
+        }
+        .widget button {
+            transition: background-color 0.2s;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .widget .btn-primary { background-color: var(--color-widget-header); color: var(--color-text-light); }
+        .widget .btn-primary:hover { background-color: #7b69b1; }
+        .widget .btn-secondary { background-color: var(--color-accent); color: var(--color-text-dark); }
+        .widget .btn-secondary:hover { background-color: #8ec9c9; }
+        .widget .btn-tertiary { background-color: var(--color-bg); color: var(--color-text-dark); }
+        .widget .btn-tertiary:hover { background-color: #e1e6b9; }
+        
+        .traffic-light-body { background-color: #333; border-radius: 10px; display: flex; flex-direction: column; gap: 10px; padding: 10px; width: fit-content; margin: auto; cursor: pointer; }
+        .light { width: 60px; height: 60px; border-radius: 50%; background-color: #1a1a1a; border: 2px solid #555; }
+        .light.red.active { background-color: #ff4136; box-shadow: 0 0 20px #ff4136; }
+        .light.yellow.active { background-color: #ffdc00; box-shadow: 0 0 20px #ffdc00; }
+        .light.green.active { background-color: #2ecc40; box-shadow: 0 0 20px #2ecc40; }
+        
+        .media-embed-container iframe, .media-embed-container img { width: 100%; height: 100%; border: none; border-radius: 6px; }
+
+        .timetable { width: 100%; border-collapse: collapse; }
+        .timetable th, .timetable td { border: 1px solid var(--color-accent); padding: 4px; text-align: center; height: 50px; }
+        .timetable th { background-color: var(--color-accent); color: var(--color-text-dark); }
+        .timetable td { background-color: var(--color-bg); }
+        .timetable td:first-child { font-weight: bold; background-color: var(--color-accent); }
+        .timetable td[contenteditable="true"]:focus { background-color: white; outline: 2px solid var(--color-widget-header); }
+
+        .scoreboard-player { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid var(--color-accent); }
+        .scoreboard-player .score { font-size: 1.5rem; font-weight: bold; }
+        .scoreboard-player .controls button { width: 30px; height: 30px; line-height: 1; padding: 0; }
+        
+        .gesture-card { background-color: var(--color-bg); border-radius: 8px; padding: 16px; text-align: center; cursor: pointer; border: 3px solid transparent; transition: border-color 0.2s, transform 0.2s; }
+        .gesture-card:hover { transform: scale(1.05); }
+        .gesture-card.active { border-color: var(--color-widget-header); }
+        .gesture-card .icon { font-size: 4rem; line-height: 1; margin-bottom: 8px; }
+        
+        .task-list { list-style: none; padding: 0; }
+        .task-list li { display: flex; align-items: center; gap: 8px; padding: 8px; border-bottom: 1px solid var(--color-accent); }
+        .task-list li.completed label { text-decoration: line-through; opacity: 0.6; }
+        .task-list li input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--color-widget-header); }
+
+    </style>
+</head>
+<body>
+
+    <div id="screen"></div>
+
+    <div id="toolbar">
+        <div class="toolbar-group">
+            <button class="tool-btn" data-title="Temporizador" data-tool="timer">⏱️</button>
+            <button class="tool-btn" data-title="Medidor de Sonido" data-tool="sound-meter">🔊</button>
+            <button class="tool-btn" data-title="Semáforo" data-tool="traffic-light">🚦</button>
+            <button class="tool-btn" data-title="Horario" data-tool="timetable">🗓️</button>
+            <button class="tool-btn" data-title="Lista de Trabajo" data-tool="work-list">✅</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="tool-btn" data-title="Bloc de Notas" data-tool="notes">📝</button>
+            <button class="tool-btn" data-title="Agregador de Medios" data-tool="media-embed">🖼️</button>
+            <button class="tool-btn" data-title="Gestos de Trabajo" data-tool="work-gestures">🤫</button>
+        </div>
+        <div class="toolbar-group">
+            <button class="tool-btn" data-title="Grupos Aleatorios" data-tool="random-groups">🧑‍🤝‍🧑</button>
+            <button class="tool-btn" data-title="Grupos Cooperativos" data-tool="coop-groups">🤝</button>
+            <button class="tool-btn" data-title="Selector Aleatorio" data-tool="student-picker">🎯</button>
+            <button class="tool-btn" data-title="Lanzar Dados" data-tool="dice">🎲</button>
+            <button class="tool-btn" data-title="Disparador de Ideas" data-tool="idea-starter">💡</button>
+            <button class="tool-btn" data-title="Generador de Torneos" data-tool="tournament-generator">🏆</button>
+            <button class="tool-btn" data-title="Marcador" data-tool="scoreboard">💯</button>
+        </div>
+    </div>
+    
+    <div id="custom-tooltip" class="custom-tooltip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const screen = document.getElementById('screen');
+    const toolbar = document.getElementById('toolbar');
+    const tooltip = document.getElementById('custom-tooltip');
+    let highestZ = 100;
+    let isAudioContextStarted = false;
+
+    toolbar.addEventListener('mouseover', (e) => {
+        const button = e.target.closest('.tool-btn');
+        if (!button) return;
+        const title = button.dataset.title;
+        if (title) {
+            tooltip.textContent = title;
+            tooltip.style.display = 'block';
+            const btnRect = button.getBoundingClientRect();
+            tooltip.style.left = `${btnRect.left + btnRect.width / 2 - tooltip.offsetWidth / 2}px`;
+            tooltip.style.top = `${btnRect.top - tooltip.offsetHeight - 8}px`;
+        }
+    });
+
+    toolbar.addEventListener('mouseout', (e) => {
+        const button = e.target.closest('.tool-btn');
+        if (button) {
+            tooltip.style.display = 'none';
+        }
+    });
+
+    function makeWidgetDraggable(widget) {
+        const header = widget.querySelector('.widget-header');
+        let isDragging = false;
+        let offsetX, offsetY;
+        header.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            offsetX = e.clientX - widget.offsetLeft;
+            offsetY = e.clientY - widget.offsetTop;
+            highestZ++;
+            widget.style.zIndex = highestZ;
+            document.onmousemove = (e) => {
+                if (!isDragging) return;
+                widget.style.left = `${e.clientX - offsetX}px`;
+                widget.style.top = `${e.clientY - offsetY}px`;
+            };
+            document.onmouseup = () => { isDragging = false; document.onmousemove = null; document.onmouseup = null; };
+        });
+    }
+
+    async function createWidget(toolId, title) {
+        if (!isAudioContextStarted && window.Tone) {
+            try {
+                await Tone.start();
+                isAudioContextStarted = true;
+            } catch (error) {
+                console.error('Could not start audio context:', error);
+            }
+        }
+
+        const widget = document.createElement('div');
+        widget.id = `widget-${toolId}-${Date.now()}`;
+        widget.className = 'widget';
+        widget.style.left = `${Math.random() * (window.innerWidth - 400)}px`;
+        widget.style.top = `${Math.random() * (window.innerHeight - 400)}px`;
+        highestZ++;
+        widget.style.zIndex = highestZ;
+        widget.innerHTML = `<div class="widget-header"><span>${title}</span><button class="widget-close-btn">&times;</button></div><div class="widget-body"></div>`;
+        screen.appendChild(widget);
+        widget.querySelector('.widget-close-btn').addEventListener('click', () => {
+            if (widget.cleanup) widget.cleanup();
+            widget.remove();
+        });
+        makeWidgetDraggable(widget);
+        const toolContent = getToolContent(toolId);
+        if (toolContent) {
+            widget.querySelector('.widget-body').innerHTML = toolContent.html;
+            toolContent.initializer(widget);
+        }
+    }
+
+    toolbar.addEventListener('click', (e) => {
+        const button = e.target.closest('.tool-btn');
+        if (!button) return;
+        const toolId = button.dataset.tool;
+        createWidget(toolId, button.dataset.title);
+    });
+
+    function getToolContent(toolId) {
+        const tools = {
+            timer: {
+                html: `<div class="text-center"><div class="timer-display text-6xl font-mono font-bold mb-4">00:05:00</div><div class="flex flex-wrap justify-center items-center gap-2 mb-4"><input type="number" min="0" max="59" value="5" class="timer-minutes w-16 p-1 text-center"><span class="font-semibold">m</span><input type="number" min="0" max="59" value="0" class="timer-seconds w-16 p-1 text-center"><span class="font-semibold">s</span></div><div class="flex justify-center gap-2"><button class="timer-start btn-primary">Iniciar</button><button class="timer-pause btn-secondary">Pausar</button><button class="timer-reset btn-tertiary">Reiniciar</button></div></div>`,
+                initializer: (widget) => {
+                    const display = widget.querySelector('.timer-display');
+                    const minutesInput = widget.querySelector('.timer-minutes');
+                    const secondsInput = widget.querySelector('.timer-seconds');
+                    let timerInterval = null, totalSeconds = 0;
+                    const setInitialTime = () => { totalSeconds = (parseInt(minutesInput.value) || 0) * 60 + (parseInt(secondsInput.value) || 0); updateDisplay(); };
+                    const updateDisplay = () => { const min = String(Math.floor(totalSeconds / 60)).padStart(2, '0'); const sec = String(totalSeconds % 60).padStart(2, '0'); display.textContent = `${min}:${sec}`; display.style.color = totalSeconds <= 10 && totalSeconds > 0 ? '#d9534f' : 'var(--color-text-dark)'; };
+                    widget.querySelector('.timer-start').addEventListener('click', () => { if (timerInterval) return; clearInterval(timerInterval); setInitialTime(); if (totalSeconds <= 0) return; timerInterval = setInterval(() => { totalSeconds--; updateDisplay(); if (totalSeconds <= 0) { clearInterval(timerInterval); timerInterval = null; display.textContent = "¡FIN!"; if(window.Tone) new Tone.Synth().toDestination().triggerAttackRelease("C5", "0.5s"); } }, 1000); });
+                    widget.querySelector('.timer-pause').addEventListener('click', () => { clearInterval(timerInterval); timerInterval = null; });
+                    widget.querySelector('.timer-reset').addEventListener('click', () => { clearInterval(timerInterval); timerInterval = null; setInitialTime(); });
+                    minutesInput.addEventListener('change', setInitialTime); secondsInput.addEventListener('change', setInitialTime);
+                    widget.cleanup = () => clearInterval(timerInterval);
+                    setInitialTime();
+                }
+            },
+            notes: {
+                html: `<textarea class="w-full h-full p-2 text-lg notes-area" placeholder="Escribe aquí..." style="min-height: 150px;"></textarea>`,
+                initializer: (widget) => { /* No es necesaria lógica compleja aquí */ }
+            },
+            'student-picker': {
+                html: `<div class="flex flex-col h-full"><h3 class="text-lg font-semibold">Lista</h3><textarea class="sp-names w-full h-24 p-2 mb-2" placeholder="Un nombre por línea..."></textarea><div class="flex items-center gap-2 mb-2"><p class="text-sm">Restantes: <span class="sp-student-count font-bold">0</span></p><button class="sp-reset py-1 px-3 btn-tertiary">Reiniciar</button></div><div class="sp-result w-full h-24 flex items-center justify-center bg-[#F4F8D3] rounded-lg text-3xl font-bold p-4 mb-2" style="color: var(--color-text-dark);">?</div><button class="sp-pick w-full btn-secondary text-lg">¡Seleccionar!</button></div>`,
+                initializer: (widget) => {
+                    const namesArea = widget.querySelector('.sp-names'), pickBtn = widget.querySelector('.sp-pick'), resetBtn = widget.querySelector('.sp-reset'), resultDiv = widget.querySelector('.sp-result'), countSpan = widget.querySelector('.sp-student-count');
+                    let allStudents = [], availableStudents = [];
+                    const updateLists = () => { const names = namesArea.value.split('\n').filter(n => n.trim() !== ''); allStudents = [...names]; availableStudents = [...names]; countSpan.textContent = availableStudents.length; };
+                    namesArea.addEventListener('input', updateLists); resetBtn.addEventListener('click', updateLists);
+                    pickBtn.addEventListener('click', () => {
+                        if (availableStudents.length === 0) { resultDiv.textContent = allStudents.length > 0 ? 'Reinicia' : 'Añade'; return; }
+                        let animationInterval = setInterval(() => { resultDiv.textContent = availableStudents[Math.floor(Math.random() * availableStudents.length)]; }, 100);
+                        setTimeout(() => { clearInterval(animationInterval); const pickedIndex = Math.floor(Math.random() * availableStudents.length); resultDiv.textContent = availableStudents.splice(pickedIndex, 1)[0] || '?'; countSpan.textContent = availableStudents.length; }, 2000);
+                    });
+                    updateLists();
+                }
+            },
+            'idea-starter': {
+                html: `<div class="text-center"><h3 class="text-lg font-semibold mb-2">Categoría</h3><div class="is-categories flex justify-center flex-wrap gap-2 mb-3"><button data-category="historias" class="category-btn btn-primary">Historias</button><button data-category="historiasMusicales" class="category-btn btn-primary">H. Musicales</button><button data-category="debate" class="category-btn btn-primary">Debate</button><button data-category="debatesMusicales" class="category-btn btn-primary">D. Musicales</button></div><div class="is-result w-full min-h-[8rem] flex items-center justify-center bg-[#F4F8D3] rounded-lg p-4 text-xl" style="color: var(--color-text-dark);">...</div><button class="is-generate mt-3 w-full btn-secondary text-lg" disabled>Generar Idea</button></div>`,
+                initializer: (widget) => {
+                    const prompts = {
+                        historias: ["Un reloj que detiene el tiempo, pero pierdes un recuerdo.", "Un mapa antiguo de un lugar desconocido.", "Los pájaros empiezan a volar hacia atrás.", "El último dragón vive en el metro.", "Un robot de limpieza desarrolla conciencia."],
+                        historiasMusicales: ["Una guitarra que toca canciones del futuro.", "Un pueblo donde está prohibido cantar.", "Un fantasma que se comunica con un piano.", "Una banda de música que viaja en el tiempo.", "Un bosque cuyos árboles suenan con el viento."],
+                        debate: ["¿Volar o ser invisible?", "¿Eliminarías las emociones negativas?", "¿Derechos para los robots?", "¿Libertad o seguridad?", "¿Conocimiento o imaginación?"],
+                        debatesMusicales: ["¿Letra o melodía?", "Un solo género musical para siempre, ¿cuál?", "¿Puede la IA crear música con emoción?", "¿Es justo usar 'samples'?", "¿Censurar música controvertida?"]
+                    };
+                    const categoryBtns = widget.querySelectorAll('.category-btn'), resultDiv = widget.querySelector('.is-result'), generateBtn = widget.querySelector('.is-generate');
+                    let selectedCategory = null;
+                    categoryBtns.forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            selectedCategory = btn.dataset.category;
+                            categoryBtns.forEach(b => { b.classList.remove('btn-secondary'); b.classList.add('btn-primary'); });
+                            btn.classList.add('btn-secondary'); btn.classList.remove('btn-primary');
+                            generateBtn.disabled = false;
+                            resultDiv.textContent = `Categoría "${btn.textContent}" seleccionada.`;
+                        });
+                    });
+                    generateBtn.addEventListener('click', () => { if (selectedCategory) { resultDiv.textContent = prompts[selectedCategory][Math.floor(Math.random() * prompts[selectedCategory].length)]; } });
+                }
+            },
+            dice: {
+                html: `<div class="text-center"><div class="flex justify-center items-center gap-4 mb-4"><label class="font-medium">Dados:</label><input type="number" min="1" max="10" value="2" class="dice-count w-20 p-1 text-center"></div><button class="dice-roll w-full btn-secondary text-xl">¡Lanzar!</button><div class="dice-results mt-4 flex flex-wrap justify-center gap-4"></div></div>`,
+                initializer: (widget) => {
+                    const countInput = widget.querySelector('.dice-count'), rollBtn = widget.querySelector('.dice-roll'), resultsDiv = widget.querySelector('.dice-results');
+                    rollBtn.addEventListener('click', () => {
+                        const count = parseInt(countInput.value) || 1;
+                        resultsDiv.innerHTML = '';
+                        for (let i = 0; i < count; i++) {
+                            const value = Math.floor(Math.random() * 6) + 1;
+                            const face = document.createElement('div');
+                            face.style.cssText = 'display:grid; grid-template-areas:"a . c" "e g f" "d . b"; flex:0 0 70px; padding:8px; background-color:#F4F8D3; width:70px; height:70px; border-radius:10px;';
+                            for (let p = 0; p < value; p++) { 
+                                const pip = document.createElement('span');
+                                pip.style.cssText = 'display:block; align-self:center; justify-self:center; width:15px; height:15px; border-radius:50%; background:var(--color-text-dark);';
+                                face.appendChild(pip);
+                            }
+                            resultsDiv.appendChild(face);
+                        }
+                    });
+                }
+            },
+            'random-groups': {
+                html: `<div class="flex flex-col h-full"><h3 class="text-lg font-semibold">Alumnos</h3><textarea class="rg-names w-full flex-grow p-2 mb-2" placeholder="Un nombre por línea..." style="min-height: 100px;"></textarea><div class="flex gap-2 items-end"><div class="flex-grow"><label class="text-sm">Nº Grupos</label><input type="number" min="1" class="rg-group-count w-full p-1"></div><div class="text-center font-bold pb-2">o</div><div class="flex-grow"><label class="text-sm">Alumnos/Grupo</label><input type="number" min="1" class="rg-students-per-group w-full p-1"></div></div><button class="rg-generate mt-2 w-full btn-primary">Generar</button><div class="rg-results mt-2 overflow-y-auto"></div></div>`,
+                initializer: (widget) => {
+                    const namesArea = widget.querySelector('.rg-names'), groupCountInput = widget.querySelector('.rg-group-count'), studentsPerGroupInput = widget.querySelector('.rg-students-per-group'), generateBtn = widget.querySelector('.rg-generate'), resultsDiv = widget.querySelector('.rg-results');
+                    groupCountInput.addEventListener('input', () => { if (groupCountInput.value) studentsPerGroupInput.value = ''; });
+                    studentsPerGroupInput.addEventListener('input', () => { if (studentsPerGroupInput.value) groupCountInput.value = ''; });
+                    generateBtn.addEventListener('click', () => {
+                        let names = namesArea.value.split('\n').filter(n => n.trim() !== '');
+                        if (names.length === 0) { resultsDiv.innerHTML = `<p style="color:var(--color-text-dark)">Añade nombres.</p>`; return; }
+                        for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j], names[i]]; }
+                        const groupCount = parseInt(groupCountInput.value), studentsPerGroup = parseInt(studentsPerGroupInput.value);
+                        let groups = [];
+                        if (groupCount > 0) { for (let i = 0; i < groupCount; i++) groups.push([]); names.forEach((name, i) => groups[i % groupCount].push(name));
+                        } else if (studentsPerGroup > 0) { for (let i = 0; i < names.length; i += studentsPerGroup) { groups.push(names.slice(i, i + studentsPerGroup)); }
+                        } else { resultsDiv.innerHTML = `<p style="color:var(--color-text-dark)">Elige una opción.</p>`; return; }
+                        resultsDiv.innerHTML = groups.map((g, i) => `<div class="p-2 mt-1 bg-[#F4F8D3] text-black rounded"><h4 class="font-bold">Grupo ${i+1}</h4><ul>${g.map(m => `<li>${m}</li>`).join('')}</ul></div>`).join('');
+                    });
+                }
+            },
+            'coop-groups': {
+                html: `<div class="flex flex-col h-full"><h3 class="text-lg font-semibold">Alumnos</h3><textarea class="cg-names w-full p-2 mb-2" placeholder="Un nombre por línea..." rows="4"></textarea><h3 class="text-lg font-semibold">Roles</h3><textarea class="cg-roles w-full p-2 mb-2" placeholder="Un rol por línea..." rows="3"></textarea><label class="text-sm">Nº Grupos</label><input type="number" min="1" class="cg-group-count w-full p-1 mb-2"><button class="cg-generate w-full btn-primary">Generar</button><div class="cg-results mt-2 overflow-y-auto"></div></div>`,
+                initializer: (widget) => {
+                    const namesArea = widget.querySelector('.cg-names'), rolesArea = widget.querySelector('.cg-roles'), groupCountInput = widget.querySelector('.cg-group-count'), generateBtn = widget.querySelector('.cg-generate'), resultsDiv = widget.querySelector('.cg-results');
+                    generateBtn.addEventListener('click', () => {
+                        let names = namesArea.value.split('\n').filter(n => n.trim() !== ''), roles = rolesArea.value.split('\n').filter(r => r.trim() !== ''), groupCount = parseInt(groupCountInput.value);
+                        if (names.length === 0 || roles.length === 0 || !groupCount) { resultsDiv.innerHTML = `<p style="color:var(--color-text-dark)">Rellena todos los campos.</p>`; return; }
+                        for (let i = names.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [names[i], names[j]] = [names[j], names[i]]; }
+                        let groups = Array.from({ length: groupCount }, () => []);
+                        names.forEach((name, i) => groups[i % groupCount].push({ name }));
+                        groups.forEach(group => { for (let i = roles.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [roles[i], roles[j]] = [roles[j], roles[i]]; } group.forEach((member, i) => { member.role = roles[i % roles.length]; }); });
+                        resultsDiv.innerHTML = groups.map((g, i) => `<div class="p-2 mt-1 bg-[#F4F8D3] text-black rounded"><h4 class="font-bold">Grupo ${i+1}</h4><ul>${g.map(m => `<li><span class="font-semibold">${m.name}:</span> ${m.role}</li>`).join('')}</ul></div>`).join('');
+                    });
+                }
+            },
+            'sound-meter': {
+                 html: `<div class="text-center"><div class="noise-permission-request"><p class="mb-4">Necesita permiso para usar tu micrófono.</p><button class="noise-start btn-primary">Activar</button></div><div class="noise-meter-container hidden"><div class="w-full h-12 bg-gray-200 rounded-full overflow-hidden border-2 border-[#A6D6D6]"><div class="noise-bar h-full rounded-full" style="width:0%; transition: width 0.1s linear, background-color 0.5s linear;"></div></div><p class="noise-level-text text-lg font-medium mt-2">Silencio</p></div></div>`,
+                 initializer: (widget) => {
+                    const startBtn = widget.querySelector('.noise-start'), permissionDiv = widget.querySelector('.noise-permission-request'), meterDiv = widget.querySelector('.noise-meter-container'), noiseBar = widget.querySelector('.noise-bar'), levelText = widget.querySelector('.noise-level-text');
+                    let audioContext, analyser, microphone;
+                    class NoiseMeter {
+                        constructor() { this.isStarted = false; }
+                        async start() {
+                            if (this.isStarted) return;
+                            try {
+                                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                                permissionDiv.classList.add('hidden'); meterDiv.classList.remove('hidden');
+                                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                                analyser = audioContext.createAnalyser();
+                                microphone = audioContext.createMediaStreamSource(stream);
+                                const scriptNode = audioContext.createScriptProcessor(2048, 1, 1);
+                                analyser.smoothingTimeConstant = 0.8; analyser.fftSize = 1024;
+                                microphone.connect(analyser); analyser.connect(scriptNode); scriptNode.connect(audioContext.destination);
+                                scriptNode.onaudioprocess = () => {
+                                    const array = new Uint8Array(analyser.frequencyBinCount);
+                                    analyser.getByteFrequencyData(array);
+                                    const average = array.reduce((a, b) => a + b, 0) / array.length;
+                                    this.updateMeter(average);
+                                };
+                                widget.cleanup = () => { if (microphone) microphone.mediaStream.getTracks().forEach(track => track.stop()); if (audioContext) audioContext.close(); };
+                                this.isStarted = true;
+                            } catch (err) { meterDiv.innerHTML = `<p style="color:var(--color-text-dark)">No se pudo acceder al micrófono.</p>`; permissionDiv.classList.add('hidden'); meterDiv.classList.remove('hidden'); }
+                        }
+                        updateMeter(level) {
+                            const percentage = Math.min(100, Math.max(0, level * 1.5));
+                            noiseBar.style.width = percentage + '%';
+                            if (percentage < 30) { noiseBar.style.backgroundColor = '#A6D6D6'; levelText.textContent = 'Silencio'; } 
+                            else if (percentage < 60) { noiseBar.style.backgroundColor = '#a8c030'; levelText.textContent = 'Conversación'; } 
+                            else { noiseBar.style.backgroundColor = '#d9534f'; levelText.textContent = '¡Ruido!'; }
+                        }
+                    }
+                    const noiseMeterInstance = new NoiseMeter();
+                    startBtn.addEventListener('click', () => noiseMeterInstance.start());
+                 }
+            },
+            'interactive-rubric': {
+                html: `<div class="flex flex-col h-full"><div class="ir-setup"><h3 class="text-lg font-semibold">Criterios</h3><textarea class="ir-criteria w-full p-2 mb-2" rows="3" placeholder="Un criterio por línea"></textarea><h3 class="text-lg font-semibold">Niveles</h3><textarea class="ir-levels w-full p-2 mb-2" rows="3" placeholder="Nivel,Puntos (uno por línea)"></textarea><button class="ir-create-template w-full btn-primary">Crear Plantilla</button></div><div class="ir-template-container mt-2 overflow-y-auto"></div><div class="ir-rubric-container mt-2 overflow-y-auto"></div><div class="ir-score-container mt-2 text-center text-xl font-bold"></div></div>`,
+                initializer: (widget) => {
+                    const criteriaArea = widget.querySelector('.ir-criteria'), levelsArea = widget.querySelector('.ir-levels'), createTemplateBtn = widget.querySelector('.ir-create-template'), templateContainer = widget.querySelector('.ir-template-container'), rubricContainer = widget.querySelector('.ir-rubric-container'), scoreContainer = widget.querySelector('.ir-score-container'), setupDiv = widget.querySelector('.ir-setup');
+                    createTemplateBtn.addEventListener('click', () => {
+                        const criteria = criteriaArea.value.split('\n').filter(c => c.trim() !== '');
+                        const levels = levelsArea.value.split('\n').filter(l => l.trim() !== '').map(l => { const parts = l.split(','); return { name: parts[0]?.trim(), points: parseFloat(parts[1]?.trim()) || 0 }; });
+                        if (criteria.length === 0 || levels.length === 0) { return; }
+                        let templateHTML = `<h3 class="text-lg font-semibold mt-2">Descriptores</h3><table class="rubric-table"><thead><tr><th>Criterios</th>${levels.map(l => `<th>${l.name}</th>`).join('')}</tr></thead><tbody>`;
+                        criteria.forEach((criterion, critIndex) => { templateHTML += `<tr><td class="criterion-col">${criterion}</td>${levels.map((level, levelIndex) => `<td><textarea id="desc-${critIndex}-${levelIndex}" class="w-full h-16 p-1"></textarea></td>`).join('')}</tr>`; });
+                        templateHTML += `</tbody></table><button class="ir-generate-rubric mt-2 w-full btn-secondary">Generar Rúbrica</button>`;
+                        templateContainer.innerHTML = templateHTML;
+                        widget.querySelector('.ir-generate-rubric').addEventListener('click', () => generateInteractiveRubric(criteria, levels));
+                    });
+                    function generateInteractiveRubric(criteria, levels) {
+                        let rubricData = criteria.map((criterion, critIndex) => ({ criterion, descriptors: levels.map((level, levelIndex) => ({ text: widget.querySelector(`#desc-${critIndex}-${levelIndex}`).value, points: level.points })) }));
+                        setupDiv.classList.add('hidden'); templateContainer.classList.add('hidden');
+                        let rubricHTML = `<table class="rubric-table"><thead><tr><th>Criterios</th>${levels.map(l => `<th>${l.name} (${l.points} pts)</th>`).join('')}</tr></thead><tbody>`;
+                        rubricData.forEach((row, critIndex) => { rubricHTML += `<tr data-row="${critIndex}"><td class="criterion-col">${row.criterion}</td>${row.descriptors.map(desc => `<td class="rubric-cell" data-points="${desc.points}">${desc.text}</td>`).join('')}</tr>`; });
+                        rubricHTML += `</tbody></table>`;
+                        rubricContainer.innerHTML = rubricHTML;
+                        rubricContainer.querySelectorAll('.rubric-cell').forEach(cell => cell.addEventListener('click', handleCellClick));
+                        calculateScore();
+                    }
+                    function handleCellClick(event) {
+                        const row = event.currentTarget.parentElement;
+                        row.querySelectorAll('.rubric-cell').forEach(cell => cell.classList.remove('selected'));
+                        event.currentTarget.classList.add('selected');
+                        calculateScore();
+                    }
+                    function calculateScore() {
+                        let totalScore = 0, maxScore = 0;
+                        rubricContainer.querySelectorAll('tbody tr').forEach(row => {
+                            const selectedCell = row.querySelector('.selected');
+                            if (selectedCell) totalScore += parseFloat(selectedCell.dataset.points);
+                            maxScore += Math.max(...Array.from(row.querySelectorAll('.rubric-cell')).map(c => parseFloat(c.dataset.points)));
+                        });
+                        scoreContainer.innerHTML = `Puntuación: <span style="color:var(--color-widget-header)">${totalScore}</span> / ${maxScore}`;
+                    }
+                }
+            },
+            'tournament-generator': {
+                html: `<div class="flex flex-col h-full"><h3 class="text-lg font-semibold">Participantes</h3><textarea class="tg-names w-full p-2 mb-2" rows="5" placeholder="Un participante por línea"></textarea><button class="tg-generate w-full btn-primary">Generar Torneo</button><div class="tg-bracket mt-2 overflow-auto flex-grow"></div></div>`,
+                initializer: (widget) => {
+                    const namesArea = widget.querySelector('.tg-names'), generateBtn = widget.querySelector('.tg-generate'), bracketDiv = widget.querySelector('.tg-bracket');
+                    generateBtn.addEventListener('click', () => {
+                        const participants = namesArea.value.split('\n').filter(p => p.trim() !== '');
+                        if (participants.length < 2) { return; }
+                        for (let i = participants.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [participants[i], participants[j]] = [participants[j], participants[i]]; }
+                        createBracket(participants);
+                    });
+                    function createBracket(participants) {
+                        bracketDiv.innerHTML = ''; let currentParticipants = [...participants]; const nextPowerOfTwo = Math.pow(2, Math.ceil(Math.log2(currentParticipants.length))); const byes = nextPowerOfTwo - currentParticipants.length;
+                        for (let i = 0; i < byes; i++) { currentParticipants.splice(Math.floor(Math.random() * (currentParticipants.length + 1)), 0, 'BYE'); }
+                        let roundsData = []; let roundParticipants = [...currentParticipants];
+                        while(roundParticipants.length > 1) { let matches = []; for (let i = 0; i < roundParticipants.length; i += 2) { matches.push({ p1: roundParticipants[i], p2: roundParticipants[i+1] }); } roundsData.push(matches); roundParticipants = new Array(matches.length).fill(null); }
+                        renderBracket(roundsData);
+                    }
+                    function renderBracket(roundsData) {
+                        bracketDiv.innerHTML = '';
+                        roundsData.forEach((round, roundIndex) => {
+                            const roundDiv = document.createElement('div'); roundDiv.className = 'round'; roundDiv.dataset.round = roundIndex;
+                            round.forEach((match, matchIndex) => {
+                                const matchDiv = document.createElement('div'); matchDiv.className = 'match'; matchDiv.dataset.match = matchIndex;
+                                matchDiv.appendChild(createParticipantDiv(match.p1, roundIndex, matchIndex, 0));
+                                matchDiv.appendChild(createParticipantDiv(match.p2, roundIndex, matchIndex, 1));
+                                roundDiv.appendChild(matchDiv);
+                            });
+                            bracketDiv.appendChild(roundDiv);
+                        });
+                        widget.querySelectorAll('.participant.bye').forEach(byeEl => {
+                            const otherParticipant = byeEl.closest('.match').querySelector('.participant:not(.bye)');
+                            if (otherParticipant) handleWin(otherParticipant);
+                        });
+                    }
+                    function createParticipantDiv(name, round, match, pIndex) {
+                         const pDiv = document.createElement('div'); pDiv.textContent = name || '...'; pDiv.dataset.round = round; pDiv.dataset.match = match; pDiv.dataset.pIndex = pIndex;
+                         if (!name) pDiv.className = 'participant placeholder';
+                         else if (name === 'BYE') pDiv.className = 'participant bye';
+                         else { pDiv.className = 'participant'; pDiv.addEventListener('click', (e) => handleWin(e.target)); }
+                         return pDiv;
+                    }
+                    function handleWin(winnerEl) {
+                        const parentMatch = winnerEl.closest('.match'); if (parentMatch.querySelector('.winner')) return;
+                        winnerEl.classList.add('winner');
+                        const { round, match } = winnerEl.dataset;
+                        const nextRoundDiv = bracketDiv.querySelector(`.round[data-round='${parseInt(round) + 1}']`);
+                        if (nextRoundDiv) {
+                            const nextMatchIndex = Math.floor(parseInt(match) / 2); const nextPIndex = parseInt(match) % 2;
+                            const nextParticipantDiv = nextRoundDiv.querySelector(`.match[data-match='${nextMatchIndex}'] .participant[data-p-index='${nextPIndex}']`);
+                            if (nextParticipantDiv) { nextParticipantDiv.textContent = winnerEl.textContent; nextParticipantDiv.className = 'participant'; nextParticipantDiv.addEventListener('click', (e) => handleWin(e.target)); }
+                        }
+                    }
+                }
+            },
+            'traffic-light': {
+                html: `<div class="traffic-light-body"><div class="light red active"></div><div class="light yellow"></div><div class="light green"></div></div>`,
+                initializer: (widget) => {
+                    const lightBody = widget.querySelector('.traffic-light-body');
+                    const red = widget.querySelector('.red');
+                    const yellow = widget.querySelector('.yellow');
+                    const green = widget.querySelector('.green');
+                    let currentState = 0; // 0: red, 1: red+yellow, 2: green, 3: yellow
+                    lightBody.addEventListener('click', () => {
+                        currentState = (currentState + 1) % 4;
+                        red.classList.remove('active');
+                        yellow.classList.remove('active');
+                        green.classList.remove('active');
+                        switch(currentState) {
+                            case 0: red.classList.add('active'); break;
+                            case 1: red.classList.add('active'); yellow.classList.add('active'); break;
+                            case 2: green.classList.add('active'); break;
+                            case 3: yellow.classList.add('active'); break;
+                        }
+                    });
+                }
+            },
+            'media-embed': {
+                html: `<div class="flex flex-col h-full"><div class="flex gap-2 mb-2"><input type="text" class="media-url-input flex-grow" placeholder="Pega una URL de YouTube, imagen o web..."><button class="media-load-btn btn-primary">Cargar</button></div><div class="media-embed-container flex-grow bg-black/20 rounded"></div></div>`,
+                initializer: (widget) => {
+                    const urlInput = widget.querySelector('.media-url-input');
+                    const loadBtn = widget.querySelector('.media-load-btn');
+                    const container = widget.querySelector('.media-embed-container');
+
+                    loadBtn.addEventListener('click', () => {
+                        const url = urlInput.value.trim();
+                        if (!url) return;
+
+                        container.innerHTML = ''; // Clear previous content
+
+                        // YouTube URL
+                        const youtubeMatch = url.match(/(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+                        if (youtubeMatch && youtubeMatch[1]) {
+                            const videoId = youtubeMatch[1];
+                            const iframe = document.createElement('iframe');
+                            iframe.src = `https://www.youtube.com/embed/${videoId}`;
+                            iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
+                            iframe.allowFullscreen = true;
+                            container.appendChild(iframe);
+                            return;
+                        }
+
+                        // Image URL
+                        if (/\.(jpeg|jpg|gif|png|svg|webp)$/i.test(url)) {
+                            const img = document.createElement('img');
+                            img.src = url;
+                            img.style.objectFit = 'contain';
+                            container.appendChild(img);
+                            return;
+                        }
+
+                        // Other websites (iframe)
+                        const iframe = document.createElement('iframe');
+                        iframe.src = url;
+                        container.appendChild(iframe);
+                    });
+                }
+            },
+            scoreboard: {
+                html: `<div class="flex flex-col h-full"><div class="scoreboard-setup"><h3 class="text-lg font-semibold">Jugadores/Equipos</h3><textarea class="scoreboard-names w-full p-2 mb-2" rows="4" placeholder="Un nombre por línea"></textarea><button class="scoreboard-start btn-primary w-full">Empezar</button></div><div class="scoreboard-main hidden"></div></div>`,
+                initializer: (widget) => {
+                    const setupDiv = widget.querySelector('.scoreboard-setup');
+                    const mainDiv = widget.querySelector('.scoreboard-main');
+                    const namesArea = widget.querySelector('.scoreboard-names');
+                    const startBtn = widget.querySelector('.scoreboard-start');
+
+                    startBtn.addEventListener('click', () => {
+                        const names = namesArea.value.split('\n').filter(n => n.trim() !== '');
+                        if (names.length === 0) return;
+
+                        setupDiv.classList.add('hidden');
+                        mainDiv.classList.remove('hidden');
+                        mainDiv.innerHTML = '';
+
+                        names.forEach(name => {
+                            const playerDiv = document.createElement('div');
+                            playerDiv.className = 'scoreboard-player';
+                            playerDiv.innerHTML = `
+                                <span class="name font-semibold">${name}</span>
+                                <div class="flex items-center gap-2">
+                                    <button class="btn-minus btn-tertiary">-</button>
+                                    <span class="score">0</span>
+                                    <button class="btn-plus btn-secondary">+</button>
+                                </div>
+                            `;
+                            mainDiv.appendChild(playerDiv);
+
+                            const scoreSpan = playerDiv.querySelector('.score');
+                            playerDiv.querySelector('.btn-plus').addEventListener('click', () => {
+                                scoreSpan.textContent = parseInt(scoreSpan.textContent) + 1;
+                            });
+                            playerDiv.querySelector('.btn-minus').addEventListener('click', () => {
+                                scoreSpan.textContent = parseInt(scoreSpan.textContent) - 1;
+                            });
+                        });
+                    });
+                }
+            },
+            timetable: {
+                html: `<table class="timetable text-sm"><thead><tr><th>Hora</th><th>Lunes</th><th>Martes</th><th>Miércoles</th><th>Jueves</th><th>Viernes</th></tr></thead><tbody><tr><td>8:00</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr><tr><td>9:00</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr><tr><td>10:00</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr><tr><td>11:00</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr><tr><td>12:00</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr><tr><td>13:00</td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td><td contenteditable="true"></td></tr></tbody></table>`,
+                initializer: (widget) => { /* No es necesaria lógica compleja aquí */ }
+            },
+             'work-gestures': {
+                html: `<div class="grid grid-cols-2 gap-4"><div class="gesture-card"><div class="icon">🤫</div><div class="font-semibold">Silencio</div></div><div class="gesture-card"><div class="icon">🗣️</div><div class="font-semibold">Hablar Bajo</div></div><div class="gesture-card"><div class="icon">🧑‍🤝‍🧑</div><div class="font-semibold">Hablar con el compañero</div></div><div class="gesture-card"><div class="icon">👨‍👩‍👧‍👦</div><div class="font-semibold">Trabajo en Equipo</div></div></div>`,
+                initializer: (widget) => {
+                    const cards = widget.querySelectorAll('.gesture-card');
+                    cards.forEach(card => {
+                        card.addEventListener('click', () => {
+                            cards.forEach(c => c.classList.remove('active'));
+                            card.classList.add('active');
+                        });
+                    });
+                }
+            },
+            'work-list': {
+                html: `<div class="flex flex-col h-full"><input type="text" class="work-list-input mb-2" placeholder="Añadir nueva tarea y pulsar Enter..."><ul class="work-list-ul flex-grow overflow-y-auto"></ul></div>`,
+                initializer: (widget) => {
+                    const input = widget.querySelector('.work-list-input');
+                    const ul = widget.querySelector('.work-list-ul');
+
+                    const addTask = (taskText) => {
+                        if (taskText === '') return;
+                        const li = document.createElement('li');
+                        li.innerHTML = `<input type="checkbox" class="task-checkbox"><label class="flex-grow">${taskText}</label>`;
+                        ul.appendChild(li);
+                        input.value = '';
+
+                        li.querySelector('.task-checkbox').addEventListener('change', (e) => {
+                            li.classList.toggle('completed', e.target.checked);
+                        });
+                    };
+
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            addTask(input.value);
+                        }
+                    });
+                }
+            }
+        };
+        return tools[toolId];
+    }
+});
+</script>
+</body>
+</html>
